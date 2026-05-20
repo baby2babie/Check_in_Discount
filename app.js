@@ -2,8 +2,8 @@
 //  กล่องสุ่มรางวัล — app.js (Premium Edition)
 // ============================================================
 
-const GAS_URL = 'xxxx';
-const LIFF_ID = 'xxx';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw6QhU3fUwvVO5UdG3qNKRLa4cdx9AIcW9IiJwm65TxfAtwHhsXK--2PG2dXsjWCkJ8/exec';
+const LIFF_ID = '2004478373-aQPYZEpt';
 
 const LB_CONFIG = [
   { milestone: 7,  name: 'กล่องเงิน',      tier: 'silver', ms: 'ms-silver' },
