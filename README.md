@@ -1,2 +1,1 @@
-# Check_in_Discount
-box 5 ea
+# Check_in_Box

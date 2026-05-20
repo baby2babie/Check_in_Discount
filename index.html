@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>กล่องสุ่มรางวัล</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="flash" id="flash"></div>
+
+<!-- DASHBOARD -->
+<div class="dashboard">
+  <div class="dash-title">
+    <h1>กล่องสุ่มรางวัล</h1>
+    <p>สะสมจากการเช็คอินติดต่อกัน</p>
+    <div class="header-room" id="lb-room-label">กำลังโหลด...</div>
+  </div>
+
+  <div class="count-wrap">
+    <div class="count-badge">🎁 กล่องที่มี: <span id="lb-count">0</span> ใบ</div>
+  </div>
+
+  <div class="lb-grid" id="lb-grid">
+  <div class="loading">กำลังโหลด...</div>
+</div>
+
+  <div class="safe-bottom"></div>
+</div>
+  <!-- PAID OVERLAY -->
+<div class="paid-overlay" id="paid-overlay">
+  <canvas id="paid-canvas"></canvas>
+  <div class="paid-box-icon" id="paid-box-icon">🎁</div>
+  <div class="paid-result" id="paid-result">
+    <div class="paid-res-tier">PAID BONUS</div>
+    <div class="paid-prize-val" id="paid-prize-val">0</div>
+    <div class="paid-prize-label">BAHT</div>
+    <div class="paid-prize-note">ส่วนลดจะถูกหักในบิลเดือนถัดไป</div>
+    <button class="btn-claim" id="paid-btn-claim" onclick="closePaidOverlay()"
+      style="--btn-bg:linear-gradient(135deg,#E879F9,#A855F7);--btn-color:#1a0030;--btn-glow:rgba(232,121,249,.5);">
+      รับรางวัล 🎊
+    </button>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="lb-overlay" id="lb-overlay">
+
+  <!-- error texts (legend only) -->
+  <div class="err-txt" id="err1" style="top:12%;left:8%">FATAL_ERROR: UI_COLLAPSE</div>
+  <div class="err-txt" id="err2" style="bottom:14%;right:8%">REBOOTING_SYSTEM...</div>
+  <div class="err-txt" id="err3" style="top:20%;right:10%">OVERFLOW_DETECTED</div>
+
+  <!-- spin -->
+  <div id="spin-wrap" style="display:flex;align-items:center;justify-content:center">
+    <div class="spin-stage" id="spin-stage"></div>
+  </div>
+
+  <!-- result -->
+  <div class="result-ui" id="result-ui">
+    <div class="res-badge" id="res-badge">
+      <div class="res-badge-sym">฿</div>
+    </div>
+    <div class="res-label">REWARD UNLOCKED</div>
+    <div class="res-tier-name" id="res-tier-name">TIER</div>
+    <div class="prize-val" id="prize-val">0</div>
+    <div class="res-note">บาท หักจากบิลเดือนนี้อัตโนมัติ</div>
+    <button class="btn-claim" id="btn-claim" onclick="closeLootPopup()">
+      รับรางวัล 🎊
+    </button>
+  </div>
+
+</div>
+
+<div class="lb-confetti" id="lb-confetti"></div>
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
