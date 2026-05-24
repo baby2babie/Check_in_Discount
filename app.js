@@ -2,7 +2,7 @@
 //  กล่องสุ่มรางวัล — app.js (Premium Edition)
 // ============================================================
 
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbw6QhU3fUwvVO5UdG3qNKRLa4cdx9AIcW9IiJwm65TxfAtwHhsXK--2PG2dXsjWCkJ8/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbx57fi00n2RKu7b5jHu67vzUVwrez1cx6RhW0lvvM9cIkt6_amJzMoVJOJvrwD7imHBnA/exec';
 const LIFF_ID = '2004478373-aQPYZEpt';
 
 const LB_CONFIG = [
