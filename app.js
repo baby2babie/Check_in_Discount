@@ -709,15 +709,51 @@ function createStarParticles(cx, cy) {
 function randomStarColor() {
   return STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)];
 }
-
 function showStardustResult(result, canvas, cx, cy) {
   const resultEl = document.getElementById('paid-result');
   const valEl    = document.getElementById('paid-prize-val');
+  const labelEl  = document.getElementById('paid-prize-label');
+  const subEl    = document.getElementById('paid-prize-sub');
+  const amount   = result.discount_amount;
 
+  const isJackpot = amount >= 50;
+  const isRare    = amount >= 30;
+
+  // ✅ label + sub
+  if (labelEl) {
+    labelEl.textContent = isJackpot ? '🏆 JACKPOT!'  :
+                          isRare    ? '🎉 โชคดีมาก!' : 'PAID BONUS';
+    labelEl.className   = 'paid-prize-label' + (isJackpot ? ' jackpot' : '');
+  }
+  if (subEl) {
+    subEl.textContent = isJackpot ? 'รางวัลสูงสุด! คุณโชคดีมาก 🎊' :
+                        isRare    ? 'ได้รับส่วนลดพิเศษ'              : '';
+  }
+
+  // ✅ ตัวเลข — เปลี่ยนสีตามรางวัล
+  valEl.className = 'paid-prize-val' + (isJackpot ? ' jackpot' : '');
   valEl.style.animation = 'none';
   valEl.textContent = '0';
   void valEl.offsetWidth;
   valEl.style.animation = '';
+
+  // ✅ jackpot — shake + ring ทอง
+  if (isJackpot) {
+    const overlay = document.getElementById('paid-overlay');
+    overlay.classList.add('shake-mid');
+    setTimeout(() => overlay.classList.remove('shake-mid'), 1000);
+
+    // วงแหวนทองบน canvas
+    const ctx  = canvas.getContext('2d');
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 220);
+    grad.addColorStop(0,   '#FFD70066');
+    grad.addColorStop(0.5, '#F59E0B33');
+    grad.addColorStop(1,   'transparent');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 220, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   resultEl.classList.add('show');
 
@@ -726,17 +762,49 @@ function showStardustResult(result, canvas, cx, cy) {
     card.classList.remove('can-open');
     card.classList.add('used');
     card.querySelector('.lb-card-sub').textContent = 'เปิดแล้วเดือนนี้';
-    card.querySelector('.lb-card-icon').textContent = '🎁';
     card.onclick = null;
   }
 
+  const confetti = isJackpot
+    ? ['#FFD700','#E879F9','#fff','#FCA5A5','#F59E0B']
+    : isRare
+    ? ['#E879F9','#C084FC','#fff','#A5F3FC']
+    : ['#C084FC','#fff','#DDD6FE'];
+
   setTimeout(() => {
-    countUp(valEl, result.discount_amount, 1800);
-    spawnStarConfetti(canvas, cx, cy);
+    countUp(valEl, amount, isJackpot ? 2800 : 1800);
+    spawnStarConfetti(canvas, cx, cy, confetti);
   }, 300);
 
   lbOpening = false;
 }
+// function showStardustResult(result, canvas, cx, cy) {
+//   const resultEl = document.getElementById('paid-result');
+//   const valEl    = document.getElementById('paid-prize-val');
+
+//   valEl.style.animation = 'none';
+//   valEl.textContent = '0';
+//   void valEl.offsetWidth;
+//   valEl.style.animation = '';
+
+//   resultEl.classList.add('show');
+
+//   const card = document.getElementById('lb-card-PAID');
+//   if (card) {
+//     card.classList.remove('can-open');
+//     card.classList.add('used');
+//     card.querySelector('.lb-card-sub').textContent = 'เปิดแล้วเดือนนี้';
+//     card.querySelector('.lb-card-icon').textContent = '🎁';
+//     card.onclick = null;
+//   }
+
+//   setTimeout(() => {
+//     countUp(valEl, result.discount_amount, 1800);
+//     spawnStarConfetti(canvas, cx, cy);
+//   }, 300);
+
+//   lbOpening = false;
+// }
 
 function spawnStarConfetti(canvas, cx, cy) {
   const ctx  = canvas.getContext('2d');
