@@ -140,7 +140,6 @@ async function initLiff() {
   const room   = params.get('room');
   const token  = params.get('token');
   const isPaid = params.get('paid');
-  ...
 }
 
   grid.innerHTML = LB_CONFIG.map(() =>
