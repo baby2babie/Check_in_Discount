@@ -170,6 +170,7 @@ async function initPaidPage(roomNo) {
   document.querySelector('.dash-title h1').textContent = 'กล่องโบนัส';
   document.querySelector('.dash-title p').textContent  = 'รางวัลจากการจ่ายตรงเวลา';
   document.querySelector('.count-wrap').style.display  = 'none';
+  setHistBtn(true);
 
   const grid = document.getElementById('lb-grid');
   grid.style.cssText = 'display:flex;justify-content:center;width:90%;max-width:380px';
@@ -274,6 +275,7 @@ function renderPage(result) {
     document.getElementById('lb-room-label').textContent = 'ห้อง ' + result.roomNo;
   }
   document.getElementById('lb-count').textContent = result.totalBox || 0;
+  setHistBtn(true);
   renderLootGrid(result.boxes || {});
 }
 
