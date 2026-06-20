@@ -90,6 +90,7 @@ const TIER_CFG = {
 let lbOpening   = false;
 let liffReady   = false;
 let liffProfile = null;
+let currentRoomNo = null;
 
 // ============================================================
 //  UTILS
@@ -180,6 +181,8 @@ async function initPaidPage(roomNo) {
   try {
     const result = await callGAS('getLootBoxDataByRoom', { roomNo });
     if (!result.success) { showError('❌ ' + (result.message || 'โหลดไม่ได้')); return; }
+    currentRoomNo = roomNo;
+    showHistoryButton();
     renderPaidCard((result.boxes || {})['PAID'] || {});
   } catch (e) {
     showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ');
@@ -272,6 +275,8 @@ async function loadLootBoxByUserId(userId) {
 function renderPage(result) {
   if (result.roomNo) {
     document.getElementById('lb-room-label').textContent = 'ห้อง ' + result.roomNo;
+    currentRoomNo = result.roomNo;
+    showHistoryButton();
   }
   document.getElementById('lb-count').textContent = result.totalBox || 0;
   renderLootGrid(result.boxes || {});
@@ -1003,7 +1008,96 @@ function initPaidTrace(id, wrap) {
   }
   loop();
 }
+// ============================================================
+//  HISTORY BUTTON + OVERLAY
+// ============================================================
+function showHistoryButton() {
+  document.getElementById('btn-history').classList.add('show');
+}
 
+const TH_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                    'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function formatMonthLabel(monthKey) {
+  const [y, m] = String(monthKey).split('-').map(Number);
+  if (!y || !m) return monthKey;
+  return `${TH_MONTHS[m - 1]} ${y + 543}`;
+}
+
+function getTierMeta(tierRaw) {
+  if (String(tierRaw).trim() === 'PAID') {
+    return { name: 'PAID BONUS', color: TIER_CFG.paid.color };
+  }
+  const cfg = LB_CONFIG.find(c => c.milestone === Number(tierRaw));
+  if (cfg) return { name: cfg.name, color: TIER_CFG[cfg.tier].color };
+  return { name: 'ไม่ทราบ', color: '#475569' };
+}
+
+function openHistoryOverlay() {
+  document.getElementById('history-overlay').classList.add('active');
+  loadHistory();
+}
+
+function closeHistoryOverlay() {
+  document.getElementById('history-overlay').classList.remove('active');
+}
+
+async function loadHistory() {
+  const body = document.getElementById('history-body');
+  body.innerHTML = '<div class="loading">กำลังโหลด...</div>';
+
+  if (!currentRoomNo) {
+    body.innerHTML = '<div class="loading">❌ ไม่พบข้อมูลห้อง</div>';
+    return;
+  }
+
+  try {
+    const result = await callGAS('getLootHistory', { roomNo: currentRoomNo });
+    if (!result.success) {
+      body.innerHTML = `<div class="loading">❌ ${result.message || 'โหลดไม่ได้'}</div>`;
+      return;
+    }
+    renderHistory(result.history || []);
+  } catch (e) {
+    body.innerHTML = '<div class="loading">❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ</div>';
+  }
+}
+
+function renderHistory(history) {
+  const body = document.getElementById('history-body');
+
+  if (!history.length) {
+    body.innerHTML = '<div class="loading">ยังไม่มีประวัติการเปิดกล่องครับ</div>';
+    return;
+  }
+
+  body.innerHTML = history.map(h => {
+    const total = h.items.reduce((s, it) => s + (Number(it.amount) || 0), 0);
+
+    const itemsHtml = h.items.map(it => {
+      const meta = getTierMeta(it.tier);
+      return `
+        <div class="history-item">
+          <span class="history-item-tier" style="--tier-color:${meta.color}">
+            <span class="history-item-dot"></span>${meta.name}
+          </span>
+          <span class="history-item-amount">฿${Number(it.amount).toLocaleString()}</span>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="history-month">
+        <div class="history-month-head">
+          <span class="history-month-label">${formatMonthLabel(h.month)}</span>
+          <span class="history-status ${h.applied ? 'applied' : 'pending'}">
+            ${h.applied ? '✓ ตัดบิลแล้ว' : '⏳ รอตัดบิล'}
+          </span>
+        </div>
+        <div class="history-items">${itemsHtml}</div>
+        <div class="history-total">รวม <b>฿${total.toLocaleString()}</b></div>
+      </div>`;
+  }).join('');
+}
 // ============================================================
 //  START
 // ============================================================
