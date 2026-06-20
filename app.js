@@ -170,7 +170,7 @@ async function initPaidPage(roomNo) {
   document.querySelector('.dash-title h1').textContent = 'กล่องโบนัส';
   document.querySelector('.dash-title p').textContent  = 'รางวัลจากการจ่ายตรงเวลา';
   document.querySelector('.count-wrap').style.display  = 'none';
-  setHistBtn(true);
+
 
   const grid = document.getElementById('lb-grid');
   grid.style.cssText = 'display:flex;justify-content:center;width:90%;max-width:380px';
@@ -237,6 +237,7 @@ function renderPaidCard(info) {
   setTimeout(() => {
     card.classList.add('fade-in');
     if (hasBox) initPaidTrace('paid-trace', wrap);
+    setHistBtn(true);
   }, 300);
 }
 
