@@ -545,14 +545,13 @@ async function openHistory() {
   const overlay = document.getElementById('history-overlay');
   overlay.style.display = 'flex';
 
-  const params = new URLSearchParams(window.location.search);
-  const roomNo = params.get('room');
+  const urlParams = new URLSearchParams(window.location.search); // ← เปลี่ยนจาก params
+  const roomNo = urlParams.get('room');
   if (!roomNo) {
     document.getElementById('hist-list').innerHTML =
       '<div style="text-align:center;padding:40px 0;color:#475569;font-size:13px">ไม่พบข้อมูลห้อง</div>';
     return;
   }
-
   try {
     const result = await callGAS('getLootHistory', { roomNo });
     renderHistory(result);
