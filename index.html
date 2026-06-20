@@ -33,17 +33,19 @@
 <div class="paid-overlay" id="paid-overlay">
   <canvas id="paid-canvas"></canvas>
 
-  <!-- ✅ ปุ่ม HISTORY -->
-  <button id="btn-hist-overlay" onclick="openHistory()" style="
-    position:fixed;top:20px;right:20px;z-index:103;
-    background:rgba(192,132,252,.12);
-    border:0.5px solid rgba(192,132,252,.3);
-    color:#C084FC;font-size:11px;
-    padding:5px 12px;border-radius:99px;cursor:pointer;
-    letter-spacing:1px;font-family:'Noto Sans Thai',sans-serif;
-    display:block;
-  ">HISTORY</button>
+<!-- ✅ ปุ่ม HISTORY — อยู่นอก overlay -->
+<button id="btn-hist-overlay" onclick="openHistory()" style="
+  position:fixed;top:20px;right:20px;z-index:103;
+  background:rgba(192,132,252,.12);
+  border:0.5px solid rgba(192,132,252,.3);
+  color:#C084FC;font-size:11px;
+  padding:5px 12px;border-radius:99px;cursor:pointer;
+  letter-spacing:1px;font-family:'Noto Sans Thai',sans-serif;
+  display:none;
+">HISTORY</button>
 
+<div class="paid-overlay" id="paid-overlay">
+  <canvas id="paid-canvas"></canvas>
   <div class="paid-box-icon" id="paid-box-icon">🎁</div>
   <div class="paid-result" id="paid-result">
     <div class="paid-res-tier">PAID BONUS</div>
