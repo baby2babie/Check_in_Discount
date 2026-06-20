@@ -1,5 +1,5 @@
 // ============================================================
-//  กล่องสุ่มรางวัล — app.js (Premium Edition)
+//  กล่องสุ่มรางวัล — app.js (Premium Edition) OA_TEST
 // ============================================================
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbx57fi00n2RKu7b5jHu67vzUVwrez1cx6RhW0lvvM9cIkt6_amJzMoVJOJvrwD7imHBnA/exec';
@@ -720,16 +720,31 @@ function showStardustResult(result, canvas, cx, cy) {
   const isRare    = amount >= 30;
 
   // ✅ label + sub
-  if (labelEl) {
-    labelEl.textContent = isJackpot ? '🏆 JACKPOT!'  :
-                          isRare    ? '🎉 โชคดีมาก!' : 'PAID BONUS';
-    labelEl.className   = 'paid-prize-label' + (isJackpot ? ' jackpot' : '');
-  }
-  if (subEl) {
-    subEl.textContent = isJackpot ? 'รางวัลสูงสุด! คุณโชคดีมาก 🎊' :
-                        isRare    ? 'ได้รับส่วนลดพิเศษ'              : '';
-  }
+// 1. label — เอาอีโมจิออก ใช้ Orbitron
+if (labelEl) {
+  labelEl.textContent = 'PAID BONUS'; // คงเดิมเสมอ
+  labelEl.className   = 'paid-prize-label';
+}
 
+// 2. sub — เอาอีโมจิออก ใช้ข้อความสั้น
+if (subEl) {
+  subEl.style.fontFamily    = "'Orbitron', monospace";
+  subEl.style.letterSpacing = '3px';
+  subEl.style.fontSize      = '11px';
+
+  if (isJackpot) {
+    subEl.textContent = 'JACKPOT';
+    subEl.style.color = '#FFD700';
+  } else if (isRare) {
+    subEl.textContent = 'RARE PRIZE';
+    subEl.style.color = '#E879F9';
+  } else if (amount >= 20) {
+    subEl.textContent = 'SPECIAL';
+    subEl.style.color = '#A5F3FC';
+  } else {
+    subEl.textContent = '';
+  }
+}
   // ✅ ตัวเลข — เปลี่ยนสีตามรางวัล
   valEl.className = 'paid-prize-val' + (isJackpot ? ' jackpot' : '');
   valEl.style.animation = 'none';
