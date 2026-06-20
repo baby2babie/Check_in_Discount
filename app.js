@@ -525,7 +525,91 @@ function spawnConfettiStop() {
   w.classList.remove('show');
   w.innerHTML = '';
 }
+// ============================================================5555
+// ============================================================
+//  HISTORY
+// ============================================================
+function setHistBtn(show) {
+  const btn = document.getElementById('btn-hist-overlay');
+  if (btn) btn.style.display = show ? 'block' : 'none';
+}
 
+async function openHistory() {
+  const overlay = document.getElementById('history-overlay');
+  overlay.style.display = 'flex';
+
+  const params = new URLSearchParams(window.location.search);
+  const roomNo = params.get('room');
+  if (!roomNo) {
+    document.getElementById('hist-list').innerHTML =
+      '<div style="text-align:center;padding:40px 0;color:#475569;font-size:13px">ไม่พบข้อมูลห้อง</div>';
+    return;
+  }
+
+  try {
+    const result = await callGAS('getLootHistory', { roomNo });
+    renderHistory(result);
+  } catch(e) {
+    document.getElementById('hist-list').innerHTML =
+      '<div style="text-align:center;padding:40px 0;color:#EF4444;font-size:13px">โหลดไม่ได้ กรุณาลองใหม่</div>';
+  }
+}
+
+function closeHistory() {
+  document.getElementById('history-overlay').style.display = 'none';
+}
+
+function renderHistory(result) {
+  if (!result.success || !result.history || !result.history.length) {
+    document.getElementById('hist-list').innerHTML =
+      '<div style="text-align:center;padding:40px 0;color:#475569;font-size:13px">ยังไม่มีประวัติส่วนลด</div>';
+    return;
+  }
+
+  const TIER_LABEL = { '7':'เช็คอิน 7 วัน','14':'เช็คอิน 14 วัน','21':'เช็คอิน 21 วัน','28':'เช็คอิน 28 วัน','PAID':'PAID BONUS' };
+  const MONTH_TH   = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+  let totalAmt = 0, totalBoxes = 0;
+
+  const cards = result.history.map(m => {
+    const monthTotal = m.items.reduce((s, i) => s + i.amount, 0);
+    totalAmt   += monthTotal;
+    totalBoxes += m.items.length;
+
+    const parts = String(m.month).split('-');
+    const y = parts[0], mo = parseInt(parts[1]);
+    const monthLabel = `${MONTH_TH[mo] || mo} ${parseInt(y) + 543}`;
+
+    const statusBadge = m.applied
+      ? `<span style="font-size:10px;background:rgba(56,186,161,.15);color:#38BFA1;padding:2px 8px;border-radius:99px">APPLIED</span>`
+      : `<span style="font-size:10px;background:rgba(71,85,105,.2);color:#64748B;padding:2px 8px;border-radius:99px">หมดอายุ</span>`;
+
+    const items = m.items.map(i => {
+      const isJackpot = i.amount >= 50;
+      const color = isJackpot ? '#FFD700' : '#C084FC';
+      return `<div style="display:flex;justify-content:space-between;padding:3px 0">
+        <span style="font-size:11px;color:#64748B">${TIER_LABEL[i.tier] || i.tier}</span>
+        <span style="font-size:13px;font-weight:600;color:${color}">+${i.amount} ฿</span>
+      </div>`;
+    }).join('');
+
+    return `<div style="background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.06);border-radius:12px;padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:600;color:#F8FAFC">${monthLabel}</span>
+        ${statusBadge}
+      </div>
+      ${items}
+      <div style="border-top:0.5px solid rgba(255,255,255,.06);margin-top:6px;padding-top:6px;display:flex;justify-content:space-between">
+        <span style="font-size:11px;color:#94A3B8">รวม</span>
+        <span style="font-size:13px;font-weight:700;color:#F8FAFC">${monthTotal} ฿</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('hist-total-amount').textContent = totalAmt + ' ฿';
+  document.getElementById('hist-total-boxes').textContent  = totalBoxes + ' ใบ';
+  document.getElementById('hist-list').innerHTML = cards;
+}
 // ============================================================
 //  STARDUST — PAID BOX
 // ============================================================
@@ -537,6 +621,7 @@ let starExplodeT  = 0;
 let starGatherT   = 0;
 
 function startStardustOpen(token) {
+  setHistBtn(false);
   const overlay = document.getElementById('paid-overlay');
   const canvas  = document.getElementById('paid-canvas');
   const boxIcon = document.getElementById('paid-box-icon');
@@ -710,6 +795,7 @@ function randomStarColor() {
   return STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)];
 }
 function showStardustResult(result, canvas, cx, cy) {
+  setHistBtn(true);
   const resultEl = document.getElementById('paid-result');
   const valEl    = document.getElementById('paid-prize-val');
   const labelEl  = document.getElementById('paid-prize-label');
@@ -845,6 +931,7 @@ function spawnStarConfetti(canvas, cx, cy) {
 }
 
 function closePaidOverlay() {
+  setHistBtn(false);
   const overlay = document.getElementById('paid-overlay');
   overlay.classList.remove('active');
   const canvas = document.getElementById('paid-canvas');
