@@ -933,7 +933,7 @@ function spawnStarConfetti(canvas, cx, cy) {
 }
 
 function closePaidOverlay() {
-  setHistBtn(false);
+  setHistBtn(true);
   const overlay = document.getElementById('paid-overlay');
   overlay.classList.remove('active');
   const canvas = document.getElementById('paid-canvas');
