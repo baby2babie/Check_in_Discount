@@ -133,7 +133,11 @@ async function initLiff() {
 // ============================================================
 //  INIT
 // ============================================================
-async function init() {
+
+  async function init() {
+  console.log('init start');
+  const params = new URLSearchParams(window.location.search);
+  console.log('room:', params.get('room'), 'paid:', params.get('paid'));
   const grid   = document.getElementById('lb-grid');
   const params = new URLSearchParams(window.location.search);
   const room   = params.get('room');
