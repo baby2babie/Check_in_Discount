@@ -720,13 +720,6 @@ function showStardustResult(result, canvas, cx, cy) {
   const isRare    = amount >= 30;
 
   // ✅ label + sub
-// 1. label — เอาอีโมจิออก ใช้ Orbitron
-if (labelEl) {
-  labelEl.textContent = 'PAID BONUS'; // คงเดิมเสมอ
-  labelEl.className   = 'paid-prize-label';
-}
-
-// 2. sub — เอาอีโมจิออก ใช้ข้อความสั้น
 if (subEl) {
   subEl.style.fontFamily    = "'Orbitron', monospace";
   subEl.style.letterSpacing = '3px';
