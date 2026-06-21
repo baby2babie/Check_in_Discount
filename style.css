@@ -556,6 +556,9 @@ canvas.sparks {
   font-family: 'Orbitron', monospace;
   font-size: 13px; letter-spacing: 1px;
   color: var(--text);
+  display: flex;        /* ← เพิ่ม */
+  align-items: center;  /* ← เพิ่ม */
+  gap: 8px;              /* ← เพิ่ม */
 }
 .history-close {
   width: 28px; height: 28px;
@@ -597,7 +600,6 @@ canvas.sparks {
   color: var(--text);
 }
 .history-status {
-  font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   letter-spacing: 1px;
   font-weight: 600;
@@ -624,12 +626,10 @@ canvas.sparks {
   flex-shrink: 0;
 }
 .history-item-amount {
-  font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
   color: var(--text);
 }
 .history-item-amount.not-opened {
-  font-family: 'Noto Sans Thai', sans-serif;
   font-weight: 400;
   color: var(--muted);
 }
@@ -645,7 +645,6 @@ canvas.sparks {
   color: #94A3B8; text-transform: uppercase;
 }
 .history-total-amount {
-  font-family: 'JetBrains Mono', monospace;
   font-size: 14px; font-weight: 700;
   color: #F59E0B;
 }
