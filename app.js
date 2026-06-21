@@ -140,6 +140,7 @@ async function init() {
   const room   = params.get('room');
   const token  = params.get('token');
   const isPaid = params.get('paid');
+  const view   = params.get('view');
 
   grid.innerHTML = LB_CONFIG.map(() =>
     `<div class="lb-card lb-skeleton"></div>`
@@ -161,6 +162,9 @@ async function init() {
     await loadLootBoxByUserId(liffProfile.userId);
   } else {
     showError('❌ ไม่พบข้อมูลห้อง');
+  }
+  if (view === 'history' && currentRoomNo) {
+    openHistoryOverlay();
   }
 }
 
