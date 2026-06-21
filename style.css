@@ -28,9 +28,9 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;   /* ← เปลี่ยนจาก center */
+  padding: 64px 24px 24px;       /* ← เปลี่ยนจาก padding: 24px */
   background: radial-gradient(circle at center, #1E293B 0%, #020617 100%);
-  padding: 24px;
   position: relative;
 }
 
@@ -141,7 +141,7 @@ html, body {
   background: linear-gradient(90deg,#1E293B 25%,#2D3F55 50%,#1E293B 75%);
   background-size: 200% 100%;
   animation: shimmer 1.2s infinite;
-  min-height: 164px;
+  min-height: 178px;   /* ← เปลี่ยนจาก 164px */
 }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 .lb-card.fade-in { animation: fadeInCard 0.4s ease forwards; }
