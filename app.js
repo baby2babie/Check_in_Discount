@@ -1076,8 +1076,8 @@ function renderHistory(history) {
   }
 
   body.innerHTML = history.map(h => {
-    const total     = h.items.reduce((s, it) => s + (it.opened ? Number(it.amount) : 0), 0);
-    const hasOpened = h.items.some(it => it.opened);
+    const total     = h.items.reduce((s, it) => s + (it.state === "opened" ? Number(it.amount) : 0), 0);
+const hasOpened = h.items.some(it => it.state === "opened");
 
     const itemsHtml = h.items.map(it => {
       const meta = getTierMeta(it.tier);
