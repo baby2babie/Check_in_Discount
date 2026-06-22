@@ -1081,9 +1081,9 @@ function renderHistory(history) {
 
     const itemsHtml = h.items.map(it => {
       const meta = getTierMeta(it.tier);
-      const amountHtml = it.opened
-        ? `<span class="history-item-amount">฿${Number(it.amount).toLocaleString()}</span>`
-        : `<span class="history-item-amount not-opened">ไม่ได้เปิด</span>`;
+      const amountHtml = it.state === "opened"
+  ? `<span class="history-item-amount">฿${Number(it.amount).toLocaleString()}</span>`
+  : `<span class="history-item-amount not-opened">ไม่ได้เปิด</span>`;
       return `
         <div class="history-item">
           <span class="history-item-tier" style="--tier-color:${meta.color}">
