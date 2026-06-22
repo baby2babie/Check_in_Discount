@@ -1069,36 +1069,42 @@ async function loadHistory() {
 
 function renderHistory(history) {
   const body = document.getElementById('history-body');
+
   if (!history.length) {
     body.innerHTML = '<div class="loading">ยังไม่มีประวัติการเปิดกล่องครับ</div>';
     return;
   }
+
   body.innerHTML = history.map(h => {
     const total     = h.items.reduce((s, it) => s + (it.opened ? Number(it.amount) : 0), 0);
     const hasOpened = h.items.some(it => it.opened);
+
     const itemsHtml = h.items.map(it => {
       const meta = getTierMeta(it.tier);
       const amountHtml = it.opened
-        ? <span class="history-item-amount">฿${Number(it.amount).toLocaleString()}</span>
-        : <span class="history-item-amount not-opened">ไม่ได้เปิด</span>;
-      return 
+        ? `<span class="history-item-amount">฿${Number(it.amount).toLocaleString()}</span>`
+        : `<span class="history-item-amount not-opened">ไม่ได้เปิด</span>`;
+      return `
         <div class="history-item">
           <span class="history-item-tier" style="--tier-color:${meta.color}">
             <span class="history-item-dot"></span>${meta.name}
           </span>
           ${amountHtml}
-        </div>;
+        </div>`;
     }).join('');
+
     const statusHtml = hasOpened
-      ? <span class="history-status ${h.applied ? 'applied' : 'pending'}">${h.applied ? 'ตัดบิลแล้ว' : 'รอตัดบิล'}</span>
+      ? `<span class="history-status ${h.applied ? 'applied' : 'pending'}">${h.applied ? 'ตัดบิลแล้ว' : 'รอตัดบิล'}</span>`
       : '';
+
     const totalHtml = hasOpened
-      ? <div class="history-total">
+      ? `<div class="history-total">
            <span class="history-total-label">รวม</span>
            <span class="history-total-amount">฿${total.toLocaleString()}</span>
-         </div>
+         </div>`
       : '';
-    return 
+
+    return `
       <div class="history-month">
         <div class="history-month-head">
           <span class="history-month-label">${formatMonthLabel(h.month)}</span>
@@ -1106,7 +1112,7 @@ function renderHistory(history) {
         </div>
         <div class="history-items">${itemsHtml}</div>
         ${totalHtml}
-      </div>;
+      </div>`;
   }).join('');
 }
 // ============================================================
