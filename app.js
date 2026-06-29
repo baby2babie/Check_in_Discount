@@ -195,10 +195,10 @@ async function initPaidPage(roomNo) {
 
 function renderPaidCard(info) {
   const grid     = document.getElementById('lb-grid');
-  const hasBox   = info.token ;
-const isOpened = info.token;
-  const isLocked = !info.token;
-
+  const hasBox   = info.token && !info.opened && !info.applied;
+const isOpened = info.token && (info.opened || info.applied);
+const isLocked = !info.token;
+  
   const card = document.createElement('div');
   card.className = 'lb-card'
     + (hasBox   ? ' can-open' : '')
@@ -215,6 +215,7 @@ const isOpened = info.token;
     <div class="lb-card-name" style="font-size:16px;margin-top:16px">PAID BONUS</div>
     <div class="lb-card-sub" style="font-size:14px;margin-top:8px">${
       hasBox   ? 'กดเพื่อเปิดกล่อง!' :
+      info.applied && !info.opened ? 'หมดอายุ' :
       isOpened ? 'เปิดแล้วเดือนนี้'  :
                  'จ่ายตรงเวลาเพื่อรับกล่อง'
     }</div>
@@ -292,8 +293,8 @@ function renderLootGrid(boxes) {
 
   LB_CONFIG.forEach((cfg, i) => {
     const info     = boxes[cfg.milestone] || {};
-    const hasBox   = info.token ;
-const isOpened = info.token ;
+    const hasBox   = info.token && !info.opened && !info.applied;
+    const isOpened = info.token && (info.opened || info.applied);
     const isLocked = !info.token;
 
     const wrap = document.createElement('div');
@@ -321,7 +322,8 @@ const isOpened = info.token ;
       <div class="lb-card-name">${cfg.name.toUpperCase()}</div>
       <div class="lb-card-sub">${
         hasBox   ? 'กดเพื่อเปิดกล่อง' :
-isOpened ? 'เปิดแล้ว'        : 'ยังไม่ถึงรอบ''
+        info.applied && !info.opened ? 'หมดอายุ'          :
+        isOpened ? 'เปิดแล้ว' : 'ยังไม่ถึงรอบ''
       }</div>
       <div class="lb-card-ms ${cfg.ms}">ครบ ${cfg.milestone} วัน</div>
     `;
