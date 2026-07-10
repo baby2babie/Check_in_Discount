@@ -1123,14 +1123,6 @@ function renderHistory(history) {
       </div>`;
   }).join('');
 }
-// ============================================================
-//  BFCACHE GUARD — กันหน้าเก่าค้างมาโชว์ตอน navigate กลับ/สลับหน้า
-// ============================================================
-window.addEventListener('pageshow', function (event) {
-  if (event.persisted) {
-    location.reload();
-  }
-});
 
 // ============================================================
 //  START
