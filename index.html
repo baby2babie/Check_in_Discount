@@ -7,24 +7,37 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="style.css">
   <style>
-    #boot-mask {
-      position: fixed; inset: 0; z-index: 9999;
-      background: #020617;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #boot-mask .spin {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 3px solid rgba(255,255,255,.15);
-      border-top-color: #F59E0B;
-      animation: bootspin .8s linear infinite;
-    }
-    @keyframes bootspin { to { transform: rotate(360deg); } }
-  </style>
+  #boot-mask {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #020617;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #boot-mask .boot-box {
+    font-size: 44px;
+    animation: bootPulse 1.1s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px #F59E0B88);
+  }
+  #boot-mask .boot-ring {
+    position: absolute;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    border: 2px solid rgba(245,158,11,.25);
+    border-top-color: #F59E0B;
+    animation: bootSpin 1.4s linear infinite;
+  }
+  @keyframes bootPulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.15); }
+  }
+  @keyframes bootSpin { to { transform: rotate(360deg); } }
+</style>
 </head>
 <body>
 
-<div id="boot-mask"><div class="spin"></div></div>
-
+<div id="boot-mask">
+  <div class="boot-ring"></div>
+  <span class="boot-box">🎁</span>
+</div>
 <div class="flash" id="flash"></div>
 
 <!-- DASHBOARD -->
