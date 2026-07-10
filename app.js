@@ -135,6 +135,8 @@ async function initLiff() {
 //  INIT
 // ============================================================
 async function init() {
+  console.log('DEBUG URL:', window.location.href);
+  console.log('DEBUG paid param:', new URLSearchParams(window.location.search).get('paid'));
   const grid   = document.getElementById('lb-grid');
   const params = new URLSearchParams(window.location.search);
   const room   = params.get('room');
