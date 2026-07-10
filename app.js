@@ -1120,6 +1120,11 @@ function renderHistory(history) {
       </div>`;
   }).join('');
 }
+window.addEventListener('pageshow', function (event) {
+  if (event.persisted) {
+    location.reload();
+  }
+});
 // ============================================================
 //  START
 // ============================================================
