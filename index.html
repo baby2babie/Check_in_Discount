@@ -6,8 +6,24 @@
   <title>กล่องสุ่มรางวัล</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="style.css">
+  <style>
+    #boot-mask {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #020617;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #boot-mask .spin {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.15);
+      border-top-color: #F59E0B;
+      animation: bootspin .8s linear infinite;
+    }
+    @keyframes bootspin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
+
+<div id="boot-mask"><div class="spin"></div></div>
 
 <div class="flash" id="flash"></div>
 
