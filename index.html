@@ -6,39 +6,57 @@
   <title>กล่องสุ่มรางวัล</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="style.css">
-  <style>
+ <style>
   #boot-mask {
     position: fixed; inset: 0; z-index: 9999;
     background: #020617;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px;
   }
-  #boot-mask .boot-box {
-    font-size: 44px;
-    animation: bootPulse 1.1s ease-in-out infinite;
-    filter: drop-shadow(0 0 20px #F59E0B88);
+  #boot-mask .boot-dots { display: flex; gap: 8px; }
+  #boot-mask .boot-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    animation: bootBounce 1s ease-in-out infinite;
   }
-  #boot-mask .boot-ring {
-    position: absolute;
-    width: 90px; height: 90px;
-    border-radius: 50%;
-    border: 2px solid rgba(245,158,11,.25);
-    border-top-color: #F59E0B;
-    animation: bootSpin 1.4s linear infinite;
+  #boot-mask .boot-dot:nth-child(1) { background: #F59E0B; }
+  #boot-mask .boot-dot:nth-child(2) { background: #C084FC; animation-delay: .15s; }
+  #boot-mask .boot-dot:nth-child(3) { background: #F59E0B; animation-delay: .3s; }
+  #boot-mask .boot-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px; letter-spacing: 4px;
+    color: #94A3B8;
+    display: flex;
   }
-  @keyframes bootPulse {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.15); }
+  #boot-mask .boot-loading-dots {
+    display: inline-block; width: 18px; text-align: left;
   }
-  @keyframes bootSpin { to { transform: rotate(360deg); } }
+  @keyframes bootBounce {
+    0%, 100% { transform: translateY(0); opacity: .5; }
+    50%      { transform: translateY(-10px); opacity: 1; }
+  }
 </style>
 </head>
 <body>
 
 <div id="boot-mask">
-  <div class="boot-ring"></div>
-  <span class="boot-box">🎁</span>
+  <div class="boot-dots">
+    <div class="boot-dot"></div>
+    <div class="boot-dot"></div>
+    <div class="boot-dot"></div>
+  </div>
+  <div class="boot-text">LOADING<span class="boot-loading-dots" id="boot-loading-dots"></span></div>
 </div>
-<div class="flash" id="flash"></div>
+<script>
+(function(){
+  var n = 0;
+  var el = document.getElementById('boot-loading-dots');
+  var iv = setInterval(function(){
+    if (!el || !document.body.contains(el)) { clearInterval(iv); return; }
+    n = (n + 1) % 4;
+    el.textContent = '.'.repeat(n);
+  }, 400);
+})();
+</script>
 
 <!-- DASHBOARD -->
 <div class="dashboard">
