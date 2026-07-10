@@ -135,8 +135,6 @@ async function initLiff() {
 //  INIT
 // ============================================================
 async function init() {
-  console.log('DEBUG URL:', window.location.href);
-  console.log('DEBUG paid param:', new URLSearchParams(window.location.search).get('paid'));
   const grid   = document.getElementById('lb-grid');
   const params = new URLSearchParams(window.location.search);
   const room   = params.get('room');
@@ -149,7 +147,7 @@ async function init() {
   }
 
   if (isPaid !== null) {
-    // ---- PAID PAGE: set title/skeleton ตรงเป้าตั้งแต่เฟรมแรก ----
+    // ---- PAID PAGE ----
     document.querySelector('.dash-title h1').textContent = 'กล่องโบนัส';
     document.querySelector('.dash-title p').textContent  = 'รางวัลจากการจ่ายตรงเวลา';
     document.querySelector('.count-wrap').style.display  = 'none';
@@ -160,7 +158,7 @@ async function init() {
     await initLiff();
     await initPaidPage(room);
   } else {
-    // ---- CHECK-IN PAGE: เหมือนเดิมทุกอย่าง ----
+    // ---- CHECK-IN PAGE ----
     grid.innerHTML = LB_CONFIG.map(() =>
       `<div class="lb-card lb-skeleton"></div>`
     ).join('');
@@ -181,6 +179,9 @@ async function init() {
   if (view === 'history' && currentRoomNo) {
     openHistoryOverlay();
   }
+
+  // ✅ ทุกอย่าง render เสร็จแล้ว ค่อยเอา mask ออก
+  document.getElementById('boot-mask')?.remove();
 }
 
 // ============================================================
