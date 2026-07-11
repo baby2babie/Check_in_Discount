@@ -584,6 +584,7 @@ canvas.sparks {
   border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 .history-month-head {
   padding: 12px 16px;
