@@ -86,19 +86,40 @@
   <div class="safe-bottom"></div>
 </div>
 
-<div class="paid-overlay" id="paid-overlay">
-  <canvas id="paid-canvas"></canvas>
-  <div class="paid-box-icon" id="paid-box-icon">🎁</div>
-  <div class="paid-result" id="paid-result">
-    <div class="paid-res-tier">PAID BONUS</div>
-    <div id="paid-prize-sub" class="paid-prize-sub"></div>
-    <div class="paid-prize-val" id="paid-prize-val">0</div>
-    <div class="paid-prize-label">BAHT</div>
-    <div class="paid-prize-note">ส่วนลดจะถูกหักในบิลเดือนถัดไป</div>
-    <button class="btn-claim" id="paid-btn-claim" onclick="closePaidOverlay()"
-      style="--btn-bg:linear-gradient(135deg,#E879F9,#A855F7);--btn-color:#1a0030;--btn-glow:rgba(232,121,249,.5);">
-      รับรางวัล 🎊
-    </button>
+<div class="gp-overlay" id="paid-overlay">
+  <div class="gp-stage">
+    <div class="gp-cabinet" id="gpCabinet">
+      <div class="gp-sign">
+        <div class="gp-sign-jp">ガシャポン</div>
+        <div class="gp-sign-th">PAID BONUS</div>
+      </div>
+      <div class="gp-dome">
+        <div class="gp-dome-shine"></div>
+        <div class="gp-pile" id="gpPile"></div>
+      </div>
+      <div class="gp-crank-wrap">
+        <div class="gp-crank-base"></div>
+        <div class="gp-crank" id="gpCrank"><div class="gp-crank-arm"></div><div class="gp-crank-knob"></div></div>
+      </div>
+      <div class="gp-chute" id="gpChute"></div>
+      <div class="gp-tray"></div>
+    </div>
+    <div class="gp-hint" id="gpHint">กำลังหมุน...</div>
+  </div>
+
+  <div class="gp-result" id="gpResult">
+    <div class="gp-crack-wrap" id="gpCrackWrap">
+      <div class="gp-crack-half top" id="gpCrackTop"></div>
+      <div class="gp-crack-half bottom" id="gpCrackBottom"></div>
+    </div>
+    <div class="gp-ticket">
+      <div class="gp-ribbon" id="gpRibbon">ยินดีด้วย</div>
+      <div class="gp-ticket-tier">PAID BONUS</div>
+      <div class="gp-ticket-val" id="paid-prize-val">0</div>
+      <div class="gp-ticket-unit">บาท</div>
+      <div class="gp-ticket-note">ส่วนลดจะถูกหักในบิลเดือนถัดไปอัตโนมัติ</div>
+      <button class="btn-claim gp-claim" id="paid-btn-claim" onclick="closePaidOverlay()">รับรางวัล 🎊</button>
+    </div>
   </div>
 </div>
 
