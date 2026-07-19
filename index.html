@@ -1,223 +1,151 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>กล่องสุ่มรางวัล</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <link rel="stylesheet" href="style.css">
- <style>
-  #boot-mask {
-    position: fixed; inset: 0; z-index: 9999;
-    background: #020617;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 20px;
-  }
-  #boot-mask .boot-dots { display: flex; gap: 8px; }
-  #boot-mask .boot-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    animation: bootBounce 1s ease-in-out infinite;
-  }
-  #boot-mask .boot-dot:nth-child(1) { background: #F59E0B; }
-  #boot-mask .boot-dot:nth-child(2) { background: #C084FC; animation-delay: .15s; }
-  #boot-mask .boot-dot:nth-child(3) { background: #F59E0B; animation-delay: .3s; }
-  #boot-mask .boot-text {
-    font-family: 'Orbitron', monospace;
-    font-size: 12px; letter-spacing: 4px;
-    color: #94A3B8;
-    display: flex;
-  }
-  #boot-mask .boot-loading-dots {
-    display: inline-block; width: 18px; text-align: left;
-  }
-  @keyframes bootBounce {
-    0%, 100% { transform: translateY(0); opacity: .5; }
-    50%      { transform: translateY(-10px); opacity: 1; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>กล่องสุ่มรางวัล — หอพัก</title>
+<link rel="stylesheet" href="style.css">
+<!--
+  Boot-mask style is kept inline here (not in style.css) per project convention —
+  see SKILL3_2_2.md "Inline <style> in <head> preferred ... when minimizing complexity matters (e.g., boot-mask)".
+  It suppresses the LINE in-app browser's flash-of-unstyled-content while init() decides
+  which page (check-in grid vs paid page) to render, and is removed at the very end of init().
+-->
+<style>
+  #boot-mask{
+    position:fixed; inset:0; z-index:9999;
+    background:#020617;
   }
 </style>
 </head>
 <body>
 
-<div id="boot-mask">
-  <div class="boot-dots">
-    <div class="boot-dot"></div>
-    <div class="boot-dot"></div>
-    <div class="boot-dot"></div>
-  </div>
-  <div class="boot-text">LOADING<span class="boot-loading-dots" id="boot-loading-dots"></span></div>
-</div>
-<script>
-(function(){
-  var n = 0;
-  var el = document.getElementById('boot-loading-dots');
-  var iv = setInterval(function(){
-    if (!el || !document.body.contains(el)) { clearInterval(iv); return; }
-    n = (n + 1) % 4;
-    el.textContent = '.'.repeat(n);
-  }, 400);
-})();
-</script>
-<div class="flash" id="flash"></div>
-<!-- DASHBOARD -->
-<div class="dashboard">
+  <!-- removed by app.js at the end of init(), once the correct page has fully rendered -->
+  <div id="boot-mask"></div>
 
-  <button class="btn-history-icon" id="btn-history" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดกล่อง">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-    <path d="M3 3v5h5"></path>
-    <path d="M12 7v5l4 2"></path>
-  </svg>
-</button>
+  <div id="toast" class="toast"></div>
+  <div id="flash" class="flash"></div>
+  <div id="lb-confetti" class="lb-confetti"></div>
 
-  <div class="dash-title">
-    <h1>กล่องสุ่มรางวัล</h1>
-    <p>สะสมจากการเช็คอินติดต่อกัน</p>
-    <div class="header-room" id="lb-room-label">กำลังโหลด...</div>
-  </div>
+  <!-- ============================================================
+       DASHBOARD — check-in grid (default) or paid page (?paid=1)
+       init() rewrites .dash-title text + hides .count-wrap for the paid page
+       ============================================================ -->
+  <main class="dashboard">
 
-  <div class="count-wrap">
-    <div class="count-badge">🎁 กล่องที่มี: <span id="lb-count">0</span> ใบ</div>
-  </div>
-
-  <div class="lb-grid" id="lb-grid">
-    <div class="loading">กำลังโหลด...</div>
-  </div>
-
-  <div class="safe-bottom"></div>
-</div>
-
-<div class="gp-overlay-bg" id="paid-overlay">
-  <div class="gp-stage" id="gpStage">
-    <div class="gp-cabinet" id="gpCabinet">
-      <div class="gp-sign-board">
-        <div class="gp-sign-jp">ガシャポン</div>
-        <div class="gp-sign-th">PAID BONUS</div>
-      </div>
-      <div class="gp-rivets"><span></span><span></span><span></span><span></span><span></span><span></span></div>
-
-      <div class="gp-dome-window">
-        <div class="gp-dome-glass-hi"></div>
-        <div class="gp-prize-sticker">
-          <div class="gp-sticker-grid">
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFC9DE 60%)"></span>
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,#BFF3E1 60%)"></span>
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFE39A 60%)"></span>
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,#C6E6FF 60%)"></span>
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,#D9C4FF 60%)"></span>
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,var(--gp-gold) 60%,var(--gp-gold-deep))"></span>
-          </div>
-          <div class="gp-cap-label">รางวัลรอบนี้</div>
-        </div>
-        <div class="gp-capsule-pile" id="gpPile"></div>
-      </div>
-
-      <div class="gp-body-panel">
-        <div class="gp-plate">★ PAID BONUS MACHINE ★</div>
-
-        <div class="gp-coin-crank-row">
-          <div class="gp-coin-slot">
-            <div class="gp-slot"></div>
-            <div class="gp-slot-label">ช่องหยอด</div>
-          </div>
-          <div class="gp-crank-wrap" id="gpCrankWrap">
-            <div class="gp-idle-pulse" id="gpIdlePulse"></div>
-            <div class="gp-crank-glow" id="gpCrankGlow"></div>
-            <div class="gp-crank-base" id="gpCrankBase"></div>
-            <div class="gp-tick-ring" id="gpTickRing"></div>
-            <div class="gp-crank" id="gpCrank" role="button" tabindex="0" aria-label="หมุนเพื่อเปิดกล่อง">
-              <div class="gp-crank-arm"></div>
-              <div class="gp-crank-knob"></div>
-            </div>
-            <div class="gp-crank-pin"></div>
-            <div class="gp-tap-hand" id="gpTapHand">👆</div>
-            <div class="gp-tap-callout" id="gpTapCallout">แตะตรงนี้เพื่อเล่น</div>
-          </div>
-        </div>
-
-        <div class="gp-chute-track" id="gpChuteTrack">
-          <div id="gpDropZone"></div>
-        </div>
-
-        <div class="gp-flap-wrap">
-          <div class="gp-flap-tray"></div>
-          <div class="gp-flap-lid" id="gpFlapLid"><div class="gp-flap-handle"></div></div>
-        </div>
-      </div>
-
-      <div class="gp-legs"><span></span><span></span></div>
-    </div>
-
-    <div class="gp-hint" id="gpHint">👉 แตะที่จับสีแดงเพื่อลุ้นรางวัล</div>
-  </div>
-
-  <div class="gp-screen-flash" id="gpScreenFlash"></div>
-  <div class="gp-confetti-layer" id="gpConfettiLayer"></div>
-
-  <div class="gp-result" id="gpResult">
-    <div class="gp-crack-wrap" id="gpCrackWrap">
-      <div class="gp-crack-half gp-top" id="gpCrackTop"></div>
-      <div class="gp-crack-half gp-bottom" id="gpCrackBottom"></div>
-    </div>
-    <div class="gp-ticket">
-      <div class="gp-ribbon" id="gpRibbon">ยินดีด้วย</div>
-      <div class="gp-ticket-tier">PAID BONUS</div>
-      <div class="gp-ticket-val" id="paid-prize-val">0</div>
-      <div class="gp-ticket-unit">บาท</div>
-      <div class="gp-ticket-note">ส่วนลดจะถูกหักในบิลเดือนถัดไปอัตโนมัติ</div>
-      <button class="gp-claim" id="paid-btn-claim" onclick="closePaidOverlay()">รับรางวัล 🎊</button>
-    </div>
-  </div>
-</div>
-
-<!-- OVERLAY -->
-<div class="lb-overlay" id="lb-overlay">
-
-  <div class="err-txt" id="err1" style="top:12%;left:8%">FATAL_ERROR: UI_COLLAPSE</div>
-  <div class="err-txt" id="err2" style="bottom:14%;right:8%">REBOOTING_SYSTEM...</div>
-  <div class="err-txt" id="err3" style="top:20%;right:10%">OVERFLOW_DETECTED</div>
-
-  <div id="spin-wrap" style="display:flex;align-items:center;justify-content:center">
-    <div class="spin-stage" id="spin-stage"></div>
-  </div>
-
-  <div class="result-ui" id="result-ui">
-    <div class="res-badge" id="res-badge">
-      <div class="res-badge-sym">฿</div>
-    </div>
-    <div class="res-label">REWARD UNLOCKED</div>
-    <div class="res-tier-name" id="res-tier-name">TIER</div>
-    <div class="prize-val" id="prize-val">0</div>
-    <div class="res-note">บาท หักจากบิลเดือนนี้อัตโนมัติ</div>
-    <button class="btn-claim" id="btn-claim" onclick="closeLootPopup()">
-      รับรางวัล 🎊
+    <button id="btn-history" class="btn-history-icon" onclick="openHistoryOverlay()" aria-label="ประวัติการเปิดกล่อง">
+      🕓
     </button>
+
+    <div class="dash-title">
+      <h1>กล่องสุ่มรางวัล</h1>
+      <p>สะสมเช็คอินลุ้นรางวัลทุกเดือน</p>
+    </div>
+
+    <div id="lb-room-label" class="header-room"></div>
+
+    <div class="count-wrap">
+      <div class="count-badge">🎁 เปิดได้อีก <span id="lb-count">0</span> กล่อง</div>
+    </div>
+
+    <div id="lb-grid" class="lb-grid"></div>
+
+    <div class="safe-bottom"></div>
+  </main>
+
+  <!-- ============================================================
+       CHECK-IN TIER OVERLAY — silver / gold / plat / legend
+       (solar-system spin, buildSolarHTML() fills #spin-stage)
+       ============================================================ -->
+  <div id="lb-overlay" class="lb-overlay">
+
+    <div id="spin-wrap" style="position:relative; display:flex; align-items:center; justify-content:center;">
+      <div id="spin-stage" class="spin-stage"></div>
+
+      <!-- scattered glitch text, only shown for the legendary tier (cfg.glitch === true) -->
+      <div id="err1" class="err-txt" style="top:12%; left:8%;">SYSTEM ERROR</div>
+      <div id="err2" class="err-txt" style="top:50%; right:4%;">OVERLOAD</div>
+      <div id="err3" class="err-txt" style="bottom:10%; left:50%; transform:translateX(-50%);">CRITICAL</div>
+    </div>
+
+    <div id="result-ui" class="result-ui">
+      <div id="res-badge" class="res-badge">
+        <span class="res-badge-sym">🎁</span>
+      </div>
+      <div class="res-label">รางวัลที่ได้รับ</div>
+      <div id="res-tier-name" class="res-tier-name"></div>
+      <div id="prize-val" class="prize-val">0</div>
+      <div class="res-note">เพิ่มเข้ายอดส่วนลดรอบบิลถัดไปให้อัตโนมัติ</div>
+      <button id="btn-claim" class="btn-claim" onclick="closeLootPopup()">เก็บรางวัล 🎉</button>
+    </div>
+
   </div>
 
-</div>
+  <!-- ============================================================
+       GACHAPON OVERLAY — PAID box only (traditional Japanese
+       capsule-machine reveal). Silver/gold/plat/legend never touch this.
+       ============================================================ -->
+  <div id="paid-overlay" class="gp-overlay">
+    <div class="gp-stage">
 
-<!-- HISTORY OVERLAY -->
-<div class="history-overlay" id="history-overlay">
-  <div class="history-panel">
-    <div class="history-header">
-      <div class="history-title">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-    <path d="M3 3v5h5"></path>
-    <path d="M12 7v5l4 2"></path>
-  </svg>
-  ประวัติการเปิดกล่อง
-</div>
-      <button class="history-close" onclick="closeHistoryOverlay()" aria-label="ปิด">✕</button>
-    </div>
-    <div class="history-body" id="history-body">
-      <div class="loading">กำลังโหลด...</div>
+      <div id="gpCabinet" class="gp-cabinet">
+        <div class="gp-sign">
+          <span class="gp-sign-jp">ガシャポン</span>
+          <span class="gp-sign-th">PAID BONUS</span>
+        </div>
+
+        <div class="gp-dome">
+          <div class="gp-dome-shine"></div>
+          <div id="gpPile" class="gp-pile"></div>
+        </div>
+
+        <div class="gp-crank-wrap">
+          <div class="gp-crank-base"></div>
+          <div id="gpCrank" class="gp-crank">
+            <div class="gp-crank-arm"></div>
+            <div class="gp-crank-knob"></div>
+          </div>
+        </div>
+
+        <div id="gpChute" class="gp-chute"></div>
+        <div class="gp-tray"></div>
+      </div>
+
+      <div id="gpHint" class="gp-hint">แตะที่ตู้เพื่อลุ้นรางวัล</div>
+
+      <div id="gpResult" class="gp-result">
+        <div id="gpCrackWrap" class="gp-crack-wrap">
+          <div id="gpCrackTop" class="gp-crack-half top"></div>
+          <div id="gpCrackBottom" class="gp-crack-half bottom"></div>
+        </div>
+
+        <div class="gp-ticket">
+          <div id="gpRibbon" class="gp-ribbon">✓ ยินดีด้วย</div>
+          <div class="gp-ticket-tier">PAID BONUS</div>
+          <div id="paid-prize-val" class="gp-ticket-val">0</div>
+          <div class="gp-ticket-unit">บาท</div>
+          <div class="gp-ticket-note">ส่วนลดจะถูกหักในบิลรอบถัดไปให้อัตโนมัติ</div>
+          <button class="btn-claim gp-claim" onclick="closePaidOverlay()">เก็บรางวัล 🎉</button>
+        </div>
+      </div>
+
     </div>
   </div>
-</div>
 
-<div class="lb-confetti" id="lb-confetti"></div>
-<div class="toast" id="toast"></div>
+  <!-- ============================================================
+       HISTORY BOTTOM SHEET
+       ============================================================ -->
+  <div id="history-overlay" class="history-overlay">
+    <div class="history-panel">
+      <div class="history-header">
+        <div class="history-title">🕓 ประวัติการเปิดกล่อง</div>
+        <button class="history-close" onclick="closeHistoryOverlay()" aria-label="ปิด">✕</button>
+      </div>
+      <div id="history-body" class="history-body"></div>
+    </div>
+  </div>
 
-<script src="app.js"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
