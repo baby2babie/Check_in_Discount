@@ -1,5 +1,5 @@
 /* ============================================================
-   กล่องสุ่มรางวัล — style.css (Premium Edition)
+   กล่องสุ่มรางวัล — style.css (Premium Edition) OA_TEST 19/7/69
    ============================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&family=Cinzel:wght@700;900&family=Orbitron:wght@800&family=JetBrains+Mono:wght@600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&family=Cinzel:wght@700;900&family=Orbitron:wght@800&display=swap');
@@ -649,7 +649,6 @@ canvas.sparks {
   font-size: 14px; font-weight: 700;
   color: #F59E0B;
 }
-
 /* ============================================================
    GACHAPON — replaces the old "stardust" PAID box reveal.
    Check-in tier boxes (silver/gold/plat/legend) are untouched.

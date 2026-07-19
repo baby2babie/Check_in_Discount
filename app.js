@@ -1,5 +1,5 @@
 // ============================================================
-//  กล่องสุ่มรางวัล — app.js (Premium Edition) OA_TEST
+//  กล่องสุ่มรางวัล — app.js (Premium Edition) OA_TEST 19/7/69
 // ============================================================
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbx57fi00n2RKu7b5jHu67vzUVwrez1cx6RhW0lvvM9cIkt6_amJzMoVJOJvrwD7imHBnA/exec';
