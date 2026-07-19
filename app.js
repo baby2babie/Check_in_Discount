@@ -271,14 +271,25 @@ function renderPaidCard(info) {
   }
 
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'width:100%';
+  wrap.style.cssText = 'position:relative;width:100%';
+
+  if (hasBox) {
+    const cv = document.createElement('canvas');
+    cv.className = 'sparks';
+    cv.id = 'paid-entry-sparks';
+    wrap.appendChild(cv);
+  }
+
   wrap.appendChild(card);
   grid.innerHTML = '';
   grid.appendChild(wrap);
 
   setTimeout(() => {
     card.classList.add('fade-in');
-    if (hasBox) gpRenderEntryPile();
+    if (hasBox) {
+      gpRenderEntryPile();
+      initSparks('paid-entry-sparks', '#E879F9');
+    }
   }, 300);
 }
 
@@ -713,6 +724,21 @@ function gpShowResult(result) {
   const ribbon      = document.getElementById('gpRibbon');
   const valEl       = document.getElementById('paid-prize-val');
   const resultWrap  = document.getElementById('gpResult');
+  const flash       = document.getElementById('flash');
+  const overlay     = document.getElementById('paid-overlay');
+
+  // ✅ วาบขาวตอนเผยผล เหมือนฝั่งกล่องเช็คอิน
+  if (flash) {
+    flash.style.animation = 'none';
+    void flash.offsetWidth;
+    flash.style.animation = 'flashTrigger .6s forwards';
+  }
+
+  // ✅ แจ็คพอต — สั่นแรงพิเศษ
+  if (isJackpot && overlay) {
+    overlay.classList.add('shake-mid');
+    setTimeout(() => overlay.classList.remove('shake-mid'), 1000);
+  }
 
   const capGrad = 'radial-gradient(circle at 32% 28%, #fff, #FFD873 55%, #F5AE3C)';
   crackTop.style.background = capGrad;
@@ -765,7 +791,7 @@ function gpShowResult(result) {
 
 function closePaidOverlay() {
   const overlay = document.getElementById('paid-overlay');
-  overlay.classList.remove('active');
+  overlay.classList.remove('active', 'shake-mid');
   document.getElementById('gpResult').classList.remove('show');
   document.getElementById('gpCrackWrap').classList.remove('go');
   document.getElementById('gpChute').innerHTML = '';
