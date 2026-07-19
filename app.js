@@ -207,27 +207,47 @@ function renderPaidCard(info) {
   const isOpened = info.token &&  info.opened;
   const isLocked = !info.token;
 
+  const wrap = document.createElement('div');
+  wrap.className = 'gp-entry-wrap';
+
   const card = document.createElement('div');
   card.className = 'gp-entry'
-    + (hasBox   ? ' can-open' : '')
-    + (isOpened ? ' used'     : '')
-    + (isLocked ? ' locked'   : '');
+    + (hasBox   ? ' gp-can-open' : '')
+    + (isOpened ? ' gp-used'     : '')
+    + (isLocked ? ' gp-locked'   : '');
   card.id = 'lb-card-PAID';
   card.setAttribute('data-tier', 'paid');
 
   card.innerHTML = `
-    <div class="gp-entry-cabinet">
-      <div class="gp-entry-sign">
-        <span class="gp-entry-sign-jp">ガシャポン</span>
-        <span class="gp-entry-sign-th">PAID BONUS</span>
+    <div class="gp-cabinet">
+      <div class="gp-sign-board">
+        <div class="gp-sign-jp">ガシャポン</div>
+        <div class="gp-sign-th">PAID BONUS</div>
       </div>
-      <div class="gp-entry-dome">
-        <div class="gp-entry-dome-shine"></div>
-        <div class="gp-entry-pile" id="gpEntryPile"></div>
+      <div class="gp-rivets"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+
+      <div class="gp-dome-window">
+        <div class="gp-dome-glass-hi"></div>
+        <div class="gp-prize-sticker">
+          <div class="gp-sticker-grid">
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFC9DE 60%)"></span>
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,#BFF3E1 60%)"></span>
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFE39A 60%)"></span>
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,#C6E6FF 60%)"></span>
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,#D9C4FF 60%)"></span>
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,var(--gp-gold) 60%,var(--gp-gold-deep))"></span>
+          </div>
+          <div class="gp-cap-label">รางวัลรอบนี้</div>
+        </div>
+        <div class="gp-capsule-pile" id="gpEntryPile"></div>
         ${isLocked ? '<div class="gp-entry-lock">🔒</div>' : ''}
         ${isOpened ? '<div class="gp-entry-lock">✓</div>' : ''}
       </div>
-      <div class="gp-entry-tray"></div>
+
+      <div class="gp-body-panel" style="padding-bottom:6px">
+        <div class="gp-plate">★ PAID BONUS MACHINE ★</div>
+      </div>
+      <div class="gp-legs"><span></span><span></span></div>
     </div>
     <div class="gp-entry-msg">${
       hasBox   ? 'แตะที่ตู้เพื่อลุ้นรางวัล 🎉' :
@@ -240,14 +260,12 @@ function renderPaidCard(info) {
     card.onclick = () => startLootOpen('PAID', 'กล่อง Paid Bonus', 'paid', info.token);
   }
 
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'width:100%';
   wrap.appendChild(card);
   grid.innerHTML = '';
   grid.appendChild(wrap);
 
   setTimeout(() => {
-    card.classList.add('fade-in');
+    card.classList.add('gp-fade-in');
     if (hasBox) gpRenderEntryPile();
   }, 300);
 }
@@ -264,11 +282,13 @@ function gpRenderEntryPile() {
     const c = document.createElement('div');
     c.className = 'gp-capsule';
     const size = 26 + Math.random() * 16;
+    const rot = (Math.random() * 30 - 15).toFixed(1);
     c.style.width = size + 'px';
     c.style.height = size + 'px';
     c.style.left = (Math.random() * 78) + '%';
-    c.style.top = (18 + Math.pow(Math.random(), 1.6) * 68) + '%';
-    c.style.transform = `rotate(${(Math.random() * 30 - 15).toFixed(1)}deg)`;
+    c.style.top = (22 + Math.pow(Math.random(), 1.6) * 66) + '%';
+    c.style.setProperty('--rot', rot + 'deg');
+    c.style.transform = `rotate(var(--rot))`;
     if (i === goldIndex) {
       c.classList.add('gp-shimmer');
     } else {
@@ -423,7 +443,7 @@ function startLootOpen(milestone, name, tier, token) {
   lbOpening = true;
 
   if (tier === 'paid') {
-    startGachaponOpen(token);
+    gpOpenOverlay(token);
     return;
   }
 
@@ -569,10 +589,12 @@ function spawnConfettiStop() {
 }
 
 // ============================================================
+// ============================================================
 //  GACHAPON — PAID BOX
-//  Replaces the old "stardust" reveal. Check-in tier boxes
-//  (silver/gold/plat/legend) use the separate solar-system flow
-//  above and are untouched by this section.
+//  Full port of the Japanese-cabinet reference: tap-driven crank,
+//  ratchet ticks, metal chute, flap-lid pickup, capsule crack-open
+//  reveal. Check-in tier boxes (silver/gold/plat/legend) use the
+//  separate solar-system flow above and are untouched here.
 // ============================================================
 const GP_PALETTE = ['#FFC9DE', '#BFF3E1', '#FFE39A', '#C6E6FF', '#D9C4FF'];
 let gpBusy = false;
@@ -589,23 +611,29 @@ function gpShade(hex, percent) {
 }
 
 // Dome is filled with decorative capsules for visual weight — this has
-// nothing to do with how many boxes are actually openable. That count
-// still comes from the PAID card itself (one per billing cycle).
+// nothing to do with how many boxes are actually openable (PAID is
+// always exactly one per billing cycle). The gold shimmer capsule
+// represents that one real box; the rest are just for atmosphere.
 function gpRenderPile() {
   const pile = document.getElementById('gpPile');
   if (!pile) return;
   pile.innerHTML = '';
-  const FILL = 16;
+  const FILL = 15;
   const goldIndex = Math.floor(Math.random() * FILL);
   for (let i = 0; i < FILL; i++) {
     const c = document.createElement('div');
     c.className = 'gp-capsule';
-    const size = 34 + Math.random() * 22;
+    const size = 26 + Math.random() * 20;
+    const left = Math.random() * 78;
+    const top = 26 + Math.pow(Math.random(), 1.7) * 70;
+    const rot = (Math.random() * 34 - 17).toFixed(1);
     c.style.width = size + 'px';
     c.style.height = size + 'px';
-    c.style.left = (Math.random() * 78) + '%';
-    c.style.top = (18 + Math.pow(Math.random(), 1.6) * 68) + '%';
-    c.style.transform = `rotate(${(Math.random() * 30 - 15).toFixed(1)}deg)`;
+    c.style.left = left + '%';
+    c.style.top = top + '%';
+    c.style.setProperty('--rot', rot + 'deg');
+    c.style.transform = 'rotate(var(--rot))';
+    c.style.zIndex = Math.round(top * 10 + size);
     if (i === goldIndex) {
       c.classList.add('gp-shimmer');
     } else {
@@ -616,51 +644,119 @@ function gpRenderPile() {
   }
 }
 
-function startGachaponOpen(token) {
-  if (gpBusy) return;
-  gpBusy = true;
-
+function gpOpenOverlay(token) {
   const overlay = document.getElementById('paid-overlay');
-  const cabinet = document.getElementById('gpCabinet');
-  const crank   = document.getElementById('gpCrank');
-  const chute   = document.getElementById('gpChute');
   const result  = document.getElementById('gpResult');
   const hint    = document.getElementById('gpHint');
   const crackWrap = document.getElementById('gpCrackWrap');
+  const flapLid = document.getElementById('gpFlapLid');
+  const idlePulse = document.getElementById('gpIdlePulse');
+  const tapHand = document.getElementById('gpTapHand');
+  const tapCallout = document.getElementById('gpTapCallout');
+  const crankBase = document.getElementById('gpCrankBase');
 
-  overlay.classList.add('active');
-  result.classList.remove('show');
-  crackWrap.classList.remove('go');
-  chute.innerHTML = '';
-  hint.textContent = 'กำลังหมุน...';
+  gpBusy = false;
+  overlay.classList.add('gp-active');
+  result.classList.remove('gp-show');
+  crackWrap.classList.remove('gp-go');
+  flapLid.classList.remove('gp-open');
+  document.getElementById('gpDropZone').innerHTML = '';
+  hint.textContent = '👉 แตะที่จับสีแดงเพื่อลุ้นรางวัล';
+  idlePulse.classList.remove('gp-hide');
+  tapHand.classList.remove('gp-hide');
+  tapCallout.classList.remove('gp-hide');
+  crankBase.classList.remove('gp-hide-breathe');
   gpRenderPile();
-  crank.classList.add('gp-turn');
 
+  const crank = document.getElementById('gpCrank');
+  crank.onclick = () => gpPlayOpen(token);
+  crank.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); gpPlayOpen(token); } };
+}
+
+function gpDismissTapHints() {
+  document.getElementById('gpIdlePulse').classList.add('gp-hide');
+  document.getElementById('gpTapHand').classList.add('gp-hide');
+  document.getElementById('gpTapCallout').classList.add('gp-hide');
+  document.getElementById('gpCrankBase').classList.add('gp-hide-breathe');
+}
+
+function gpSpawnRatchetTicks() {
+  const tickRing = document.getElementById('gpTickRing');
+  const TICK_COUNT = 10;
+  for (let i = 0; i < TICK_COUNT; i++) {
+    const t = document.createElement('div');
+    t.className = 'gp-ratchet-tick';
+    const angle = (360 / TICK_COUNT) * i;
+    t.style.setProperty('--tick-angle', `${angle}deg`);
+    t.style.animationDelay = (i * 45) + 'ms';
+    tickRing.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('gp-go'));
+    setTimeout(() => t.remove(), 700);
+  }
+}
+
+function gpPlayOpen(token) {
+  if (gpBusy) return;
+  gpBusy = true;
+
+  const crank     = document.getElementById('gpCrank');
+  const pile      = document.getElementById('gpPile');
+  const crankGlow = document.getElementById('gpCrankGlow');
+  const hint      = document.getElementById('gpHint');
+
+  gpDismissTapHints();
+  crank.classList.add('gp-turn');
+  pile.classList.remove('gp-jiggle'); void pile.offsetWidth; pile.classList.add('gp-jiggle');
+  gpSpawnRatchetTicks();
+  crankGlow.classList.remove('gp-go'); void crankGlow.offsetWidth; crankGlow.classList.add('gp-go');
+  hint.textContent = 'กำลังหมุน...';
+
+  setTimeout(() => {
+    crank.classList.remove('gp-turn');
+    pile.classList.remove('gp-jiggle');
+    gpDropCapsule(token);
+  }, 650);
+}
+
+function gpDropCapsule(token) {
+  const cabinet  = document.getElementById('gpCabinet');
+  const dropZone = document.getElementById('gpDropZone');
+  const flapLid  = document.getElementById('gpFlapLid');
+  const hint     = document.getElementById('gpHint');
+
+  const falling = document.createElement('div');
+  falling.className = 'gp-falling-capsule gp-drop';
+  falling.style.background = 'radial-gradient(circle at 32% 28%, #fff, #E7B94A 55%, #B4822A)';
+  dropZone.appendChild(falling);
+  hint.textContent = 'แคปซูลกำลังหล่นลงราง...';
+
+  // Real API call runs in parallel with the drop animation — the reveal
+  // waits for both, and never fabricates a result if the call fails.
   let apiResult = null;
   callGAS('openLootBox', { token })
     .then(r => { apiResult = r; })
     .catch(() => { apiResult = { success: false, message: 'เกิดข้อผิดพลาด' }; });
 
-  // capsule drop — purely visual, timed independently of the API call
-  setTimeout(() => {
-    const falling = document.createElement('div');
-    falling.className = 'gp-falling drop';
-    falling.style.background = 'radial-gradient(circle at 32% 28%, #fff, #FFD873 55%, #F5AE3C)';
-    chute.appendChild(falling);
-    hint.textContent = 'แคปซูลกำลังหล่นลงราง...';
-  }, 350);
-
   setTimeout(() => {
     cabinet.classList.add('gp-shake');
+    const ring1 = document.createElement('div');
+    ring1.className = 'gp-impact-ring gp-go';
+    dropZone.appendChild(ring1);
+    const ring2 = document.createElement('div');
+    ring2.className = 'gp-impact-ring gp-go';
+    ring2.style.animationDelay = '80ms';
+    ring2.style.borderColor = '#DE5245';
+    dropZone.appendChild(ring2);
+    flapLid.classList.add('gp-open');
     hint.textContent = 'ลุ้นๆ...';
     setTimeout(() => cabinet.classList.remove('gp-shake'), 350);
-  }, 1100);
+    setTimeout(() => { ring1.remove(); ring2.remove(); }, 600);
+  }, 700);
 
-  // Wait for both the drop animation to feel complete AND the real
-  // openLootBox response before revealing — never fabricate a result.
   const waitForApi = () => {
     if (apiResult === null) { setTimeout(waitForApi, 100); return; }
-    crank.classList.remove('gp-turn');
+    flapLid.classList.remove('gp-open');
+    dropZone.innerHTML = '';
 
     if (!apiResult.success) {
       closePaidOverlay();
@@ -669,7 +765,26 @@ function startGachaponOpen(token) {
     }
     setTimeout(() => gpShowResult(apiResult), 200);
   };
-  setTimeout(waitForApi, 1400);
+  setTimeout(waitForApi, 1100);
+}
+
+function gpSpawnConfetti(count) {
+  const layer = document.getElementById('gpConfettiLayer');
+  const colors = ['#E7B94A', '#DE5245', '#D9C4FF', '#BFF3E1', '#C6E6FF', '#FFE39A'];
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'gp-confetti-piece';
+    const w = 6 + Math.random() * 6;
+    const h = w * (1.3 + Math.random() * 0.6);
+    p.style.width = w + 'px';
+    p.style.height = h + 'px';
+    p.style.left = (Math.random() * 100) + 'vw';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = (2 + Math.random() * 1.4) + 's';
+    p.style.animationDelay = (Math.random() * 0.5) + 's';
+    layer.appendChild(p);
+    setTimeout(() => p.remove(), 4000);
+  }
 }
 
 function gpShowResult(result) {
@@ -683,32 +798,50 @@ function gpShowResult(result) {
   const ribbon      = document.getElementById('gpRibbon');
   const valEl       = document.getElementById('paid-prize-val');
   const resultWrap  = document.getElementById('gpResult');
+  const stage       = document.getElementById('gpStage');
+  const screenFlash = document.getElementById('gpScreenFlash');
 
-  const capGrad = 'radial-gradient(circle at 32% 28%, #fff, #FFD873 55%, #F5AE3C)';
+  const capGrad = 'radial-gradient(circle at 32% 28%, #fff, #E7B94A 55%, #B4822A)';
   crackTop.style.background = capGrad;
   crackBottom.style.background = capGrad;
 
   ribbon.textContent = isJackpot ? '★ แจ็คพอต' : isRare ? '✦ หายาก' : '✓ ยินดีด้วย';
+  ribbon.classList.remove('gp-shine');
+  if (isJackpot || isRare) { void ribbon.offsetWidth; ribbon.classList.add('gp-shine'); }
 
-  valEl.className = 'gp-ticket-val' + (isJackpot ? ' jackpot' : '');
+  valEl.className = 'gp-ticket-val' + (isJackpot ? ' gp-jackpot' : '');
   valEl.style.animation = 'none';
   valEl.textContent = '0';
   void valEl.offsetWidth;
   valEl.style.animation = '';
 
-  crackWrap.classList.remove('go');
+  document.querySelectorAll('#gpCrackWrap .gp-burst').forEach(el => el.remove());
+  crackWrap.classList.remove('gp-go');
   void crackWrap.offsetWidth;
-  crackWrap.classList.add('go');
+  crackWrap.classList.add('gp-go');
 
-  resultWrap.classList.add('show');
+  const burstCount = isJackpot ? 24 : isRare ? 16 : 8;
+  for (let i = 0; i < burstCount; i++) {
+    const b = document.createElement('div');
+    b.className = 'gp-burst';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 30 + Math.random() * 30;
+    b.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+    b.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+    b.style.background = Math.random() > 0.5 ? '#E7B94A' : GP_PALETTE[Math.floor(Math.random() * GP_PALETTE.length)];
+    crackWrap.appendChild(b);
+    setTimeout(() => b.classList.add('gp-go'), 10);
+  }
+
+  resultWrap.classList.add('gp-show');
 
   const card = document.getElementById('lb-card-PAID');
   if (card) {
-    card.classList.remove('can-open');
-    card.classList.add('used');
+    card.classList.remove('gp-can-open');
+    card.classList.add('gp-used');
     const msg = card.querySelector('.gp-entry-msg');
     if (msg) msg.textContent = 'เปิดแล้วเดือนนี้ กลับมาใหม่รอบบิลหน้า';
-    const dome = card.querySelector('.gp-entry-dome');
+    const dome = card.querySelector('.gp-dome-window');
     if (dome && !dome.querySelector('.gp-entry-lock')) {
       const lock = document.createElement('div');
       lock.className = 'gp-entry-lock';
@@ -718,16 +851,22 @@ function gpShowResult(result) {
     card.onclick = null;
   }
 
-  const confetti = isJackpot
-    ? ['#FFD700', '#F5AE3C', '#fff', '#FCA5A5']
-    : isRare
-    ? ['#FFD873', '#F5AE3C', '#fff', '#D9C4FF']
-    : ['#FFD873', '#fff', '#F2E9D6'];
+  screenFlash.classList.remove('gp-go', 'gp-big'); void screenFlash.offsetWidth;
+  stage.classList.remove('gp-shake-big'); void stage.offsetWidth;
 
-  setTimeout(() => {
-    countUp(valEl, amount, isJackpot ? 2200 : 1400);
-    spawnConfetti(confetti);
-  }, 200);
+  if (isJackpot) {
+    screenFlash.classList.add('gp-go', 'gp-big');
+    gpSpawnConfetti(46);
+    stage.classList.add('gp-shake-big');
+  } else if (isRare) {
+    screenFlash.classList.add('gp-go');
+    gpSpawnConfetti(22);
+    stage.classList.add('gp-shake-big');
+  } else {
+    screenFlash.classList.add('gp-go');
+  }
+
+  setTimeout(() => countUp(valEl, amount, isJackpot ? 2200 : 1400), 150);
 
   gpBusy = false;
   lbOpening = false;
@@ -735,15 +874,18 @@ function gpShowResult(result) {
 
 function closePaidOverlay() {
   const overlay = document.getElementById('paid-overlay');
-  overlay.classList.remove('active');
-  document.getElementById('gpResult').classList.remove('show');
-  document.getElementById('gpCrackWrap').classList.remove('go');
-  document.getElementById('gpChute').innerHTML = '';
+  overlay.classList.remove('gp-active');
+  document.getElementById('gpResult').classList.remove('gp-show');
+  document.getElementById('gpCrackWrap').classList.remove('gp-go');
+  document.getElementById('gpDropZone').innerHTML = '';
+  document.getElementById('gpFlapLid').classList.remove('gp-open');
   document.getElementById('gpCrank').classList.remove('gp-turn');
   document.getElementById('gpCabinet').classList.remove('gp-shake');
+  document.getElementById('gpStage').classList.remove('gp-shake-big');
   gpBusy = false;
   lbOpening = false;
 }
+
 
 // ============================================================
 //  SPARKS — 4 กล่อง
