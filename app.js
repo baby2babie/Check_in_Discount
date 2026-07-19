@@ -224,8 +224,20 @@ function renderPaidCard(info) {
         <span class="gp-sign-jp">ガシャポン</span>
         <span class="gp-sign-th">PAID BONUS</span>
       </div>
+      <div class="gp-rivets"><span></span><span></span><span></span><span></span><span></span><span></span></div>
       <div class="gp-dome">
         <div class="gp-dome-shine"></div>
+        <div class="gp-prize-sticker">
+          <div class="gp-sticker-grid">
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFC9DE 60%)"></span>
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,#BFF3E1 60%)"></span>
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFE39A 60%)"></span>
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,#C6E6FF 60%)"></span>
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,#D9C4FF 60%)"></span>
+            <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFD873 60%,#F5AE3C)"></span>
+          </div>
+          <div class="gp-sticker-label">รางวัลรอบนี้</div>
+        </div>
         <div class="gp-pile" id="gpPile"></div>
         ${isLocked ? '<div class="gp-entry-lock">🔒</div>' : ''}
         ${isOpened ? '<div class="gp-entry-lock">✓</div>' : ''}
@@ -236,9 +248,18 @@ function renderPaidCard(info) {
           <div class="gp-crank-arm"></div>
           <div class="gp-crank-knob"></div>
         </div>
+        <div class="gp-tick-ring" id="gpTickRing"></div>
+        ${hasBox ? `
+          <div class="gp-idle-pulse" id="gpIdlePulse"></div>
+          <div class="gp-tap-hand" id="gpTapHand">👆</div>
+          <div class="gp-tap-callout" id="gpTapCallout">แตะตรงนี้เพื่อลุ้น</div>
+        ` : ''}
       </div>
       <div class="gp-chute" id="gpChute"></div>
-      <div class="gp-tray"></div>
+      <div class="gp-tray-wrap">
+        <div class="gp-tray"></div>
+        <div class="gp-flap-lid" id="gpFlapLid"><div class="gp-flap-handle"></div></div>
+      </div>
     </div>
     <div class="gp-hint" id="gpHint">${
       hasBox   ? 'กดที่คันโยกเพื่อลุ้นรางวัล 🎉' :
@@ -607,9 +628,35 @@ function gpRenderPile() {
   }
 }
 
+function dismissGachaponHints() {
+  const pulse = document.getElementById('gpIdlePulse');
+  const hand  = document.getElementById('gpTapHand');
+  const callout = document.getElementById('gpTapCallout');
+  if (pulse)   pulse.classList.add('hide');
+  if (hand)    hand.classList.add('hide');
+  if (callout) callout.classList.add('hide');
+}
+
+// One burst of ticks flicking out around the crank — reads as the mechanical
+// "click click click" of a real coin-op capsule machine.
+function gpSpawnTicks() {
+  const ring = document.getElementById('gpTickRing');
+  if (!ring) return;
+  const COUNT = 8;
+  for (let i = 0; i < COUNT; i++) {
+    const t = document.createElement('div');
+    t.className = 'gp-ratchet-tick';
+    t.style.setProperty('--tick-angle', (360 / COUNT) * i + 'deg');
+    ring.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('go'));
+    setTimeout(() => t.remove(), 350);
+  }
+}
+
 function startGachaponOpen(token) {
   if (gpBusy) return;
   gpBusy = true;
+  dismissGachaponHints();
 
   const cabinet = document.getElementById('gpCabinet');
   const crank   = document.getElementById('gpCrank');
@@ -617,12 +664,21 @@ function startGachaponOpen(token) {
   const result  = document.getElementById('gpResult');
   const hint    = document.getElementById('gpHint');
   const crackWrap = document.getElementById('gpCrackWrap');
+  const flapLid = document.getElementById('gpFlapLid');
 
   result.classList.remove('show');
   crackWrap.classList.remove('go');
   chute.innerHTML = '';
+  flapLid.classList.remove('open');
   hint.textContent = 'กำลังหมุน...';
   crank.classList.add('gp-turn');
+
+  // The crank spins for as long as the API call takes (network latency is
+  // variable, so this can't be a single fixed-length animation like a demo
+  // could use) — ticks fire on an interval instead, to keep the mechanical
+  // click-click-click feel going for the whole wait.
+  gpSpawnTicks();
+  const tickInterval = setInterval(gpSpawnTicks, 350);
 
   let apiResult = null;
   callGAS('openLootBox', { token })
@@ -642,12 +698,14 @@ function startGachaponOpen(token) {
     cabinet.classList.add('gp-shake');
     hint.textContent = 'ลุ้นๆ...';
     setTimeout(() => cabinet.classList.remove('gp-shake'), 350);
+    flapLid.classList.add('open'); // pickup hatch swings open on its own — no extra tap needed
   }, 1100);
 
   // Wait for both the drop animation to feel complete AND the real
   // openLootBox response before revealing — never fabricate a result.
   const waitForApi = () => {
     if (apiResult === null) { setTimeout(waitForApi, 100); return; }
+    clearInterval(tickInterval);
     crank.classList.remove('gp-turn');
 
     if (!apiResult.success) {
@@ -733,6 +791,8 @@ function closePaidOverlay() {
   document.getElementById('gpChute').innerHTML = '';
   document.getElementById('gpCrank').classList.remove('gp-turn');
   document.getElementById('gpCabinet').classList.remove('gp-shake');
+  const flapLid = document.getElementById('gpFlapLid');
+  if (flapLid) flapLid.classList.remove('open');
   gpBusy = false;
   lbOpening = false;
 }

@@ -3,6 +3,7 @@
    ============================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&family=Cinzel:wght@700;900&family=Orbitron:wght@800&family=JetBrains+Mono:wght@600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&family=Cinzel:wght@700;900&family=Orbitron:wght@800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Mali:wght@600;700&family=Kosugi+Maru&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -676,6 +677,13 @@ canvas.sparks {
   padding: 22px 22px 30px;
   box-shadow: 0 30px 60px -20px rgba(0,0,0,.7), inset 0 0 0 3px rgba(255,255,255,.15);
 }
+.gp-cabinet::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 1px, transparent 1px 26px);
+  border-radius: 28px;
+  pointer-events: none;
+}
 .gp-cabinet.gp-shake { animation: gp-shake .35s ease; }
 @keyframes gp-shake {
   0%,100% { transform: translate(0,0); }
@@ -684,8 +692,15 @@ canvas.sparks {
   75%     { transform: translate(-3px,2px); }
 }
 
-.gp-sign { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.gp-sign-jp { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: .05em; text-shadow: 0 2px 0 rgba(0,0,0,.2); }
+.gp-rivets { display: flex; justify-content: space-between; padding: 0 4px 10px; position: relative; z-index: 1; }
+.gp-rivets span {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #8B929C);
+  box-shadow: 0 1px 1px rgba(0,0,0,.3);
+}
+
+.gp-sign { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; position: relative; z-index: 1; }
+.gp-sign-jp { font-family: 'Kosugi Maru', 'Mali', sans-serif; font-size: 20px; font-weight: 700; color: #fff; letter-spacing: .05em; text-shadow: 0 2px 0 rgba(0,0,0,.2); }
 .gp-sign-th { font-size: 13px; font-weight: 700; color: #E7B94A; background: rgba(0,0,0,.2); padding: 5px 12px; border-radius: 99px; }
 
 .gp-dome {
@@ -706,6 +721,20 @@ canvas.sparks {
   transform: rotate(-14deg);
   pointer-events: none;
 }
+.gp-prize-sticker {
+  position: absolute; top: 8px; right: 8px;
+  width: 66px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 6px;
+  padding: 5px;
+  transform: rotate(3deg);
+  box-shadow: 0 2px 5px rgba(0,0,0,.18);
+  z-index: 3;
+}
+.gp-prize-sticker .gp-sticker-label { font-size: 8px; text-align: center; color: #6C5D4E; font-weight: 600; margin-top: 3px; letter-spacing: .02em; }
+.gp-prize-sticker .gp-sticker-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; }
+.gp-prize-sticker .gp-sticker-grid span { width: 100%; aspect-ratio: 1; border-radius: 50%; box-shadow: inset -1px -1px 2px rgba(0,0,0,.15), inset 1px 1px 1px rgba(255,255,255,.7); }
 .gp-pile { position: absolute; inset: 14px 10px 0; }
 .gp-capsule {
   position: absolute;
@@ -744,6 +773,76 @@ canvas.sparks {
   box-shadow: 0 3px 6px rgba(0,0,0,.3);
 }
 
+/* mechanical ratchet ticks — small notches that flick out around the crank while it turns */
+.gp-tick-ring { position: absolute; inset: -4px; pointer-events: none; }
+.gp-ratchet-tick {
+  position: absolute; top: 50%; left: 50%;
+  width: 3px; height: 9px;
+  margin: -4.5px 0 0 -1.5px;
+  border-radius: 1px;
+  background: #565C64;
+  opacity: 0;
+  transform-origin: 50% 30px;
+}
+.gp-ratchet-tick.go { animation: gp-tick-flick .3s ease-out forwards; }
+@keyframes gp-tick-flick {
+  0%   { opacity: 0; transform: rotate(var(--tick-angle)) translateY(-26px) scale(.6); }
+  35%  { opacity: 1; transform: rotate(var(--tick-angle)) translateY(-30px) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--tick-angle)) translateY(-34px) scale(.8); }
+}
+
+/* "tap here" affordance — idle ring pulse + bouncing hand + callout, dismissed on first press */
+.gp-idle-pulse {
+  position: absolute; inset: -6px;
+  border-radius: 50%;
+  border: 2px solid #E7B94A;
+  opacity: 0;
+  pointer-events: none;
+  animation: gp-idle-pulse-ring 1.8s ease-out infinite;
+}
+@keyframes gp-idle-pulse-ring {
+  0%   { transform: scale(.85); opacity: .9; }
+  70%  { opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+.gp-idle-pulse.hide { animation: none; opacity: 0; }
+
+.gp-tap-hand {
+  position: absolute; bottom: -24px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,.3));
+  animation: gp-tap-hand-bounce 1.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes gp-tap-hand-bounce {
+  0%,100% { transform: translate(-50%,0); }
+  35%     { transform: translate(-50%,-8px); }
+  50%     { transform: translate(-50%,-2px); }
+}
+.gp-tap-hand.hide { animation: none; opacity: 0; transition: opacity .3s; }
+
+.gp-tap-callout {
+  position: absolute; top: -40px; left: 50%;
+  transform: translateX(-50%);
+  background: #fff; color: #C1372C;
+  font-family: 'Mali', sans-serif; font-weight: 700; font-size: 11px;
+  padding: 5px 11px; border-radius: 999px;
+  box-shadow: 0 4px 8px rgba(0,0,0,.2);
+  white-space: nowrap;
+  animation: gp-callout-float 1.8s ease-in-out infinite;
+  z-index: 3;
+}
+.gp-tap-callout::after {
+  content: ''; position: absolute; bottom: -4px; left: 50%; margin-left: -4px;
+  width: 8px; height: 8px; background: #fff; transform: rotate(45deg);
+}
+@keyframes gp-callout-float {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(-4px); }
+}
+.gp-tap-callout.hide { animation: none; opacity: 0; transform: translateX(-50%) translateY(-4px); transition: opacity .3s, transform .3s; }
+
 .gp-chute { position: relative; height: 56px; margin: 10px 46px 0; }
 .gp-falling {
   width: 44px; height: 44px; border-radius: 50%;
@@ -755,12 +854,23 @@ canvas.sparks {
 @keyframes gp-fall { 0% { top: -6px; opacity: 1; } 85% { top: 44px; opacity: 1; } 100% { top: 38px; opacity: 1; } }
 @keyframes gp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+.gp-tray-wrap { position: relative; height: 26px; margin: 0 30px; }
 .gp-tray {
-  height: 26px; margin: 0 30px;
+  position: absolute; inset: 0;
   background: linear-gradient(180deg, #EFE6D2, #E1CFA4);
   border-radius: 0 0 16px 16px;
   box-shadow: inset 0 6px 8px rgba(0,0,0,.12);
 }
+.gp-flap-lid {
+  position: absolute; top: 0; left: 8px; right: 8px; height: 14px;
+  background: linear-gradient(180deg, #CBD1D8, #8B929C);
+  border-radius: 3px 3px 0 0;
+  transform-origin: top center;
+  box-shadow: 0 1px 2px rgba(0,0,0,.3);
+  transition: transform .3s ease;
+}
+.gp-flap-lid.open { transform: rotateX(70deg); }
+.gp-flap-handle { position: absolute; top: 4px; left: 50%; margin-left: -9px; width: 18px; height: 4px; border-radius: 2px; background: rgba(0,0,0,.25); }
 
 .gp-hint {
   margin-top: 22px;
