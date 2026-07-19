@@ -153,7 +153,7 @@ async function init() {
     document.querySelector('.count-wrap').style.display  = 'none';
 
     grid.style.cssText = 'display:flex;justify-content:center;width:90%;max-width:380px';
-    grid.innerHTML = `<div class="lb-card lb-skeleton" style="width:100%;height:420px"></div>`;
+    grid.innerHTML = `<div class="lb-card lb-skeleton" style="width:100%;height:290px"></div>`;
 
     await initLiff();
     await initPaidPage(room);
@@ -207,88 +207,106 @@ function renderPaidCard(info) {
   const isOpened = info.token &&  info.opened;
   const isLocked = !info.token;
 
-  // The machine itself is now the first screen — no separate "enter the
-  // cabinet" step. Tapping the crank directly triggers the open (one tap).
-  const wrap = document.createElement('div');
-  wrap.id = 'lb-card-PAID';
-  wrap.className = 'gp-live'
+  const card = document.createElement('div');
+  card.className = 'gp-entry'
     + (hasBox   ? ' can-open' : '')
     + (isOpened ? ' used'     : '')
     + (isLocked ? ' locked'   : '');
-  wrap.setAttribute('data-tier', 'paid');
-  wrap.style.cssText = 'width:100%; display:flex; flex-direction:column; align-items:center; opacity:0; transform:translateY(10px); transition:opacity .4s ease, transform .4s ease;';
+  card.id = 'lb-card-PAID';
+  card.setAttribute('data-tier', 'paid');
 
-  wrap.innerHTML = `
-    <div class="gp-cabinet" id="gpCabinet">
-      <div class="gp-sign">
-        <span class="gp-sign-jp">ガシャポン</span>
-        <span class="gp-sign-th">PAID BONUS</span>
+  card.innerHTML = `
+    <div class="gp-entry-cabinet">
+      <div class="gp-entry-sign">
+        <span class="gp-entry-sign-jp">ガシャポン</span>
+        <span class="gp-entry-sign-th">PAID BONUS</span>
       </div>
-      <div class="gp-rivets"><span></span><span></span><span></span><span></span><span></span><span></span></div>
-      <div class="gp-dome">
-        <div class="gp-dome-shine"></div>
-        <div class="gp-prize-sticker">
-          <div class="gp-sticker-grid">
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFC9DE 60%)"></span>
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,#BFF3E1 60%)"></span>
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFE39A 60%)"></span>
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,#C6E6FF 60%)"></span>
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,#D9C4FF 60%)"></span>
-            <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFD873 60%,#F5AE3C)"></span>
+      <div class="gp-entry-rivets"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+
+      <div class="gp-entry-dome">
+        <div class="gp-entry-dome-shine"></div>
+        <div class="gp-entry-prize-sticker">
+          <div class="grid">
+            <span style="background:#FFC9DE"></span><span style="background:#BFF3E1"></span><span style="background:#FFE39A"></span>
+            <span style="background:#C6E6FF"></span><span style="background:#D9C4FF"></span><span style="background:#FFC9DE"></span>
           </div>
-          <div class="gp-sticker-label">รางวัลรอบนี้</div>
+          <div class="gp-entry-cap-label">PRIZE</div>
         </div>
-        <div class="gp-pile" id="gpPile"></div>
+        <div class="gp-entry-pile" id="gpEntryPile"></div>
         ${isLocked ? '<div class="gp-entry-lock">🔒</div>' : ''}
         ${isOpened ? '<div class="gp-entry-lock">✓</div>' : ''}
       </div>
-      <div class="gp-crank-wrap" id="gpCrankWrap">
-        <div class="gp-crank-base"></div>
-        <div class="gp-crank" id="gpCrank">
-          <div class="gp-crank-arm"></div>
-          <div class="gp-crank-knob"></div>
+
+      <div class="gp-entry-plate">No.7 ★ FOUNDER TIER MACHINE</div>
+
+      <div class="gp-entry-coin-crank-row">
+        <div class="gp-entry-coin-slot">
+          <div class="slot"></div>
+          <div class="label">ช่องหยอด</div>
         </div>
-        <div class="gp-tick-ring" id="gpTickRing"></div>
-        ${hasBox ? `
-          <div class="gp-idle-pulse" id="gpIdlePulse"></div>
-          <div class="gp-tap-hand" id="gpTapHand">👆</div>
-          <div class="gp-tap-callout" id="gpTapCallout">แตะตรงนี้เพื่อลุ้น</div>
-        ` : ''}
+        <div class="gp-entry-crank-wrap">
+          <div class="gp-entry-crank-base"></div>
+          <div class="gp-entry-crank-arm"></div>
+          <div class="gp-entry-crank-knob"></div>
+        </div>
       </div>
-      <div class="gp-chute" id="gpChute"></div>
-      <div class="gp-tray-wrap">
-        <div class="gp-tray"></div>
-        <div class="gp-flap-lid" id="gpFlapLid"><div class="gp-flap-handle"></div></div>
+
+      <div class="gp-entry-chute"></div>
+
+      <div class="gp-entry-flap-wrap">
+        <div class="gp-entry-flap-tray"></div>
+        <div class="gp-entry-flap-lid"><div class="gp-entry-flap-handle"></div></div>
       </div>
     </div>
-    <div class="gp-hint" id="gpHint">${
-      hasBox   ? 'กดที่คันโยกเพื่อลุ้นรางวัล 🎉' :
+    <div class="gp-entry-legs"><span></span><span></span></div>
+    <div class="gp-entry-msg">${
+      hasBox   ? 'แตะที่ตู้เพื่อลุ้นรางวัล 🎉' :
       isOpened ? 'เปิดแล้วเดือนนี้ กลับมาใหม่รอบบิลหน้า' :
                  'จ่ายตรงเวลาเพื่อรับกล่อง'
     }</div>
   `;
 
-  const cabinet   = wrap.querySelector('#gpCabinet');
-  const dome      = wrap.querySelector('.gp-dome');
-  const crankWrap = wrap.querySelector('#gpCrankWrap');
-
   if (hasBox) {
-    crankWrap.style.cursor = 'pointer';
-    crankWrap.onclick = () => startLootOpen('PAID', 'กล่อง Paid Bonus', 'paid', info.token);
-    cabinet.style.animation = 'gp-entry-pulse 2s ease-in-out infinite'; // reuses existing keyframe, invites the tap
-  } else {
-    dome.style.filter = 'grayscale(.55)';
-    cabinet.style.opacity = '.72';
+    card.onclick = () => startLootOpen('PAID', 'กล่อง Paid Bonus', 'paid', info.token);
   }
 
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'width:100%';
+  wrap.appendChild(card);
   grid.innerHTML = '';
   grid.appendChild(wrap);
 
   setTimeout(() => {
-    wrap.style.opacity = '1';
-    wrap.style.transform = 'translateY(0)';
-    if (hasBox) gpRenderPile();
+    card.classList.add('fade-in');
+    if (hasBox) gpRenderEntryPile();
   }, 300);
+}
+
+// Idle dome preview shown on the entry card, before the box is opened —
+// same capsule visuals as the overlay dome (gpRenderPile), smaller fill.
+function gpRenderEntryPile() {
+  const pile = document.getElementById('gpEntryPile');
+  if (!pile) return;
+  pile.innerHTML = '';
+  const FILL = 12;
+  const goldIndex = Math.floor(Math.random() * FILL);
+  for (let i = 0; i < FILL; i++) {
+    const c = document.createElement('div');
+    c.className = 'gp-capsule';
+    const size = 26 + Math.random() * 16;
+    c.style.width = size + 'px';
+    c.style.height = size + 'px';
+    c.style.left = (Math.random() * 78) + '%';
+    c.style.top = (18 + Math.pow(Math.random(), 1.6) * 68) + '%';
+    c.style.transform = `rotate(${(Math.random() * 30 - 15).toFixed(1)}deg)`;
+    if (i === goldIndex) {
+      c.classList.add('gp-shimmer');
+    } else {
+      const base = GP_PALETTE[Math.floor(Math.random() * GP_PALETTE.length)];
+      c.style.background = `radial-gradient(circle at 32% 28%, #fff, ${base} 60%, ${gpShade(base, -14)})`;
+    }
+    pile.appendChild(c);
+  }
 }
 
 // ============================================================
@@ -628,57 +646,25 @@ function gpRenderPile() {
   }
 }
 
-function dismissGachaponHints() {
-  const pulse = document.getElementById('gpIdlePulse');
-  const hand  = document.getElementById('gpTapHand');
-  const callout = document.getElementById('gpTapCallout');
-  if (pulse)   pulse.classList.add('hide');
-  if (hand)    hand.classList.add('hide');
-  if (callout) callout.classList.add('hide');
-}
-
-// One burst of ticks flicking out around the crank — reads as the mechanical
-// "click click click" of a real coin-op capsule machine.
-function gpSpawnTicks() {
-  const ring = document.getElementById('gpTickRing');
-  if (!ring) return;
-  const COUNT = 8;
-  for (let i = 0; i < COUNT; i++) {
-    const t = document.createElement('div');
-    t.className = 'gp-ratchet-tick';
-    t.style.setProperty('--tick-angle', (360 / COUNT) * i + 'deg');
-    ring.appendChild(t);
-    requestAnimationFrame(() => t.classList.add('go'));
-    setTimeout(() => t.remove(), 350);
-  }
-}
-
 function startGachaponOpen(token) {
   if (gpBusy) return;
   gpBusy = true;
-  dismissGachaponHints();
 
+  const overlay = document.getElementById('paid-overlay');
   const cabinet = document.getElementById('gpCabinet');
   const crank   = document.getElementById('gpCrank');
   const chute   = document.getElementById('gpChute');
   const result  = document.getElementById('gpResult');
   const hint    = document.getElementById('gpHint');
   const crackWrap = document.getElementById('gpCrackWrap');
-  const flapLid = document.getElementById('gpFlapLid');
 
+  overlay.classList.add('active');
   result.classList.remove('show');
   crackWrap.classList.remove('go');
   chute.innerHTML = '';
-  flapLid.classList.remove('open');
   hint.textContent = 'กำลังหมุน...';
+  gpRenderPile();
   crank.classList.add('gp-turn');
-
-  // The crank spins for as long as the API call takes (network latency is
-  // variable, so this can't be a single fixed-length animation like a demo
-  // could use) — ticks fire on an interval instead, to keep the mechanical
-  // click-click-click feel going for the whole wait.
-  gpSpawnTicks();
-  const tickInterval = setInterval(gpSpawnTicks, 350);
 
   let apiResult = null;
   callGAS('openLootBox', { token })
@@ -698,14 +684,12 @@ function startGachaponOpen(token) {
     cabinet.classList.add('gp-shake');
     hint.textContent = 'ลุ้นๆ...';
     setTimeout(() => cabinet.classList.remove('gp-shake'), 350);
-    flapLid.classList.add('open'); // pickup hatch swings open on its own — no extra tap needed
   }, 1100);
 
   // Wait for both the drop animation to feel complete AND the real
   // openLootBox response before revealing — never fabricate a result.
   const waitForApi = () => {
     if (apiResult === null) { setTimeout(waitForApi, 100); return; }
-    clearInterval(tickInterval);
     crank.classList.remove('gp-turn');
 
     if (!apiResult.success) {
@@ -747,25 +731,21 @@ function gpShowResult(result) {
   crackWrap.classList.add('go');
 
   resultWrap.classList.add('show');
-  document.getElementById('paid-overlay').classList.add('active'); // the ticket reveal is the only thing this overlay shows now
 
   const card = document.getElementById('lb-card-PAID');
   if (card) {
     card.classList.remove('can-open');
     card.classList.add('used');
-    const hintEl = document.getElementById('gpHint');
-    if (hintEl) hintEl.textContent = 'เปิดแล้วเดือนนี้ กลับมาใหม่รอบบิลหน้า';
-    const dome = card.querySelector('.gp-dome');
+    const msg = card.querySelector('.gp-entry-msg');
+    if (msg) msg.textContent = 'เปิดแล้วเดือนนี้ กลับมาใหม่รอบบิลหน้า';
+    const dome = card.querySelector('.gp-entry-dome');
     if (dome && !dome.querySelector('.gp-entry-lock')) {
       const lock = document.createElement('div');
       lock.className = 'gp-entry-lock';
       lock.textContent = '✓';
       dome.appendChild(lock);
     }
-    const crankWrap = card.querySelector('.gp-crank-wrap');
-    if (crankWrap) { crankWrap.onclick = null; crankWrap.style.cursor = 'default'; }
-    const cabinetEl = card.querySelector('.gp-cabinet');
-    if (cabinetEl) cabinetEl.style.animation = '';
+    card.onclick = null;
   }
 
   const confetti = isJackpot
@@ -791,8 +771,6 @@ function closePaidOverlay() {
   document.getElementById('gpChute').innerHTML = '';
   document.getElementById('gpCrank').classList.remove('gp-turn');
   document.getElementById('gpCabinet').classList.remove('gp-shake');
-  const flapLid = document.getElementById('gpFlapLid');
-  if (flapLid) flapLid.classList.remove('open');
   gpBusy = false;
   lbOpening = false;
 }
