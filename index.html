@@ -2,107 +2,107 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>กล่องสุ่มรางวัล — หอพัก</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>กล่องสุ่มรางวัล</title>
 <link rel="stylesheet" href="style.css">
-<!--
-  Boot-mask style is kept inline here (not in style.css) per project convention —
-  see SKILL3_2_2.md "Inline <style> in <head> preferred ... when minimizing complexity matters (e.g., boot-mask)".
-  It suppresses the LINE in-app browser's flash-of-unstyled-content while init() decides
-  which page (check-in grid vs paid page) to render, and is removed at the very end of init().
--->
-<style>
-  #boot-mask{
-    position:fixed; inset:0; z-index:9999;
-    background:#020617;
-  }
-</style>
 </head>
 <body>
 
-  <!-- removed by app.js at the end of init(), once the correct page has fully rendered -->
-  <div id="boot-mask"></div>
+  <!-- ป้องกันจอกระพริบก่อนข้อมูลจะพร้อม -->
+  <div id="boot-mask" style="position:fixed;inset:0;background:#020617;z-index:999"></div>
 
-  <div id="toast" class="toast"></div>
-  <div id="flash" class="flash"></div>
-  <div id="lb-confetti" class="lb-confetti"></div>
+  <div class="dashboard">
 
-  <!-- ============================================================
-       DASHBOARD — check-in grid (default) or paid page (?paid=1)
-       init() rewrites .dash-title text + hides .count-wrap for the paid page
-       ============================================================ -->
-  <main class="dashboard">
-
-    <button id="btn-history" class="btn-history-icon" onclick="openHistoryOverlay()" aria-label="ประวัติการเปิดกล่อง">
-      🕓
+    <button class="btn-history-icon" id="btn-history" onclick="openHistoryOverlay()" aria-label="ประวัติการเปิดกล่อง">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"></circle>
+        <polyline points="12 7 12 12 15 14"></polyline>
+      </svg>
     </button>
 
     <div class="dash-title">
       <h1>กล่องสุ่มรางวัล</h1>
-      <p>สะสมเช็คอินลุ้นรางวัลทุกเดือน</p>
+      <p>เช็คอินต่อเนื่องเพื่อปลดล็อกกล่อง</p>
+      <div class="header-room" id="lb-room-label">ห้อง —</div>
     </div>
-
-    <div id="lb-room-label" class="header-room"></div>
 
     <div class="count-wrap">
-      <div class="count-badge">🎁 เปิดได้อีก <span id="lb-count">0</span> กล่อง</div>
+      <div class="count-badge"><span id="lb-count">0</span> / 4 กล่อง</div>
     </div>
 
-    <div id="lb-grid" class="lb-grid"></div>
+    <div class="lb-grid" id="lb-grid">
+      <div class="loading">กำลังโหลด...</div>
+    </div>
 
     <div class="safe-bottom"></div>
-  </main>
+  </div>
 
-  <!-- ============================================================
-       CHECK-IN TIER OVERLAY — silver / gold / plat / legend
-       (solar-system spin, buildSolarHTML() fills #spin-stage)
-       ============================================================ -->
-  <div id="lb-overlay" class="lb-overlay">
+  <!-- ================= FLASH ================= -->
+  <div class="flash" id="flash"></div>
 
-    <div id="spin-wrap" style="position:relative; display:flex; align-items:center; justify-content:center;">
-      <div id="spin-stage" class="spin-stage"></div>
+  <!-- ================= OVERLAY — กล่องเช็คอิน 4 กล่อง (Solar System) ================= -->
+  <div class="lb-overlay" id="lb-overlay">
 
-      <!-- scattered glitch text, only shown for the legendary tier (cfg.glitch === true) -->
-      <div id="err1" class="err-txt" style="top:12%; left:8%;">SYSTEM ERROR</div>
-      <div id="err2" class="err-txt" style="top:50%; right:4%;">OVERLOAD</div>
-      <div id="err3" class="err-txt" style="bottom:10%; left:50%; transform:translateX(-50%);">CRITICAL</div>
+    <div class="spin-wrap" id="spin-wrap" style="display:none;position:relative;flex-direction:column;align-items:center;justify-content:center">
+      <div class="spin-stage" id="spin-stage"></div>
+      <span class="err-txt" id="err1" style="top:20%;left:12%">ERROR</span>
+      <span class="err-txt" id="err2" style="top:70%;right:14%">ERROR</span>
+      <span class="err-txt" id="err3" style="bottom:8%;left:40%">ERROR</span>
     </div>
 
-    <div id="result-ui" class="result-ui">
-      <div id="res-badge" class="res-badge">
-        <span class="res-badge-sym">🎁</span>
+    <div class="result-ui" id="result-ui">
+      <div class="res-badge" id="res-badge">
+        <span class="res-badge-sym">฿</span>
       </div>
-      <div class="res-label">รางวัลที่ได้รับ</div>
-      <div id="res-tier-name" class="res-tier-name"></div>
-      <div id="prize-val" class="prize-val">0</div>
-      <div class="res-note">เพิ่มเข้ายอดส่วนลดรอบบิลถัดไปให้อัตโนมัติ</div>
-      <button id="btn-claim" class="btn-claim" onclick="closeLootPopup()">เก็บรางวัล 🎉</button>
+      <div class="res-label">REWARD ACQUIRED</div>
+      <div class="res-tier-name" id="res-tier-name">TIER</div>
+      <div class="prize-val" id="prize-val">0</div>
+      <div class="res-note" id="res-note">เพิ่มเข้ายอดส่วนลดรอบบิลถัดไปแล้ว</div>
+      <button class="btn-claim" id="btn-claim" onclick="closeLootPopup()">รับรางวัล 🎉</button>
     </div>
 
   </div>
 
-  <!-- ============================================================
-       GACHAPON REVEAL OVERLAY — PAID box only. Shows just the
-       crack-open ticket once a result comes back from the API.
-       The cabinet/crank/chute itself is NOT here anymore — it's
-       rendered inline on the dashboard by renderPaidCard() in app.js,
-       so pressing the crank there is the only tap needed to open a box.
-       ============================================================ -->
-  <div id="paid-overlay" class="gp-overlay">
+  <!-- ================= OVERLAY — กล่อง PAID (Gachapon) ================= -->
+  <div class="paid-overlay" id="paid-overlay">
     <div class="gp-stage">
 
-      <div id="gpResult" class="gp-result">
-        <div id="gpCrackWrap" class="gp-crack-wrap">
-          <div id="gpCrackTop" class="gp-crack-half top"></div>
-          <div id="gpCrackBottom" class="gp-crack-half bottom"></div>
+      <div class="gp-cabinet" id="gpCabinet">
+        <div class="gp-sign">
+          <span class="gp-sign-jp">ガシャポン</span>
+          <span class="gp-sign-th">PAID BONUS</span>
         </div>
 
+        <div class="gp-dome">
+          <div class="gp-dome-shine"></div>
+          <div class="gp-pile" id="gpPile"></div>
+        </div>
+
+        <div class="gp-crank-wrap">
+          <div class="gp-crank-base"></div>
+          <div class="gp-crank" id="gpCrank">
+            <div class="gp-crank-arm"></div>
+            <div class="gp-crank-knob"></div>
+          </div>
+        </div>
+
+        <div class="gp-chute" id="gpChute"></div>
+        <div class="gp-tray"></div>
+      </div>
+
+      <div class="gp-hint" id="gpHint">แตะที่ตู้เพื่อลุ้นรางวัล 🎉</div>
+
+      <div class="gp-result" id="gpResult">
+        <div class="gp-crack-wrap" id="gpCrackWrap">
+          <div class="gp-crack-half top" id="gpCrackTop"></div>
+          <div class="gp-crack-half bottom" id="gpCrackBottom"></div>
+        </div>
         <div class="gp-ticket">
-          <div id="gpRibbon" class="gp-ribbon">✓ ยินดีด้วย</div>
+          <div class="gp-ribbon" id="gpRibbon">✓ ยินดีด้วย</div>
           <div class="gp-ticket-tier">PAID BONUS</div>
-          <div id="paid-prize-val" class="gp-ticket-val">0</div>
+          <div class="gp-ticket-val" id="paid-prize-val">0</div>
           <div class="gp-ticket-unit">บาท</div>
-          <div class="gp-ticket-note">ส่วนลดจะถูกหักในบิลรอบถัดไปให้อัตโนมัติ</div>
+          <div class="gp-ticket-note">เพิ่มเข้ายอดส่วนลดรอบบิลถัดไปแล้ว (จำลอง)</div>
           <button class="btn-claim gp-claim" onclick="closePaidOverlay()">เก็บรางวัล 🎉</button>
         </div>
       </div>
@@ -110,16 +110,20 @@
     </div>
   </div>
 
-  <!-- ============================================================
-       HISTORY BOTTOM SHEET
-       ============================================================ -->
-  <div id="history-overlay" class="history-overlay">
+  <!-- ================= CONFETTI / TOAST ================= -->
+  <div class="lb-confetti" id="lb-confetti"></div>
+  <div class="toast" id="toast"></div>
+
+  <!-- ================= HISTORY ================= -->
+  <div class="history-overlay" id="history-overlay">
     <div class="history-panel">
       <div class="history-header">
-        <div class="history-title">🕓 ประวัติการเปิดกล่อง</div>
-        <button class="history-close" onclick="closeHistoryOverlay()" aria-label="ปิด">✕</button>
+        <span class="history-title">📜 ประวัติการเปิดกล่อง</span>
+        <button class="history-close" onclick="closeHistoryOverlay()">✕</button>
       </div>
-      <div id="history-body" class="history-body"></div>
+      <div class="history-body" id="history-body">
+        <div class="loading">กำลังโหลด...</div>
+      </div>
     </div>
   </div>
 
