@@ -153,7 +153,7 @@ async function init() {
     document.querySelector('.count-wrap').style.display  = 'none';
 
     grid.style.cssText = 'display:flex;justify-content:center;width:90%;max-width:380px';
-    grid.innerHTML = `<div class="lb-card lb-skeleton" style="width:100%;height:290px"></div>`;
+    grid.innerHTML = `<div class="lb-card lb-skeleton" style="width:100%;height:420px"></div>`;
 
     await initLiff();
     await initPaidPage(room);
@@ -207,76 +207,67 @@ function renderPaidCard(info) {
   const isOpened = info.token &&  info.opened;
   const isLocked = !info.token;
 
-  const card = document.createElement('div');
-  card.className = 'gp-entry'
+  // The machine itself is now the first screen — no separate "enter the
+  // cabinet" step. Tapping the crank directly triggers the open (one tap).
+  const wrap = document.createElement('div');
+  wrap.id = 'lb-card-PAID';
+  wrap.className = 'gp-live'
     + (hasBox   ? ' can-open' : '')
     + (isOpened ? ' used'     : '')
     + (isLocked ? ' locked'   : '');
-  card.id = 'lb-card-PAID';
-  card.setAttribute('data-tier', 'paid');
+  wrap.setAttribute('data-tier', 'paid');
+  wrap.style.cssText = 'width:100%; display:flex; flex-direction:column; align-items:center; opacity:0; transform:translateY(10px); transition:opacity .4s ease, transform .4s ease;';
 
-  card.innerHTML = `
-    <div class="gp-entry-cabinet">
-      <div class="gp-entry-sign">
-        <span class="gp-entry-sign-jp">ガシャポン</span>
-        <span class="gp-entry-sign-th">PAID BONUS</span>
+  wrap.innerHTML = `
+    <div class="gp-cabinet" id="gpCabinet">
+      <div class="gp-sign">
+        <span class="gp-sign-jp">ガシャポン</span>
+        <span class="gp-sign-th">PAID BONUS</span>
       </div>
-      <div class="gp-entry-dome">
-        <div class="gp-entry-dome-shine"></div>
-        <div class="gp-entry-pile" id="gpEntryPile"></div>
+      <div class="gp-dome">
+        <div class="gp-dome-shine"></div>
+        <div class="gp-pile" id="gpPile"></div>
         ${isLocked ? '<div class="gp-entry-lock">🔒</div>' : ''}
         ${isOpened ? '<div class="gp-entry-lock">✓</div>' : ''}
       </div>
-      <div class="gp-entry-tray"></div>
+      <div class="gp-crank-wrap" id="gpCrankWrap">
+        <div class="gp-crank-base"></div>
+        <div class="gp-crank" id="gpCrank">
+          <div class="gp-crank-arm"></div>
+          <div class="gp-crank-knob"></div>
+        </div>
+      </div>
+      <div class="gp-chute" id="gpChute"></div>
+      <div class="gp-tray"></div>
     </div>
-    <div class="gp-entry-msg">${
-      hasBox   ? 'แตะที่ตู้เพื่อลุ้นรางวัล 🎉' :
+    <div class="gp-hint" id="gpHint">${
+      hasBox   ? 'กดที่คันโยกเพื่อลุ้นรางวัล 🎉' :
       isOpened ? 'เปิดแล้วเดือนนี้ กลับมาใหม่รอบบิลหน้า' :
                  'จ่ายตรงเวลาเพื่อรับกล่อง'
     }</div>
   `;
 
+  const cabinet   = wrap.querySelector('#gpCabinet');
+  const dome      = wrap.querySelector('.gp-dome');
+  const crankWrap = wrap.querySelector('#gpCrankWrap');
+
   if (hasBox) {
-    card.onclick = () => startLootOpen('PAID', 'กล่อง Paid Bonus', 'paid', info.token);
+    crankWrap.style.cursor = 'pointer';
+    crankWrap.onclick = () => startLootOpen('PAID', 'กล่อง Paid Bonus', 'paid', info.token);
+    cabinet.style.animation = 'gp-entry-pulse 2s ease-in-out infinite'; // reuses existing keyframe, invites the tap
+  } else {
+    dome.style.filter = 'grayscale(.55)';
+    cabinet.style.opacity = '.72';
   }
 
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'width:100%';
-  wrap.appendChild(card);
   grid.innerHTML = '';
   grid.appendChild(wrap);
 
   setTimeout(() => {
-    card.classList.add('fade-in');
-    if (hasBox) gpRenderEntryPile();
+    wrap.style.opacity = '1';
+    wrap.style.transform = 'translateY(0)';
+    if (hasBox) gpRenderPile();
   }, 300);
-}
-
-// Idle dome preview shown on the entry card, before the box is opened —
-// same capsule visuals as the overlay dome (gpRenderPile), smaller fill.
-function gpRenderEntryPile() {
-  const pile = document.getElementById('gpEntryPile');
-  if (!pile) return;
-  pile.innerHTML = '';
-  const FILL = 12;
-  const goldIndex = Math.floor(Math.random() * FILL);
-  for (let i = 0; i < FILL; i++) {
-    const c = document.createElement('div');
-    c.className = 'gp-capsule';
-    const size = 26 + Math.random() * 16;
-    c.style.width = size + 'px';
-    c.style.height = size + 'px';
-    c.style.left = (Math.random() * 78) + '%';
-    c.style.top = (18 + Math.pow(Math.random(), 1.6) * 68) + '%';
-    c.style.transform = `rotate(${(Math.random() * 30 - 15).toFixed(1)}deg)`;
-    if (i === goldIndex) {
-      c.classList.add('gp-shimmer');
-    } else {
-      const base = GP_PALETTE[Math.floor(Math.random() * GP_PALETTE.length)];
-      c.style.background = `radial-gradient(circle at 32% 28%, #fff, ${base} 60%, ${gpShade(base, -14)})`;
-    }
-    pile.appendChild(c);
-  }
 }
 
 // ============================================================
@@ -620,7 +611,6 @@ function startGachaponOpen(token) {
   if (gpBusy) return;
   gpBusy = true;
 
-  const overlay = document.getElementById('paid-overlay');
   const cabinet = document.getElementById('gpCabinet');
   const crank   = document.getElementById('gpCrank');
   const chute   = document.getElementById('gpChute');
@@ -628,12 +618,10 @@ function startGachaponOpen(token) {
   const hint    = document.getElementById('gpHint');
   const crackWrap = document.getElementById('gpCrackWrap');
 
-  overlay.classList.add('active');
   result.classList.remove('show');
   crackWrap.classList.remove('go');
   chute.innerHTML = '';
   hint.textContent = 'กำลังหมุน...';
-  gpRenderPile();
   crank.classList.add('gp-turn');
 
   let apiResult = null;
@@ -701,21 +689,25 @@ function gpShowResult(result) {
   crackWrap.classList.add('go');
 
   resultWrap.classList.add('show');
+  document.getElementById('paid-overlay').classList.add('active'); // the ticket reveal is the only thing this overlay shows now
 
   const card = document.getElementById('lb-card-PAID');
   if (card) {
     card.classList.remove('can-open');
     card.classList.add('used');
-    const msg = card.querySelector('.gp-entry-msg');
-    if (msg) msg.textContent = 'เปิดแล้วเดือนนี้ กลับมาใหม่รอบบิลหน้า';
-    const dome = card.querySelector('.gp-entry-dome');
+    const hintEl = document.getElementById('gpHint');
+    if (hintEl) hintEl.textContent = 'เปิดแล้วเดือนนี้ กลับมาใหม่รอบบิลหน้า';
+    const dome = card.querySelector('.gp-dome');
     if (dome && !dome.querySelector('.gp-entry-lock')) {
       const lock = document.createElement('div');
       lock.className = 'gp-entry-lock';
       lock.textContent = '✓';
       dome.appendChild(lock);
     }
-    card.onclick = null;
+    const crankWrap = card.querySelector('.gp-crank-wrap');
+    if (crankWrap) { crankWrap.onclick = null; crankWrap.style.cursor = 'default'; }
+    const cabinetEl = card.querySelector('.gp-cabinet');
+    if (cabinetEl) cabinetEl.style.animation = '';
   }
 
   const confetti = isJackpot

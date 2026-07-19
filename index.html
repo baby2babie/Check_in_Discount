@@ -82,36 +82,14 @@
   </div>
 
   <!-- ============================================================
-       GACHAPON OVERLAY — PAID box only (traditional Japanese
-       capsule-machine reveal). Silver/gold/plat/legend never touch this.
+       GACHAPON REVEAL OVERLAY — PAID box only. Shows just the
+       crack-open ticket once a result comes back from the API.
+       The cabinet/crank/chute itself is NOT here anymore — it's
+       rendered inline on the dashboard by renderPaidCard() in app.js,
+       so pressing the crank there is the only tap needed to open a box.
        ============================================================ -->
   <div id="paid-overlay" class="gp-overlay">
     <div class="gp-stage">
-
-      <div id="gpCabinet" class="gp-cabinet">
-        <div class="gp-sign">
-          <span class="gp-sign-jp">ガシャポン</span>
-          <span class="gp-sign-th">PAID BONUS</span>
-        </div>
-
-        <div class="gp-dome">
-          <div class="gp-dome-shine"></div>
-          <div id="gpPile" class="gp-pile"></div>
-        </div>
-
-        <div class="gp-crank-wrap">
-          <div class="gp-crank-base"></div>
-          <div id="gpCrank" class="gp-crank">
-            <div class="gp-crank-arm"></div>
-            <div class="gp-crank-knob"></div>
-          </div>
-        </div>
-
-        <div id="gpChute" class="gp-chute"></div>
-        <div class="gp-tray"></div>
-      </div>
-
-      <div id="gpHint" class="gp-hint">แตะที่ตู้เพื่อลุ้นรางวัล</div>
 
       <div id="gpResult" class="gp-result">
         <div id="gpCrackWrap" class="gp-crack-wrap">
