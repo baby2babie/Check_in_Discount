@@ -649,3 +649,276 @@ canvas.sparks {
   font-size: 14px; font-weight: 700;
   color: #F59E0B;
 }
+
+/* ============================================================
+   GACHAPON — replaces the old "stardust" PAID box reveal.
+   Check-in tier boxes (silver/gold/plat/legend) are untouched.
+   Sized for real mobile viewports (was fixed 220px — too small).
+   ============================================================ */
+.gp-overlay {
+  display: none;
+  position: fixed; inset: -40px; z-index: 100;
+  background: #020617;
+  align-items: center; justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 40px 20px;
+}
+.gp-overlay.active { display: flex; }
+
+.gp-stage { position: relative; display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+.gp-cabinet {
+  position: relative;
+  width: min(90vw, 380px);
+  background: linear-gradient(180deg, #C1372C 0%, #C1372C 46%, #F2E9D6 46%, #F2E9D6 100%);
+  border-radius: 28px;
+  padding: 22px 22px 30px;
+  box-shadow: 0 30px 60px -20px rgba(0,0,0,.7), inset 0 0 0 3px rgba(255,255,255,.15);
+}
+.gp-cabinet.gp-shake { animation: gp-shake .35s ease; }
+@keyframes gp-shake {
+  0%,100% { transform: translate(0,0); }
+  25%     { transform: translate(-4px,3px) rotate(-.5deg); }
+  50%     { transform: translate(4px,-3px) rotate(.5deg); }
+  75%     { transform: translate(-3px,2px); }
+}
+
+.gp-sign { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.gp-sign-jp { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: .05em; text-shadow: 0 2px 0 rgba(0,0,0,.2); }
+.gp-sign-th { font-size: 13px; font-weight: 700; color: #E7B94A; background: rgba(0,0,0,.2); padding: 5px 12px; border-radius: 99px; }
+
+.gp-dome {
+  position: relative;
+  height: min(46vw, 250px);
+  min-height: 190px;
+  border-radius: 20px 20px 12px 12px;
+  background: radial-gradient(circle at 30% 18%, rgba(255,255,255,.85), rgba(255,255,255,.1) 42%), #F7EFDE;
+  border: 6px solid #CBD1D8;
+  overflow: hidden;
+  box-shadow: inset 0 10px 18px rgba(255,255,255,.6), inset 0 -16px 22px rgba(0,0,0,.1);
+}
+.gp-dome-shine {
+  position: absolute; top: 12px; left: 22px;
+  width: 62px; height: 120px;
+  background: linear-gradient(160deg, rgba(255,255,255,.85), rgba(255,255,255,0));
+  border-radius: 50%;
+  transform: rotate(-14deg);
+  pointer-events: none;
+}
+.gp-pile { position: absolute; inset: 14px 10px 0; }
+.gp-capsule {
+  position: absolute;
+  border-radius: 50%;
+  box-shadow: inset -4px -5px 7px rgba(0,0,0,.1), inset 4px 4px 6px rgba(255,255,255,.8);
+}
+.gp-capsule::after {
+  content: ""; position: absolute; top: 16%; left: 20%;
+  width: 30%; height: 20%;
+  background: rgba(255,255,255,.85);
+  border-radius: 50%;
+}
+.gp-capsule.gp-shimmer {
+  background: radial-gradient(circle at 32% 28%, #fff, #FFD873 55%, #F5AE3C) !important;
+  box-shadow: inset -4px -5px 7px rgba(0,0,0,.1), inset 4px 4px 6px rgba(255,255,255,.8), 0 0 14px rgba(245,174,60,.6);
+  animation: gp-shimmer-pulse 1.9s ease-in-out infinite;
+}
+@keyframes gp-shimmer-pulse {
+  0%,100% { box-shadow: inset -4px -5px 7px rgba(0,0,0,.1), inset 4px 4px 6px rgba(255,255,255,.8), 0 0 8px rgba(245,174,60,.4); }
+  50%     { box-shadow: inset -4px -5px 7px rgba(0,0,0,.1), inset 4px 4px 6px rgba(255,255,255,.8), 0 0 22px rgba(245,174,60,.9); }
+}
+
+.gp-crank-wrap { position: relative; width: 76px; height: 76px; margin: 16px auto 0; }
+.gp-crank-base {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #E3E7EB, #8B929C);
+  box-shadow: 0 4px 8px rgba(0,0,0,.25), inset 0 3px 4px rgba(255,255,255,.7);
+}
+.gp-crank { position: absolute; inset: 0; transform-origin: 50% 50%; }
+.gp-crank.gp-turn { animation: gp-crank-turn 3.2s linear infinite; }
+@keyframes gp-crank-turn { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.gp-crank-arm { position: absolute; top: 50%; left: 50%; width: 30px; height: 8px; margin-top: -4px; background: linear-gradient(180deg,#ECEFF2,#8B929C); border-radius: 4px; }
+.gp-crank-knob {
+  position: absolute; top: 50%; left: 50%; width: 24px; height: 24px; margin: -12px 0 0 16px;
+  border-radius: 50%; background: radial-gradient(circle at 32% 28%, #fff, #DE5245 55%, #8F2620);
+  box-shadow: 0 3px 6px rgba(0,0,0,.3);
+}
+
+.gp-chute { position: relative; height: 56px; margin: 10px 46px 0; }
+.gp-falling {
+  width: 44px; height: 44px; border-radius: 50%;
+  position: absolute; left: 50%; margin-left: -22px; top: -6px;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.9), inset -4px -5px 7px rgba(0,0,0,.1), inset 4px 4px 6px rgba(255,255,255,.85), 0 8px 14px rgba(0,0,0,.35);
+  opacity: 0;
+}
+.gp-falling.drop { animation: gp-fall .75s cubic-bezier(.6,.02,.85,.6) forwards, gp-spin .75s linear forwards; }
+@keyframes gp-fall { 0% { top: -6px; opacity: 1; } 85% { top: 44px; opacity: 1; } 100% { top: 38px; opacity: 1; } }
+@keyframes gp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.gp-tray {
+  height: 26px; margin: 0 30px;
+  background: linear-gradient(180deg, #EFE6D2, #E1CFA4);
+  border-radius: 0 0 16px 16px;
+  box-shadow: inset 0 6px 8px rgba(0,0,0,.12);
+}
+
+.gp-hint {
+  margin-top: 22px;
+  font-size: 15px; font-weight: 600; letter-spacing: .04em;
+  color: #E7B94A;
+  text-align: center;
+}
+
+/* ---- result: capsule cracks open, prize rises as a paper ticket ---- */
+.gp-result {
+  display: none; z-index: 102;
+  flex-direction: column; align-items: center;
+  position: absolute; inset: 0;
+  padding: 60px 20px 20px;
+}
+.gp-result.show { display: flex; }
+
+.gp-crack-wrap { position: relative; width: 120px; height: 120px; margin-bottom: -22px; }
+.gp-crack-half { position: absolute; width: 120px; height: 60px; left: 0; box-shadow: inset -7px -7px 10px rgba(0,0,0,.12), inset 5px 5px 8px rgba(255,255,255,.85); }
+.gp-crack-half.top { top: 0; border-radius: 120px 120px 0 0 / 120px 120px 0 0; transform-origin: bottom center; }
+.gp-crack-half.bottom { bottom: 0; border-radius: 0 0 120px 120px / 0 0 120px 120px; transform-origin: top center; }
+.gp-crack-wrap.go .gp-crack-half.top    { animation: gp-crack-open-top .5s cubic-bezier(.3,1.4,.5,1) .1s both; }
+.gp-crack-wrap.go .gp-crack-half.bottom { animation: gp-crack-open-bottom .5s cubic-bezier(.3,1.4,.5,1) .1s both; }
+@keyframes gp-crack-open-top    { 0% { transform: translateY(28px) rotate(0deg); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateY(-18px) rotate(-16deg); opacity: 1; } }
+@keyframes gp-crack-open-bottom { 0% { transform: translateY(-28px) rotate(0deg); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateY(18px) rotate(16deg); opacity: 1; } }
+
+.gp-ticket {
+  width: min(88vw, 340px);
+  background: #F2E9D6;
+  border-radius: 26px;
+  padding: 36px 28px 26px;
+  text-align: center;
+  color: #2E2620;
+  box-shadow: 0 20px 40px -14px rgba(0,0,0,.55);
+  position: relative;
+  transform: translateY(14px) scale(.92);
+  opacity: 0;
+}
+.gp-result.show .gp-ticket { animation: gp-card-rise .45s cubic-bezier(.3,1.4,.5,1) .35s both; }
+@keyframes gp-card-rise { 0% { transform: translateY(14px) scale(.9); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+
+.gp-ribbon {
+  position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(90deg, #E7B94A, #B4822A);
+  color: #fff; font-weight: 700; font-size: 14px;
+  padding: 7px 20px; border-radius: 99px;
+  box-shadow: 0 4px 8px rgba(180,130,42,.45);
+  white-space: nowrap;
+}
+.gp-ticket-tier { font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: #6C5D4E; margin: 10px 0 4px; }
+.gp-ticket-val {
+  font-family: 'Cinzel', serif;
+  font-size: 72px; font-weight: 900; line-height: 1;
+  background: linear-gradient(160deg, #fff8ea, #E7B94A 45%, #8F711A);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 12px rgba(231,185,74,.5));
+}
+.gp-ticket-val.jackpot {
+  background: linear-gradient(160deg, #fff, #FFD700 45%, #F59E0B);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 20px #FFD700);
+  animation: gp-jackpot-glow 1.2s ease-in-out infinite;
+}
+@keyframes gp-jackpot-glow {
+  0%,100% { filter: drop-shadow(0 0 14px #FFD700) brightness(1.3); }
+  50%     { filter: drop-shadow(0 0 34px #FFD700) brightness(1.8); }
+}
+.gp-ticket-unit { font-size: 14px; letter-spacing: 3px; color: #8F711A; margin-top: 6px; }
+.gp-ticket-note { font-size: 13px; color: #6C5D4E; margin: 10px 0 22px; line-height: 1.5; }
+
+.gp-claim { width: 100%; }
+
+@media (max-width: 360px) {
+  .gp-ticket-val { font-size: 60px; }
+  .gp-crack-wrap { width: 96px; height: 96px; margin-bottom: -18px; }
+  .gp-crack-half { width: 96px; height: 48px; }
+  .gp-crack-half.top    { border-radius: 96px 96px 0 0 / 96px 96px 0 0; }
+  .gp-crack-half.bottom { border-radius: 0 0 96px 96px / 0 0 96px 96px; }
+}
+
+/* ============================================================
+   GACHAPON — entry card (first thing shown before opening).
+   Replaces the old glowing 🎁 lb-card so the machine itself
+   is visible from the moment the page loads, not just mid-open.
+   ============================================================ */
+.gp-entry {
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 0 6px;
+  opacity: 0; transform: translateY(10px);
+  transition: opacity .4s ease, transform .4s ease;
+  cursor: default;
+}
+.gp-entry.fade-in { opacity: 1; transform: translateY(0); }
+.gp-entry.can-open { cursor: pointer; }
+
+.gp-entry-cabinet {
+  position: relative;
+  width: min(90vw, 380px);
+  background: linear-gradient(180deg, #C1372C 0%, #C1372C 46%, #F2E9D6 46%, #F2E9D6 100%);
+  border-radius: 28px;
+  padding: 22px 22px 22px;
+  box-shadow: 0 24px 44px -18px rgba(0,0,0,.55), inset 0 0 0 3px rgba(255,255,255,.15);
+}
+.gp-entry.can-open .gp-entry-cabinet { animation: gp-entry-pulse 2s ease-in-out infinite; }
+@keyframes gp-entry-pulse {
+  0%,100% { box-shadow: 0 24px 44px -18px rgba(0,0,0,.55), inset 0 0 0 3px rgba(255,255,255,.15), 0 0 0 rgba(231,185,74,0); }
+  50%     { box-shadow: 0 24px 44px -18px rgba(0,0,0,.55), inset 0 0 0 3px rgba(255,255,255,.15), 0 0 26px rgba(231,185,74,.55); }
+}
+
+.gp-entry-sign { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.gp-entry-sign-jp { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: .05em; text-shadow: 0 2px 0 rgba(0,0,0,.2); }
+.gp-entry-sign-th { font-size: 13px; font-weight: 700; color: #E7B94A; background: rgba(0,0,0,.2); padding: 5px 12px; border-radius: 99px; }
+
+.gp-entry-dome {
+  position: relative;
+  height: min(46vw, 240px);
+  min-height: 180px;
+  border-radius: 20px 20px 12px 12px;
+  background: radial-gradient(circle at 30% 18%, rgba(255,255,255,.85), rgba(255,255,255,.1) 42%), #F7EFDE;
+  border: 6px solid #CBD1D8;
+  overflow: hidden;
+  box-shadow: inset 0 10px 18px rgba(255,255,255,.6), inset 0 -16px 22px rgba(0,0,0,.1);
+}
+.gp-entry-dome-shine {
+  position: absolute; top: 12px; left: 22px;
+  width: 60px; height: 116px;
+  background: linear-gradient(160deg, rgba(255,255,255,.85), rgba(255,255,255,0));
+  border-radius: 50%;
+  transform: rotate(-14deg);
+  pointer-events: none;
+}
+.gp-entry-pile { position: absolute; inset: 14px 10px 0; }
+
+.gp-entry-lock {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 46px;
+  background: rgba(247,239,222,.72);
+}
+
+.gp-entry.locked .gp-entry-dome,
+.gp-entry.used .gp-entry-dome { filter: grayscale(.55); }
+.gp-entry.locked .gp-entry-cabinet,
+.gp-entry.used .gp-entry-cabinet { opacity: .72; }
+
+.gp-entry-tray {
+  height: 22px; margin-top: 10px;
+  background: linear-gradient(180deg, #EFE6D2, #E1CFA4);
+  border-radius: 0 0 14px 14px;
+  box-shadow: inset 0 5px 7px rgba(0,0,0,.12);
+}
+
+.gp-entry-msg {
+  margin-top: 14px;
+  font-size: 14px; font-weight: 600;
+  color: #E7B94A;
+  text-align: center;
+}
+.gp-entry.used .gp-entry-msg,
+.gp-entry.locked .gp-entry-msg { color: #94A3B8; }

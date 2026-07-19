@@ -208,50 +208,75 @@ function renderPaidCard(info) {
   const isLocked = !info.token;
 
   const card = document.createElement('div');
-  card.className = 'lb-card'
+  card.className = 'gp-entry'
     + (hasBox   ? ' can-open' : '')
     + (isOpened ? ' used'     : '')
     + (isLocked ? ' locked'   : '');
   card.id = 'lb-card-PAID';
   card.setAttribute('data-tier', 'paid');
-  card.style.cssText = 'width:100%;padding:40px 20px;--t-color:#C084FC';
 
   card.innerHTML = `
-    <span class="lb-card-icon" style="font-size:64px">${
-      isOpened ? '🎁' : hasBox ? '🎁' : '🔒'
-    }</span>
-    <div class="lb-card-name" style="font-size:16px;margin-top:16px">PAID BONUS</div>
-    <div class="lb-card-sub" style="font-size:14px;margin-top:8px">${
-      hasBox   ? 'กดเพื่อเปิดกล่อง!' :
-      isOpened ? 'เปิดแล้วเดือนนี้'  :
+    <div class="gp-entry-cabinet">
+      <div class="gp-entry-sign">
+        <span class="gp-entry-sign-jp">ガシャポン</span>
+        <span class="gp-entry-sign-th">PAID BONUS</span>
+      </div>
+      <div class="gp-entry-dome">
+        <div class="gp-entry-dome-shine"></div>
+        <div class="gp-entry-pile" id="gpEntryPile"></div>
+        ${isLocked ? '<div class="gp-entry-lock">🔒</div>' : ''}
+        ${isOpened ? '<div class="gp-entry-lock">✓</div>' : ''}
+      </div>
+      <div class="gp-entry-tray"></div>
+    </div>
+    <div class="gp-entry-msg">${
+      hasBox   ? 'แตะที่ตู้เพื่อลุ้นรางวัล 🎉' :
+      isOpened ? 'เปิดแล้วเดือนนี้ กลับมาใหม่รอบบิลหน้า' :
                  'จ่ายตรงเวลาเพื่อรับกล่อง'
     }</div>
-    <div class="lb-card-ms ms-paid" style="margin-top:16px">จ่ายตรงเวลา</div>
   `;
 
   if (hasBox) {
     card.onclick = () => startLootOpen('PAID', 'กล่อง Paid Bonus', 'paid', info.token);
   }
 
-  // ✅ wrap + border trace canvas
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:relative;width:100%';
-
-  if (hasBox) {
-    const cv = document.createElement('canvas');
-    cv.id = 'paid-trace';
-    cv.style.cssText = 'position:absolute;inset:-3px;pointer-events:none;z-index:3;border-radius:27px';
-    wrap.appendChild(cv);
-  }
-
+  wrap.style.cssText = 'width:100%';
   wrap.appendChild(card);
   grid.innerHTML = '';
   grid.appendChild(wrap);
 
   setTimeout(() => {
     card.classList.add('fade-in');
-    if (hasBox) initPaidTrace('paid-trace', wrap);
+    if (hasBox) gpRenderEntryPile();
   }, 300);
+}
+
+// Idle dome preview shown on the entry card, before the box is opened —
+// same capsule visuals as the overlay dome (gpRenderPile), smaller fill.
+function gpRenderEntryPile() {
+  const pile = document.getElementById('gpEntryPile');
+  if (!pile) return;
+  pile.innerHTML = '';
+  const FILL = 12;
+  const goldIndex = Math.floor(Math.random() * FILL);
+  for (let i = 0; i < FILL; i++) {
+    const c = document.createElement('div');
+    c.className = 'gp-capsule';
+    const size = 26 + Math.random() * 16;
+    c.style.width = size + 'px';
+    c.style.height = size + 'px';
+    c.style.left = (Math.random() * 78) + '%';
+    c.style.top = (18 + Math.pow(Math.random(), 1.6) * 68) + '%';
+    c.style.transform = `rotate(${(Math.random() * 30 - 15).toFixed(1)}deg)`;
+    if (i === goldIndex) {
+      c.classList.add('gp-shimmer');
+    } else {
+      const base = GP_PALETTE[Math.floor(Math.random() * GP_PALETTE.length)];
+      c.style.background = `radial-gradient(circle at 32% 28%, #fff, ${base} 60%, ${gpShade(base, -14)})`;
+    }
+    pile.appendChild(c);
+  }
 }
 
 // ============================================================
@@ -398,7 +423,7 @@ function startLootOpen(milestone, name, tier, token) {
   lbOpening = true;
 
   if (tier === 'paid') {
-    startStardustOpen(token);
+    startGachaponOpen(token);
     return;
   }
 
@@ -544,333 +569,179 @@ function spawnConfettiStop() {
 }
 
 // ============================================================
-//  STARDUST — PAID BOX
+//  GACHAPON — PAID BOX
+//  Replaces the old "stardust" reveal. Check-in tier boxes
+//  (silver/gold/plat/legend) use the separate solar-system flow
+//  above and are untouched by this section.
 // ============================================================
-const STAR_COLORS = ['#E879F9','#C084FC','#A5F3FC','#FCA5A5','#F0ABFC','#fff','#DDD6FE'];
-let starParticles = [];
-let starAnimId    = null;
-let starPhase     = 'idle';
-let starExplodeT  = 0;
-let starGatherT   = 0;
+const GP_PALETTE = ['#FFC9DE', '#BFF3E1', '#FFE39A', '#C6E6FF', '#D9C4FF'];
+let gpBusy = false;
 
-function startStardustOpen(token) {
+function gpShade(hex, percent) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  let r = (num >> 16) + Math.round(255 * percent / 100);
+  let g = (num >> 8 & 0x00FF) + Math.round(255 * percent / 100);
+  let b = (num & 0x0000FF) + Math.round(255 * percent / 100);
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+  return '#' + (0x1000000 + r * 0x10000 + g * 0x100 + b).toString(16).slice(1);
+}
+
+// Dome is filled with decorative capsules for visual weight — this has
+// nothing to do with how many boxes are actually openable. That count
+// still comes from the PAID card itself (one per billing cycle).
+function gpRenderPile() {
+  const pile = document.getElementById('gpPile');
+  if (!pile) return;
+  pile.innerHTML = '';
+  const FILL = 16;
+  const goldIndex = Math.floor(Math.random() * FILL);
+  for (let i = 0; i < FILL; i++) {
+    const c = document.createElement('div');
+    c.className = 'gp-capsule';
+    const size = 34 + Math.random() * 22;
+    c.style.width = size + 'px';
+    c.style.height = size + 'px';
+    c.style.left = (Math.random() * 78) + '%';
+    c.style.top = (18 + Math.pow(Math.random(), 1.6) * 68) + '%';
+    c.style.transform = `rotate(${(Math.random() * 30 - 15).toFixed(1)}deg)`;
+    if (i === goldIndex) {
+      c.classList.add('gp-shimmer');
+    } else {
+      const base = GP_PALETTE[Math.floor(Math.random() * GP_PALETTE.length)];
+      c.style.background = `radial-gradient(circle at 32% 28%, #fff, ${base} 60%, ${gpShade(base, -14)})`;
+    }
+    pile.appendChild(c);
+  }
+}
+
+function startGachaponOpen(token) {
+  if (gpBusy) return;
+  gpBusy = true;
+
   const overlay = document.getElementById('paid-overlay');
-  const canvas  = document.getElementById('paid-canvas');
-  const boxIcon = document.getElementById('paid-box-icon');
-
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
-  const cx = canvas.width  / 2;
-  const cy = canvas.height / 2;
+  const cabinet = document.getElementById('gpCabinet');
+  const crank   = document.getElementById('gpCrank');
+  const chute   = document.getElementById('gpChute');
+  const result  = document.getElementById('gpResult');
+  const hint    = document.getElementById('gpHint');
+  const crackWrap = document.getElementById('gpCrackWrap');
 
   overlay.classList.add('active');
-  document.getElementById('paid-result').classList.remove('show');
-  boxIcon.style.display = 'flex';
-
-  starPhase    = 'explode';
-  starExplodeT = 0;
-  starGatherT  = 0;
-  createStarParticles(cx, cy);
-
-  setTimeout(() => {
-    boxIcon.style.animation = 'none';
-    boxIcon.style.transform = 'scale(0)';
-  }, 300);
+  result.classList.remove('show');
+  crackWrap.classList.remove('go');
+  chute.innerHTML = '';
+  hint.textContent = 'กำลังหมุน...';
+  gpRenderPile();
+  crank.classList.add('gp-turn');
 
   let apiResult = null;
   callGAS('openLootBox', { token })
-    .then(r  => { apiResult = r; })
+    .then(r => { apiResult = r; })
     .catch(() => { apiResult = { success: false, message: 'เกิดข้อผิดพลาด' }; });
 
-  const ctx = canvas.getContext('2d');
+  // capsule drop — purely visual, timed independently of the API call
+  setTimeout(() => {
+    const falling = document.createElement('div');
+    falling.className = 'gp-falling drop';
+    falling.style.background = 'radial-gradient(circle at 32% 28%, #fff, #FFD873 55%, #F5AE3C)';
+    chute.appendChild(falling);
+    hint.textContent = 'แคปซูลกำลังหล่นลงราง...';
+  }, 350);
 
-  function loop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  setTimeout(() => {
+    cabinet.classList.add('gp-shake');
+    hint.textContent = 'ลุ้นๆ...';
+    setTimeout(() => cabinet.classList.remove('gp-shake'), 350);
+  }, 1100);
 
-    if (starPhase === 'explode') {
-      starExplodeT++;
-      starParticles.forEach(p => {
-        p.x += p.vx; p.y += p.vy;
-        p.vy += 0.08; p.vx *= 0.98;
-        p.twinkle += 0.1;
-        drawStar(ctx, p, .6 + .4 * Math.sin(p.twinkle));
-      });
-      if (starExplodeT > 60) { starPhase = 'orbit'; starGatherT = 0; }
+  // Wait for both the drop animation to feel complete AND the real
+  // openLootBox response before revealing — never fabricate a result.
+  const waitForApi = () => {
+    if (apiResult === null) { setTimeout(waitForApi, 100); return; }
+    crank.classList.remove('gp-turn');
+
+    if (!apiResult.success) {
+      closePaidOverlay();
+      showToast('❌ ' + (apiResult.message || 'เกิดข้อผิดพลาด'), 'error');
+      return;
     }
-
-    else if (starPhase === 'orbit') {
-      starGatherT++;
-      starParticles.forEach(p => {
-        p.orbitAngle += p.orbitSpeed * 1.5;
-        p.x = lerp(p.x, cx + Math.cos(p.orbitAngle) * p.orbitR, .08);
-        p.y = lerp(p.y, cy + Math.sin(p.orbitAngle) * p.orbitR, .08);
-        p.twinkle += 0.12;
-        drawStar(ctx, p, .5 + .5 * Math.sin(p.twinkle));
-      });
-      if (starGatherT > 80) { starPhase = 'gather'; starGatherT = 0; }
-    }
-
-    else if (starPhase === 'gather') {
-      starGatherT++;
-      const progress = Math.min(starGatherT / 60, 1);
-      const eased    = 1 - Math.pow(1 - progress, 3);
-
-      starParticles.forEach(p => {
-        p.orbitAngle += p.orbitSpeed * (1 + progress * 4);
-        const tx = cx + Math.cos(p.orbitAngle) * p.orbitR * (1 - eased);
-        const ty = cy + Math.sin(p.orbitAngle) * p.orbitR * (1 - eased);
-        p.x = lerp(p.x, tx, .1);
-        p.y = lerp(p.y, ty, .1);
-        p.size = Math.max(.5, p.size * (1 - eased * .02));
-        p.twinkle += .15;
-        drawStar(ctx, p, Math.max(0, (1 - eased) * (.6 + .4 * Math.sin(p.twinkle))));
-      });
-
-      if (progress > .8) {
-        const fa = (progress - .8) / .2 * .6;
-        ctx.save();
-        ctx.globalAlpha = fa;
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 100);
-        grad.addColorStop(0, '#E879F9');
-        grad.addColorStop(1, 'transparent');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(cx, cy, 100, 0, Math.PI*2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      if (progress >= 1) { starPhase = 'waiting'; starGatherT = 0; }
-    }
-
-    else if (starPhase === 'waiting') {
-      starGatherT++;
-      const pulse = .3 + .3 * Math.sin((starGatherT / 120) * Math.PI * 2);
-
-      ctx.save();
-      ctx.globalAlpha = pulse;
-      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 130);
-      grad.addColorStop(0, '#E879F9');
-      grad.addColorStop(.5, '#C084FC');
-      grad.addColorStop(1, 'transparent');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 130, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-
-      starGatherT % 1 === 0 && starParticles.slice(0, 20).forEach((p, i) => {
-        const a = (starGatherT * .05) + (i / 20) * Math.PI * 2;
-        p.x = cx + Math.cos(a) * 50;
-        p.y = cy + Math.sin(a) * 50;
-        p.twinkle += .2;
-        drawStar(ctx, p, .4 + .4 * Math.sin(p.twinkle));
-      });
-
-      if (apiResult !== null) {
-        starPhase = 'done';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        if (!apiResult.success) {
-          closePaidOverlay();
-          showToast('❌ ' + (apiResult.message || 'เกิดข้อผิดพลาด'), 'error');
-          lbOpening = false;
-          return;
-        }
-
-        showStardustResult(apiResult, canvas, cx, cy);
-        return;
-      }
-    }
-
-    starAnimId = requestAnimationFrame(loop);
-  }
-
-  loop();
+    setTimeout(() => gpShowResult(apiResult), 200);
+  };
+  setTimeout(waitForApi, 1400);
 }
 
-function drawStar(ctx, p, alpha) {
-  ctx.save();
-  ctx.globalAlpha = Math.max(0, alpha);
-  ctx.fillStyle   = p.color;
-  ctx.shadowColor = p.color;
-  ctx.shadowBlur  = 8;
-  ctx.beginPath();
-  ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-  ctx.fill();
-  ctx.restore();
-}
-
-function lerp(a, b, t) { return a + (b - a) * t; }
-
-function createStarParticles(cx, cy) {
-  starParticles = [];
-  for (let i = 0; i < 120; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = 2 + Math.random() * 5;
-    starParticles.push({
-      x: cx, y: cy,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - Math.random() * 3,
-      size: 2 + Math.random() * 4,
-      color: randomStarColor(),
-      alpha: 1,
-      orbitR: 60 + Math.random() * 80,
-      orbitSpeed: (Math.random() > .5 ? 1 : -1) * (.02 + Math.random() * .04),
-      orbitAngle: angle,
-      twinkle: Math.random() * Math.PI * 2
-    });
-  }
-}
-
-function randomStarColor() {
-  return STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)];
-}
-function showStardustResult(result, canvas, cx, cy) {
-  const resultEl = document.getElementById('paid-result');
-  const valEl    = document.getElementById('paid-prize-val');
-  const labelEl  = document.getElementById('paid-prize-label');
-  const subEl    = document.getElementById('paid-prize-sub');
-  const amount   = result.discount_amount;
-
+function gpShowResult(result) {
+  const amount    = result.discount_amount;
   const isJackpot = amount >= 50;
   const isRare    = amount >= 30;
 
-  // ✅ label + sub
-if (subEl) {
-  subEl.style.fontFamily    = "'Orbitron', monospace";
-  subEl.style.letterSpacing = '3px';
-  subEl.style.fontSize      = '11px';
+  const crackTop    = document.getElementById('gpCrackTop');
+  const crackBottom = document.getElementById('gpCrackBottom');
+  const crackWrap   = document.getElementById('gpCrackWrap');
+  const ribbon      = document.getElementById('gpRibbon');
+  const valEl       = document.getElementById('paid-prize-val');
+  const resultWrap  = document.getElementById('gpResult');
 
-  if (isJackpot) {
-    subEl.textContent = 'JACKPOT';
-    subEl.style.color = '#FFD700';
-  } else if (isRare) {
-    subEl.textContent = 'RARE PRIZE';
-    subEl.style.color = '#E879F9';
-  } else if (amount >= 20) {
-    subEl.textContent = 'SPECIAL';
-    subEl.style.color = '#A5F3FC';
-  } else {
-    subEl.textContent = '';
-  }
-}
-  // ✅ ตัวเลข — เปลี่ยนสีตามรางวัล
-  valEl.className = 'paid-prize-val' + (isJackpot ? ' jackpot' : '');
+  const capGrad = 'radial-gradient(circle at 32% 28%, #fff, #FFD873 55%, #F5AE3C)';
+  crackTop.style.background = capGrad;
+  crackBottom.style.background = capGrad;
+
+  ribbon.textContent = isJackpot ? '★ แจ็คพอต' : isRare ? '✦ หายาก' : '✓ ยินดีด้วย';
+
+  valEl.className = 'gp-ticket-val' + (isJackpot ? ' jackpot' : '');
   valEl.style.animation = 'none';
   valEl.textContent = '0';
   void valEl.offsetWidth;
   valEl.style.animation = '';
 
-  // ✅ jackpot — shake + ring ทอง
-  if (isJackpot) {
-    const overlay = document.getElementById('paid-overlay');
-    overlay.classList.add('shake-mid');
-    setTimeout(() => overlay.classList.remove('shake-mid'), 1000);
+  crackWrap.classList.remove('go');
+  void crackWrap.offsetWidth;
+  crackWrap.classList.add('go');
 
-    // วงแหวนทองบน canvas
-    const ctx  = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 220);
-    grad.addColorStop(0,   '#FFD70066');
-    grad.addColorStop(0.5, '#F59E0B33');
-    grad.addColorStop(1,   'transparent');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 220, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  resultEl.classList.add('show');
+  resultWrap.classList.add('show');
 
   const card = document.getElementById('lb-card-PAID');
   if (card) {
     card.classList.remove('can-open');
     card.classList.add('used');
-    card.querySelector('.lb-card-sub').textContent = 'เปิดแล้วเดือนนี้';
+    const msg = card.querySelector('.gp-entry-msg');
+    if (msg) msg.textContent = 'เปิดแล้วเดือนนี้ กลับมาใหม่รอบบิลหน้า';
+    const dome = card.querySelector('.gp-entry-dome');
+    if (dome && !dome.querySelector('.gp-entry-lock')) {
+      const lock = document.createElement('div');
+      lock.className = 'gp-entry-lock';
+      lock.textContent = '✓';
+      dome.appendChild(lock);
+    }
     card.onclick = null;
   }
 
   const confetti = isJackpot
-    ? ['#FFD700','#E879F9','#fff','#FCA5A5','#F59E0B']
+    ? ['#FFD700', '#F5AE3C', '#fff', '#FCA5A5']
     : isRare
-    ? ['#E879F9','#C084FC','#fff','#A5F3FC']
-    : ['#C084FC','#fff','#DDD6FE'];
+    ? ['#FFD873', '#F5AE3C', '#fff', '#D9C4FF']
+    : ['#FFD873', '#fff', '#F2E9D6'];
 
   setTimeout(() => {
-    countUp(valEl, amount, isJackpot ? 2800 : 1800);
-    spawnStarConfetti(canvas, cx, cy, confetti);
-  }, 300);
+    countUp(valEl, amount, isJackpot ? 2200 : 1400);
+    spawnConfetti(confetti);
+  }, 200);
 
+  gpBusy = false;
   lbOpening = false;
-}
-// function showStardustResult(result, canvas, cx, cy) {
-//   const resultEl = document.getElementById('paid-result');
-//   const valEl    = document.getElementById('paid-prize-val');
-
-//   valEl.style.animation = 'none';
-//   valEl.textContent = '0';
-//   void valEl.offsetWidth;
-//   valEl.style.animation = '';
-
-//   resultEl.classList.add('show');
-
-//   const card = document.getElementById('lb-card-PAID');
-//   if (card) {
-//     card.classList.remove('can-open');
-//     card.classList.add('used');
-//     card.querySelector('.lb-card-sub').textContent = 'เปิดแล้วเดือนนี้';
-//     card.querySelector('.lb-card-icon').textContent = '🎁';
-//     card.onclick = null;
-//   }
-
-//   setTimeout(() => {
-//     countUp(valEl, result.discount_amount, 1800);
-//     spawnStarConfetti(canvas, cx, cy);
-//   }, 300);
-
-//   lbOpening = false;
-// }
-
-function spawnStarConfetti(canvas, cx, cy) {
-  const ctx  = canvas.getContext('2d');
-  let drops  = [];
-  for (let i = 0; i < 100; i++) {
-    drops.push({
-      x: Math.random() * canvas.width,
-      y: -10 - Math.random() * 100,
-      vx: (Math.random() - .5) * 2,
-      vy: 1.5 + Math.random() * 2.5,
-      size: 2 + Math.random() * 5,
-      color: randomStarColor(),
-      alpha: 1,
-      twinkle: Math.random() * Math.PI * 2
-    });
-  }
-  function fall() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drops = drops.filter(p => p.alpha > .05);
-    drops.forEach(p => {
-      p.x += p.vx; p.y += p.vy;
-      p.alpha -= .005;
-      p.twinkle += .1;
-      drawStar(ctx, p, p.alpha * (.6 + .4 * Math.sin(p.twinkle)));
-    });
-    if (drops.length) requestAnimationFrame(fall);
-    else ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-  fall();
 }
 
 function closePaidOverlay() {
   const overlay = document.getElementById('paid-overlay');
   overlay.classList.remove('active');
-  const canvas = document.getElementById('paid-canvas');
-  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-  if (starAnimId) { cancelAnimationFrame(starAnimId); starAnimId = null; }
-  starPhase = 'idle';
-  const boxIcon = document.getElementById('paid-box-icon');
-  boxIcon.style.cssText = '';
-  document.getElementById('paid-result').classList.remove('show');
+  document.getElementById('gpResult').classList.remove('show');
+  document.getElementById('gpCrackWrap').classList.remove('go');
+  document.getElementById('gpChute').innerHTML = '';
+  document.getElementById('gpCrank').classList.remove('gp-turn');
+  document.getElementById('gpCabinet').classList.remove('gp-shake');
+  gpBusy = false;
   lbOpening = false;
 }
 
