@@ -6,35 +6,33 @@
   <title>กล่องสุ่มรางวัล</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="style.css">
- <style>
-  #boot-mask {
-    position: fixed; inset: 0; z-index: 9999;
-    background: #020617;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 20px;
-  }
-  #boot-mask .boot-dots { display: flex; gap: 8px; }
-  #boot-mask .boot-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    animation: bootBounce 1s ease-in-out infinite;
-  }
-  #boot-mask .boot-dot:nth-child(1) { background: #F59E0B; }
-  #boot-mask .boot-dot:nth-child(2) { background: #C084FC; animation-delay: .15s; }
-  #boot-mask .boot-dot:nth-child(3) { background: #F59E0B; animation-delay: .3s; }
-  #boot-mask .boot-text {
-    font-family: 'Orbitron', monospace;
-    font-size: 12px; letter-spacing: 4px;
-    color: #94A3B8;
-    display: flex;
-  }
-  #boot-mask .boot-loading-dots {
-    display: inline-block; width: 18px; text-align: left;
-  }
-  @keyframes bootBounce {
-    0%, 100% { transform: translateY(0); opacity: .5; }
-    50%      { transform: translateY(-10px); opacity: 1; }
-  }
-</style>
+  <style>
+    #boot-mask {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #020617;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 20px;
+    }
+    #boot-mask .boot-dots { display: flex; gap: 8px; }
+    #boot-mask .boot-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      animation: bootBounce 1s ease-in-out infinite;
+    }
+    #boot-mask .boot-dot:nth-child(1) { background: #E7B94A; }
+    #boot-mask .boot-dot:nth-child(2) { background: #DE5245; animation-delay: .15s; }
+    #boot-mask .boot-dot:nth-child(3) { background: #E7B94A; animation-delay: .3s; }
+    #boot-mask .boot-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 12px; letter-spacing: 4px;
+      color: #94A3B8;
+      display: flex;
+    }
+    #boot-mask .boot-loading-dots { display: inline-block; width: 18px; text-align: left; }
+    @keyframes bootBounce {
+      0%, 100% { transform: translateY(0); opacity: .5; }
+      50%      { transform: translateY(-10px); opacity: 1; }
+    }
+  </style>
 </head>
 <body>
 
@@ -57,11 +55,10 @@
   }, 400);
 })();
 </script>
-<div class="flash" id="flash"></div>
-<!-- DASHBOARD -->
-<div class="dashboard">
 
-  <button class="btn-history-icon" id="btn-history" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดกล่อง">
+<div class="floor"></div>
+
+<button class="btn-history-icon" id="btn-history" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดกล่อง">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
     <path d="M3 3v5h5"></path>
@@ -69,93 +66,99 @@
   </svg>
 </button>
 
-  <div class="dash-title">
-    <h1>กล่องสุ่มรางวัล</h1>
-    <p>สะสมจากการเช็คอินติดต่อกัน</p>
-    <div class="header-room" id="lb-room-label">กำลังโหลด...</div>
-  </div>
+<div class="eyebrow">Loot Box · หอพัก 3 ชั้น</div>
+<h1>ตู้กาชาปอง 🎰</h1>
+<div class="sub">หมุนที่จับด้านข้างเพื่อลุ้นรางวัล<br><span class="header-room" id="lb-room-label">กำลังโหลด...</span></div>
 
-  <div class="count-wrap">
-    <div class="count-badge">🎁 กล่องที่มี: <span id="lb-count">0</span> ใบ</div>
-  </div>
+<div class="stage">
+  <div class="cabinet">
+    <div class="sign-board">
+      <div class="sign-jp">ガシャポン</div>
+      <div class="sign-th" id="cabRoomBadge">—</div>
+    </div>
+    <div class="rivets"><span></span><span></span><span></span><span></span><span></span><span></span></div>
 
-  <div class="lb-grid" id="lb-grid">
-    <div class="loading">กำลังโหลด...</div>
-  </div>
-
-  <div class="safe-bottom"></div>
-</div>
-
-<div class="paid-overlay" id="paid-overlay">
-  <div class="gp-stage">
-
-    <div class="gp-cabinet" id="gpCabinet">
-      <div class="gp-sign">
-        <span class="gp-sign-jp">ガシャポン</span>
-        <span class="gp-sign-th">PAID BONUS</span>
+    <div class="dome-window">
+      <div class="dome-glass-hi"></div>
+      <div class="prize-sticker">
+        <div class="grid">
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFC9DE 60%)"></span>
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,#BFF3E1 60%)"></span>
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFE39A 60%)"></span>
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,#C6E6FF 60%)"></span>
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,#D9C4FF 60%)"></span>
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,var(--gold) 60%,var(--gold-deep))"></span>
+        </div>
+        <div class="cap-label">รางวัลรอบนี้</div>
       </div>
+      <div class="capsule-pile" id="pile"></div>
+    </div>
 
-      <div class="gp-dome">
-        <div class="gp-dome-shine"></div>
-        <div class="gp-pile" id="gpPile"></div>
-      </div>
+    <div class="body-panel">
+      <div class="plate" id="plateText">กำลังโหลดข้อมูลห้อง...</div>
 
-      <div class="gp-crank-wrap">
-        <div class="gp-crank-base"></div>
-        <div class="gp-crank" id="gpCrank">
-          <div class="gp-crank-arm"></div>
-          <div class="gp-crank-knob"></div>
+      <div class="coin-crank-row">
+        <div class="coin-slot">
+          <div class="slot"></div>
+          <div class="slot-label">ช่องหยอด</div>
+        </div>
+        <div class="crank-wrap" id="crankWrap">
+          <div class="idle-pulse" id="idlePulse"></div>
+          <div class="crank-glow" id="crankGlow"></div>
+          <div class="crank-base"></div>
+          <div class="tick-ring" id="tickRing"></div>
+          <div class="crank" id="crank" role="button" tabindex="0" aria-label="หมุนเพื่อเปิดกล่อง">
+            <div class="crank-arm"></div>
+            <div class="crank-knob"></div>
+          </div>
+          <div class="crank-pin"></div>
+          <div class="tap-hand" id="tapHand">👆</div>
+          <div class="tap-callout" id="tapCallout">แตะตรงนี้เพื่อเล่น</div>
         </div>
       </div>
 
-      <div class="gp-chute" id="gpChute"></div>
-      <div class="gp-tray"></div>
-    </div>
-
-    <div class="gp-hint" id="gpHint">แตะที่ตู้เพื่อลุ้นรางวัล 🎉</div>
-
-    <div class="gp-result" id="gpResult">
-      <div class="gp-crack-wrap" id="gpCrackWrap">
-        <div class="gp-crack-half top" id="gpCrackTop"></div>
-        <div class="gp-crack-half bottom" id="gpCrackBottom"></div>
+      <div class="chute-track" id="chuteTrack">
+        <div id="dropZone"></div>
       </div>
-      <div class="gp-ticket">
-        <div class="gp-ribbon" id="gpRibbon">✓ ยินดีด้วย</div>
-        <div class="gp-ticket-tier">PAID BONUS</div>
-        <div class="gp-ticket-val" id="paid-prize-val">0</div>
-        <div class="gp-ticket-unit">บาท</div>
-        <div class="gp-ticket-note">ส่วนลดจะถูกหักในบิลเดือนถัดไป</div>
-        <button class="btn-claim gp-claim" onclick="closePaidOverlay()">รับรางวัล 🎊</button>
+
+      <div class="flap-wrap">
+        <div class="flap-tray"></div>
+        <div class="flap-lid" id="flapLid"><div class="flap-handle"></div></div>
       </div>
     </div>
 
+    <div class="legs"><span></span><span></span></div>
+  </div>
+
+  <div class="knob-panel">
+    <div class="instruction" id="instruction">กำลังโหลดข้อมูล...</div>
+    <div class="stock-row">
+      <span class="stock-pill" id="stockCount">—</span>
+    </div>
   </div>
 </div>
 
-<!-- OVERLAY -->
-<div class="lb-overlay" id="lb-overlay">
+<div class="screen-flash" id="screenFlash"></div>
+<div class="confetti-layer" id="confettiLayer"></div>
 
-  <div class="err-txt" id="err1" style="top:12%;left:8%">FATAL_ERROR: UI_COLLAPSE</div>
-  <div class="err-txt" id="err2" style="bottom:14%;right:8%">REBOOTING_SYSTEM...</div>
-  <div class="err-txt" id="err3" style="top:20%;right:10%">OVERFLOW_DETECTED</div>
+<div class="footnote">
+  ตู้เติมแคปซูลให้ดูเต็มเหมือนของจริง แต่จำนวนที่ <b>เปิดได้จริง</b> อิงตามป้ายด้านล่างตู้ — กล่อง <b>PAID</b> เปิดได้ครั้งเดียว/รอบบิล (แคปซูลทองระยิบ)
+</div>
 
-  <div id="spin-wrap" style="display:flex;align-items:center;justify-content:center">
-    <div class="spin-stage" id="spin-stage"></div>
-  </div>
-
-  <div class="result-ui" id="result-ui">
-    <div class="res-badge" id="res-badge">
-      <div class="res-badge-sym">฿</div>
+<div class="overlay" id="overlay">
+  <div class="reveal-stage">
+    <div class="crack-wrap" id="crackWrap">
+      <div class="crack-half top" id="crackTop"></div>
+      <div class="crack-half bottom" id="crackBottom"></div>
     </div>
-    <div class="res-label">REWARD UNLOCKED</div>
-    <div class="res-tier-name" id="res-tier-name">TIER</div>
-    <div class="prize-val" id="prize-val">0</div>
-    <div class="res-note">บาท หักจากบิลเดือนนี้อัตโนมัติ</div>
-    <button class="btn-claim" id="btn-claim" onclick="closeLootPopup()">
-      รับรางวัล 🎊
-    </button>
+    <div class="prize-card" id="prizeCard">
+      <div class="ribbon" id="rarityRibbon">ธรรมดา</div>
+      <div class="prize-tier" id="resultTierLabel">TIER</div>
+      <div class="prize-name" id="resultPrize">ส่วนลด 0 บาท</div>
+      <div class="prize-note" id="resultNote"></div>
+      <button class="close-btn" id="closeBtn">เก็บรางวัล 🎉</button>
+    </div>
   </div>
-
 </div>
 
 <!-- HISTORY OVERLAY -->
@@ -163,13 +166,13 @@
   <div class="history-panel">
     <div class="history-header">
       <div class="history-title">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-    <path d="M3 3v5h5"></path>
-    <path d="M12 7v5l4 2"></path>
-  </svg>
-  ประวัติการเปิดกล่อง
-</div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+          <path d="M12 7v5l4 2"></path>
+        </svg>
+        ประวัติการเปิดกล่อง
+      </div>
       <button class="history-close" onclick="closeHistoryOverlay()" aria-label="ปิด">✕</button>
     </div>
     <div class="history-body" id="history-body">
@@ -178,7 +181,6 @@
   </div>
 </div>
 
-<div class="lb-confetti" id="lb-confetti"></div>
 <div class="toast" id="toast"></div>
 
 <script src="app.js"></script>
