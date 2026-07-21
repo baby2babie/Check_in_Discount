@@ -105,6 +105,7 @@ function dismissTapHints(){
 
 const DOME_FILL = 15;
 const palette = ["#FFC9DE","#BFF3E1","#FFE39A","#C6E6FF","#D9C4FF"]; // pastel capsule variety
+const CAPSULE_NUMBERS = [5, 10, 15, 20, 25, 30, 50];
 
 // stock = milestone keys (string) ที่มีกล่องเปิดได้จริงตอนนี้ เรียงตามลำดับที่จะเปิด
 // lootTokens = { "7": token, "PAID": token, ... } token จริงจาก backend สำหรับแต่ละ milestone
@@ -139,6 +140,13 @@ function renderPile(){
     } else {
       const base = palette[Math.floor(Math.random()*palette.length)];
       c.style.background = `radial-gradient(circle at 32% 28%, #fff, ${base} 60%, ${shade(base,-14)})`;
+      // ตัวเลขส่วนลดปั๊มอยู่กลางแคปซูล — หมุนไปตามลูก เลยธรรมชาติที่บางลูกจะเห็นเต็ม
+      // บางลูกโดนลูกอื่นซ้อนทับบังบางส่วน (ซ้อนทับกันเองจากตำแหน่ง/z-index ที่สุ่มไว้อยู่แล้ว)
+      const num = document.createElement('div');
+      num.className = 'capsule-number';
+      num.textContent = CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)];
+      num.style.fontSize = (size * 0.34) + 'px';
+      c.appendChild(num);
     }
     pile.appendChild(c);
   }
