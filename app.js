@@ -91,6 +91,7 @@ const crankGlow      = document.getElementById('crankGlow');
 const screenFlash    = document.getElementById('screenFlash');
 const confettiLayer  = document.getElementById('confettiLayer');
 const flapLid        = document.getElementById('flapLid');
+const flapTray       = document.querySelector('.flap-tray');
 const idlePulse      = document.getElementById('idlePulse');
 const crankBase      = document.querySelector('.crank-base');
 const crankWrap      = document.getElementById('crankWrap');
@@ -190,6 +191,51 @@ function jigglePile(){
 }
 
 // ============================================================
+//  SUSPENSE EFFECTS — เล่นระหว่างรอผลจริงจาก backend
+//  (แทนที่จะปล่อยให้ค้างเฉยๆ ตรงข้อความ "ลุ้นๆ...")
+// ============================================================
+let suspenseRingTimer = null;
+let suspenseDotsTimer = null;
+
+function spawnPulseRing(){
+  const ring = document.createElement('div');
+  ring.className = 'impact-ring go';
+  dropZone.appendChild(ring);
+  const ring2 = document.createElement('div');
+  ring2.className = 'impact-ring go';
+  ring2.style.animationDelay = '90ms';
+  ring2.style.borderColor = 'var(--red-light)';
+  dropZone.appendChild(ring2);
+  setTimeout(()=>{ ring.remove(); ring2.remove(); }, 650);
+}
+
+function startSuspenseEffects(){
+  flapTray.classList.add('waiting');
+  let dots = 0;
+  suspenseDotsTimer = setInterval(()=>{
+    dots = (dots + 1) % 4;
+    instruction.textContent = "ลุ้นๆ" + ".".repeat(dots);
+  }, 350);
+  suspenseRingTimer = setInterval(spawnPulseRing, 550);
+}
+
+function stopSuspenseEffects(){
+  flapTray.classList.remove('waiting');
+  clearInterval(suspenseRingTimer);
+  clearInterval(suspenseDotsTimer);
+  suspenseRingTimer = null;
+  suspenseDotsTimer = null;
+}
+
+// กันไม่ให้ค้างตลอดไปถ้า backend ไม่ตอบเลย
+function withTimeout(promise, ms, fallback){
+  return Promise.race([
+    promise,
+    new Promise(resolve => setTimeout(()=> resolve(fallback), ms))
+  ]);
+}
+
+// ============================================================
 //  OPEN LOOT BOX — เรียก backend จริง ไม่สุ่มฝั่ง client
 // ============================================================
 function playOpen(){
@@ -207,7 +253,11 @@ function playOpen(){
 
   const milestone = stock[0];
   const token = lootTokens[milestone];
-  const apiPromise = callGAS('openLootBox', { token }).catch(() => ({ success:false, message:'เกิดข้อผิดพลาด' }));
+  const apiPromise = withTimeout(
+    callGAS('openLootBox', { token }).catch(() => ({ success:false, message:'เกิดข้อผิดพลาด' })),
+    8000,
+    { success:false, message:'เชื่อมต่อช้าเกินไป ลองใหม่อีกครั้งครับ' }
+  );
 
   setTimeout(()=>{
     crank.classList.remove('turn');
@@ -243,13 +293,13 @@ function dropCapsule(milestone, apiPromise){
     ring2.style.borderColor = 'var(--red-light)';
     dropZone.appendChild(ring2);
     flapLid.classList.add('open');
-    instruction.textContent = "ลุ้นๆ...";
+    startSuspenseEffects();
     setTimeout(()=> cabinet.classList.remove('shake'), 350);
-    setTimeout(()=> { ring.remove(); ring2.remove(); }, 600);
   }, 700);
 
   setTimeout(async ()=>{
     const result = await apiPromise;
+    stopSuspenseEffects();
 
     dropZone.innerHTML = "";
     flapLid.classList.remove('open');
