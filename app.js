@@ -92,17 +92,13 @@ const screenFlash    = document.getElementById('screenFlash');
 const confettiLayer  = document.getElementById('confettiLayer');
 const flapLid        = document.getElementById('flapLid');
 const idlePulse      = document.getElementById('idlePulse');
-const tapHand        = document.getElementById('tapHand');
-const tapCallout     = document.getElementById('tapCallout');
 const crankBase      = document.querySelector('.crank-base');
-const roomLabel      = document.getElementById('lb-room-label');
+const crankWrap      = document.getElementById('crankWrap');
 const cabRoomBadge   = document.getElementById('cabRoomBadge');
 const plateText      = document.getElementById('plateText');
 
 function dismissTapHints(){
   idlePulse.classList.add('hide');
-  tapHand.classList.add('hide');
-  tapCallout.classList.add('hide');
   crankBase.classList.add('hide-breathe');
 }
 
@@ -163,6 +159,16 @@ function rarityOf(amount){
   return 'common';
 }
 
+function boxNameFor(milestone){
+  if(milestone === 'PAID') return 'กล่อง PAID';
+  const cfg = LB_CONFIG.find(c => c.milestone === Number(milestone));
+  return cfg ? cfg.name : 'กล่องลึกลับ';
+}
+
+function updatePlateText(){
+  plateText.textContent = stock.length ? `ถัดไป: ${boxNameFor(stock[0])}` : 'เปิดครบแล้วตอนนี้';
+}
+
 function spawnRatchetTicks(){
   const TICK_COUNT = 10;
   for(let i=0;i<TICK_COUNT;i++){
@@ -192,6 +198,8 @@ function playOpen(){
   busy = true;
   dismissTapHints();
   crank.classList.add('turn');
+  cabinet.classList.remove('rumble'); void cabinet.offsetWidth; cabinet.classList.add('rumble');
+  crankWrap.classList.remove('rumble'); void crankWrap.offsetWidth; crankWrap.classList.add('rumble');
   pile.classList.remove('jiggle'); void pile.offsetWidth; pile.classList.add('jiggle');
   spawnRatchetTicks();
   crankGlow.classList.remove('go'); void crankGlow.offsetWidth; crankGlow.classList.add('go');
@@ -201,7 +209,13 @@ function playOpen(){
   const token = lootTokens[milestone];
   const apiPromise = callGAS('openLootBox', { token }).catch(() => ({ success:false, message:'เกิดข้อผิดพลาด' }));
 
-  setTimeout(()=>{ crank.classList.remove('turn'); pile.classList.remove('jiggle'); dropCapsule(milestone, apiPromise); }, 650);
+  setTimeout(()=>{
+    crank.classList.remove('turn');
+    cabinet.classList.remove('rumble');
+    crankWrap.classList.remove('rumble');
+    pile.classList.remove('jiggle');
+    dropCapsule(milestone, apiPromise);
+  }, 780);
 }
 
 function dropCapsule(milestone, apiPromise){
@@ -251,6 +265,7 @@ function dropCapsule(milestone, apiPromise){
     stock.shift();
     delete lootTokens[milestone];
     renderPile();
+    updatePlateText();
     pile.classList.add('pile-settle');
     setTimeout(()=> pile.classList.remove('pile-settle'), 400);
 
@@ -322,12 +337,12 @@ function showResult(milestone, result, isPaid){
 
   if(rarity === 'legendary'){
     screenFlash.classList.add('go','big');
-    spawnConfetti(46);
     stage.classList.add('shake-big');
+    setTimeout(()=> spawnConfetti(46), 300);
   } else if(rarity === 'rare'){
     screenFlash.classList.add('go');
-    spawnConfetti(20);
     stage.classList.add('shake-big');
+    setTimeout(()=> spawnConfetti(20), 300);
   } else {
     screenFlash.classList.add('go');
   }
@@ -343,9 +358,7 @@ crank.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' '){
 //  RENDER CABINET จากข้อมูลจริง (getLootBoxDataByRoom / getLootBoxData)
 // ============================================================
 function updateRoomLabel(room){
-  roomLabel.textContent   = 'ห้อง ' + room;
   cabRoomBadge.textContent = 'ห้อง ' + room;
-  plateText.textContent    = 'ห้อง ' + room;
   currentRoomNo = room;
   showHistoryButton();
 }
@@ -367,10 +380,11 @@ function renderCabinet(result){
   });
 
   renderPile();
+  updatePlateText();
   crank.style.pointerEvents = '';
   busy = false;
   instruction.textContent = stock.length
-    ? "👉 แตะที่จับสีแดงด้านบนเพื่อลุ้นรางวัล"
+    ? "👉 แตะที่จับเพื่อลุ้นรางวัล"
     : "ยังไม่มีกล่องให้เปิดในตอนนี้";
 }
 
