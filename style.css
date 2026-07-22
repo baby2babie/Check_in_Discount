@@ -207,7 +207,7 @@ h1{
   border-radius:50%;
 }
 .capsule.shimmer{
-  background: linear-gradient(118deg, #FFF6DC 0%, #FFF6DC 44%, #F0CD6E 44%, #F0CD6E 58%, #B4822A 100%) !important;
+  background: radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep)) !important;
   box-shadow: inset -4px -5px 6px rgba(0,0,0,.1), inset 3px 4px 6px rgba(255,255,255,.8), 0 0 10px rgba(180,130,42,.6);
   animation: shimmer-pulse 1.9s ease-in-out infinite;
 }
@@ -244,30 +244,13 @@ h1{
 }
 
 .cab-instruction{
-  position:relative;
   text-align:center;
   font-size:12px; font-weight:500;
   color:var(--ink-soft);
   line-height:1.3;
   min-height:15px;
-  margin-bottom:14px;
-  padding:7px 10px;
-  background:linear-gradient(180deg, #fff, #FBF6EA);
-  border:1px solid rgba(46,38,32,.1);
-  border-radius:10px;
-  box-shadow:0 2px 5px rgba(46,38,32,.08);
-}
-.cab-instruction::after{
-  content:"";
-  position:absolute;
-  left:78%; bottom:-6px;
-  width:12px; height:12px;
-  margin-left:-6px;
-  background:#FBF6EA;
-  border-right:1px solid rgba(46,38,32,.1);
-  border-bottom:1px solid rgba(46,38,32,.1);
-  transform:rotate(45deg);
-  clip-path:polygon(100% 0, 100% 100%, 0 100%);
+  margin-bottom:8px;
+  padding:0 4px;
 }
 
 .coin-crank-row{
@@ -543,9 +526,8 @@ h1{
 }
 .overlay.show{ opacity:1; pointer-events:auto; }
 .reveal-stage{ width:min(270px,100%); display:flex; flex-direction:column; align-items:center; }
-.crack-wrap{ position:relative; width:90px; height:14px; margin-bottom:4px; }
+.crack-wrap{ position:relative; width:90px; height:90px; margin-bottom:-16px; }
 .crack-half{
-  display:none; /* ไม่ต้องแสดงเปลือกแคปซูลตอนแสดงผลรางวัลแล้ว ตามที่ขอ */
   position:absolute; width:90px; height:45px; left:0;
   border-radius:90px 90px 0 0 / 90px 90px 0 0;
   box-shadow: inset -6px -6px 10px rgba(0,0,0,.1), inset 5px 5px 8px rgba(255,255,255,.8);
@@ -734,128 +716,4 @@ h1{
 @media (prefers-reduced-motion: reduce){
   .falling-capsule.drop, .crank.turn, .cabinet.shake, .cabinet.rumble, .crank-wrap.rumble, .stage.shake-big, .impact-ring.go, .crack-half, .burst.go, .prize-card,
   .capsule-pile.jiggle .capsule, .ratchet-tick.go, .crank-glow.go, .screen-flash.go, .confetti-piece, .flap-lid, .dome-glass-hi, .flap-tray.waiting{ animation:none !important; transition:none !important; }
-}
-
-/* ============================================================
-   PREMIUM FX ADD-ON — sparkle / particle burst / glint / glow
-   ============================================================ */
-
-/* ---- floating sparkles inside dome ---- */
-.dome-sparkle{
-  position:absolute;
-  width:6px; height:6px;
-  pointer-events:none;
-  z-index:4;
-  background:
-    radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 70%);
-  clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
-  opacity:0;
-  filter:drop-shadow(0 0 4px rgba(255,255,255,.9));
-  animation: sparkle-float linear infinite;
-}
-@keyframes sparkle-float{
-  0%{ opacity:0; transform:translateY(6px) scale(.4) rotate(0deg); }
-  12%{ opacity:1; }
-  50%{ opacity:.9; transform:translateY(-10px) scale(1) rotate(140deg); }
-  88%{ opacity:.3; }
-  100%{ opacity:0; transform:translateY(-22px) scale(.5) rotate(280deg); }
-}
-
-/* ---- glint trail that chases the falling capsule ---- */
-.glint-trail{
-  position:absolute;
-  left:50%; top:-4px;
-  width:3px; height:14px;
-  margin-left:-1.5px;
-  border-radius:3px;
-  background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,0));
-  opacity:0;
-  pointer-events:none;
-  z-index:1;
-}
-.glint-trail.go{ animation: glint-fall .75s cubic-bezier(.6,.02,.85,.6) forwards; }
-@keyframes glint-fall{
-  0%{ top:-4px; opacity:.9; }
-  85%{ top:12px; opacity:.5; }
-  100%{ top:9px; opacity:0; }
-}
-
-/* ---- particle-dust burst radiating from the crack on reveal ---- */
-.prize-spark{
-  position:absolute; left:50%; top:50%;
-  width:9px; height:9px;
-  margin:-4.5px 0 0 -4.5px;
-  pointer-events:none;
-  z-index:-1;
-  background:radial-gradient(circle, #fff 0%, var(--spark-color, #FFE39A) 55%, rgba(255,255,255,0) 78%);
-  clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
-  filter:drop-shadow(0 0 7px var(--spark-color, rgba(255,225,150,.9)));
-  opacity:0;
-}
-.prize-spark.go{ animation: spark-burst-fly var(--dur,.85s) cubic-bezier(.1,.75,.25,1) var(--sdelay,0s) forwards; }
-@keyframes spark-burst-fly{
-  0%{ opacity:0; transform:translate(0,0) scale(.25) rotate(0deg); }
-  10%{ opacity:1; transform:translate(0,0) scale(1.1) rotate(20deg); }
-  65%{ opacity:1; }
-  100%{ opacity:0; transform:translate(var(--dx),var(--dy)) scale(.3) rotate(200deg); }
-}
-
-/* ---- glow ring pulsing around the crack the instant it splits ---- */
-.crack-glow-ring{
-  position:absolute; left:50%; top:50%;
-  width:90px; height:90px;
-  margin:-45px 0 0 -45px;
-  border-radius:50%;
-  box-shadow:0 0 0 0 rgba(255,221,140,.7);
-  opacity:0;
-  pointer-events:none;
-  z-index:-1;
-}
-.crack-glow-ring.go{ animation: crack-glow-pop .7s ease-out forwards; }
-@keyframes crack-glow-pop{
-  0%{ opacity:.9; box-shadow:0 0 0 0 rgba(255,221,140,.7); transform:scale(.7); }
-  100%{ opacity:0; box-shadow:0 0 40px 24px rgba(255,221,140,0); transform:scale(1.6); }
-}
-
-/* ---- premium gold-edge glow on the prize card for rare/legendary ---- */
-.prize-card.premium-rare{
-  box-shadow:
-    0 20px 40px -14px rgba(46,38,32,.45),
-    0 0 0 1.5px rgba(231,185,74,.55),
-    0 0 26px 2px rgba(231,185,74,.35);
-}
-.prize-card.premium-legendary{
-  box-shadow:
-    0 20px 46px -14px rgba(46,38,32,.5),
-    0 0 0 2px rgba(231,185,74,.85),
-    0 0 40px 6px rgba(231,185,74,.55);
-  animation: legendary-breathe 1.6s ease-in-out infinite;
-}
-@keyframes legendary-breathe{
-  0%,100%{ filter:brightness(1); }
-  50%{ filter:brightness(1.05); }
-}
-
-/* ---- shine sweep across the crank knob when idle-hinting (extra premium gleam) ---- */
-.crank-knob::after{
-  content:"";
-  position:absolute; inset:0; border-radius:50%;
-  background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.55) 48%, transparent 62%);
-  background-size:220% 220%;
-  background-position:120% 120%;
-  opacity:0;
-  pointer-events:none;
-}
-.crank-wrap.gleam .crank-knob::after{ animation: knob-gleam 1.4s ease .05s; }
-@keyframes knob-gleam{
-  0%{ background-position:130% 130%; opacity:0; }
-  20%{ opacity:1; }
-  60%{ background-position:-10% -10%; opacity:.9; }
-  100%{ background-position:-30% -30%; opacity:0; }
-}
-
-@media (prefers-reduced-motion: reduce){
-  .dome-sparkle, .glint-trail.go, .prize-spark.go, .crack-glow-ring.go, .prize-card.premium-legendary, .crank-wrap.gleam .crank-knob::after{
-    animation:none !important;
-  }
 }

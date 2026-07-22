@@ -101,15 +101,6 @@ const plateText      = document.getElementById('plateText');
 function dismissTapHints(){
   idlePulse.classList.add('hide');
   crankBase.classList.add('hide-breathe');
-  clearInterval(gleamTimer);
-}
-
-let gleamTimer = null;
-function startCrankGleam(){
-  clearInterval(gleamTimer);
-  gleamTimer = setInterval(()=>{
-    crankWrap.classList.remove('gleam'); void crankWrap.offsetWidth; crankWrap.classList.add('gleam');
-  }, 3200);
 }
 
 const DOME_FILL = 15;
@@ -148,7 +139,7 @@ function renderPile(){
       c.classList.add('shimmer');
     } else {
       const base = palette[Math.floor(Math.random()*palette.length)];
-      c.style.background = capsuleFill(base);
+      c.style.background = `radial-gradient(circle at 32% 28%, #fff, ${base} 60%, ${shade(base,-14)})`;
       // ตัวเลขส่วนลดปั๊มอยู่กลางแคปซูล — หมุนไปตามลูก เลยธรรมชาติที่บางลูกจะเห็นเต็ม
       // บางลูกโดนลูกอื่นซ้อนทับบังบางส่วน (ซ้อนทับกันเองจากตำแหน่ง/z-index ที่สุ่มไว้อยู่แล้ว)
       const num = document.createElement('div');
@@ -169,14 +160,6 @@ function shade(hex, percent){
   let b = (num & 0x0000FF) + Math.round(255*percent/100);
   r = Math.max(0,Math.min(255,r)); g = Math.max(0,Math.min(255,g)); b = Math.max(0,Math.min(255,b));
   return "#" + (0x1000000 + r*0x10000 + g*0x100 + b).toString(16).slice(1);
-}
-
-// พื้นผิวแคปซูลสองโทน: โดมใสด้านบน + แถบสีทแยงมุมด้านล่าง (แถบสว่างใกล้รอยต่อ ไล่เข้มลงขอบล่าง)
-function capsuleFill(base, opts = {}){
-  const pale  = opts.pale  || '#EAF6FF';
-  const light = opts.light || shade(base, 18);
-  const dark  = opts.dark  || shade(base, -16);
-  return `linear-gradient(118deg, ${pale} 0%, ${pale} 44%, ${light} 44%, ${light} 58%, ${dark} 100%)`;
 }
 
 function rarityOf(amount){
@@ -216,77 +199,23 @@ function jigglePile(){
 }
 
 // ============================================================
-//  PREMIUM FX — sparkle dust, glint trail, particle burst, crack glow
-// ============================================================
-let sparkleTimer = null;
-function spawnDomeSparkles(){
-  clearInterval(sparkleTimer);
-  const domeWindow = document.querySelector('.dome-window');
-  if(!domeWindow) return;
-  sparkleTimer = setInterval(()=>{
-    if(document.hidden) return;
-    const s = document.createElement('div');
-    s.className = 'dome-sparkle';
-    s.style.left = (8 + Math.random()*84) + '%';
-    s.style.top  = (14 + Math.random()*70) + '%';
-    const dur = 1.6 + Math.random()*1.4;
-    s.style.animationDuration = dur + 's';
-    const size = 4 + Math.random()*5;
-    s.style.width = size + 'px';
-    s.style.height = size + 'px';
-    domeWindow.appendChild(s);
-    setTimeout(()=> s.remove(), dur*1000 + 50);
-  }, 260);
-}
-
-function spawnGlintTrail(){
-  const g = document.createElement('div');
-  g.className = 'glint-trail go';
-  dropZone.appendChild(g);
-  setTimeout(()=> g.remove(), 800);
-}
-
-function spawnCrackGlow(){
-  const g = document.createElement('div');
-  g.className = 'crack-glow-ring go';
-  crackWrap.appendChild(g);
-  setTimeout(()=> g.remove(), 750);
-}
-
-const SPARK_COLORS = ['#FFC9DE','#BFF3E1','#FFE39A','#C6E6FF','#D9C4FF','#E7B94A','#FF9AC0','#7FE3C4'];
-
-function spawnPrizeBurst(rarity){
-  document.querySelectorAll('.prize-spark').forEach(el=>el.remove());
-  const count = rarity === 'legendary' ? 60 : rarity === 'rare' ? 40 : 24;
-  const maxDist = rarity === 'legendary' ? 190 : rarity === 'rare' ? 140 : 95;
-  const minDist = rarity === 'legendary' ? 70 : rarity === 'rare' ? 55 : 38;
-  const host = crackWrap.parentElement;
-  for(let i=0;i<count;i++){
-    const s = document.createElement('div');
-    s.className = 'prize-spark';
-    const angle = (Math.PI*2/count)*i + (Math.random()*.6 - .3);
-    const dist = minDist + Math.random()*(maxDist - minDist);
-    s.style.setProperty('--dx', `${Math.cos(angle)*dist}px`);
-    s.style.setProperty('--dy', `${Math.sin(angle)*dist}px`);
-    s.style.setProperty('--dur', `${(0.75 + Math.random()*0.55).toFixed(2)}s`);
-    s.style.setProperty('--sdelay', `${Math.random()*0.22}s`);
-    s.style.setProperty('--spark-color', SPARK_COLORS[Math.floor(Math.random()*SPARK_COLORS.length)]);
-    const size = 8 + Math.random()*10;
-    s.style.width = size + 'px';
-    s.style.height = size + 'px';
-    s.style.marginLeft = (-size/2) + 'px';
-    s.style.marginTop = (-size/2) + 'px';
-    host.insertBefore(s, host.firstChild);
-    requestAnimationFrame(()=> s.classList.add('go'));
-    setTimeout(()=> s.remove(), 1700);
-  }
-}
-
-// ============================================================
 //  SUSPENSE EFFECTS — เล่นระหว่างรอผลจริงจาก backend
 //  (แทนที่จะปล่อยให้ค้างเฉยๆ ตรงข้อความ "ลุ้นๆ...")
 // ============================================================
+let suspenseRingTimer = null;
 let suspenseDotsTimer = null;
+
+function spawnPulseRing(){
+  const ring = document.createElement('div');
+  ring.className = 'impact-ring go';
+  dropZone.appendChild(ring);
+  const ring2 = document.createElement('div');
+  ring2.className = 'impact-ring go';
+  ring2.style.animationDelay = '90ms';
+  ring2.style.borderColor = 'var(--red-light)';
+  dropZone.appendChild(ring2);
+  setTimeout(()=>{ ring.remove(); ring2.remove(); }, 650);
+}
 
 function startSuspenseEffects(){
   flapTray.classList.add('waiting');
@@ -295,11 +224,14 @@ function startSuspenseEffects(){
     dots = (dots + 1) % 4;
     instruction.textContent = "ลุ้นๆ" + ".".repeat(dots);
   }, 350);
+  suspenseRingTimer = setInterval(spawnPulseRing, 550);
 }
 
 function stopSuspenseEffects(){
   flapTray.classList.remove('waiting');
+  clearInterval(suspenseRingTimer);
   clearInterval(suspenseDotsTimer);
+  suspenseRingTimer = null;
   suspenseDotsTimer = null;
 }
 
@@ -347,20 +279,27 @@ function playOpen(){
 function dropCapsule(milestone, apiPromise){
   const isPaid = milestone === 'PAID';
   const capsuleGrad = isPaid
-    ? capsuleFill('#E7B94A', { dark:'#B4822A', pale:'#FFF6DC' })
-    : capsuleFill(palette[Math.floor(Math.random()*palette.length)]);
+    ? `radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`
+    : `radial-gradient(circle at 32% 28%, #fff, ${palette[Math.floor(Math.random()*palette.length)]} 60%)`;
 
   const falling = document.createElement('div');
   falling.className = 'falling-capsule drop';
   falling.style.background = capsuleGrad;
   dropZone.appendChild(falling);
-  spawnGlintTrail();
   instruction.textContent = "แคปซูลกำลังหล่นลงราง...";
 
   jigglePile();
 
   setTimeout(()=>{
     cabinet.classList.add('shake');
+    const ring = document.createElement('div');
+    ring.className = 'impact-ring go';
+    dropZone.appendChild(ring);
+    const ring2 = document.createElement('div');
+    ring2.className = 'impact-ring go';
+    ring2.style.animationDelay = '80ms';
+    ring2.style.borderColor = 'var(--red-light)';
+    dropZone.appendChild(ring2);
     flapLid.classList.add('open');
     startSuspenseEffects();
     setTimeout(()=> cabinet.classList.remove('shake'), 350);
@@ -375,7 +314,7 @@ function dropCapsule(milestone, apiPromise){
 
     if(!result || !result.success){
       showToast('❌ ' + (result && result.message || 'เกิดข้อผิดพลาด'), 'error');
-      instruction.textContent = stock.length ? "แตะที่จับเพื่อลองใหม่ 👇" : "ไม่มีกล่องให้เปิดแล้วตอนนี้";
+      instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกล่องให้เปิดแล้วตอนนี้";
       busy = false;
       return;
     }
@@ -389,7 +328,7 @@ function dropCapsule(milestone, apiPromise){
     setTimeout(()=> pile.classList.remove('pile-settle'), 400);
 
     showResult(milestone, result, isPaid);
-    instruction.textContent = stock.length ? "แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป 👇" : "เปิดครบแล้วตอนนี้";
+    instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป" : "เปิดครบแล้วตอนนี้";
     busy = false;
   }, 1050);
 }
@@ -417,8 +356,8 @@ function showResult(milestone, result, isPaid){
   const rarity = rarityOf(amount);
 
   const capGrad = isPaid
-    ? capsuleFill('#E7B94A', { dark:'#B4822A', pale:'#FFF6DC' })
-    : capsuleFill(palette[Math.floor(Math.random()*palette.length)]);
+    ? `radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`
+    : `radial-gradient(circle at 32% 28%, #fff, ${palette[Math.floor(Math.random()*palette.length)]} 60%)`;
   crackTop.style.background = capGrad;
   crackBottom.style.background = capGrad;
 
@@ -431,13 +370,6 @@ function showResult(milestone, result, isPaid){
   rarityRibbon.textContent = rarity === 'legendary' ? '★ พิเศษสุด' : rarity === 'rare' ? '✦ หายาก' : '✓ ธรรมดา';
   rarityRibbon.classList.remove('shine');
   if(rarity !== 'common'){ void rarityRibbon.offsetWidth; rarityRibbon.classList.add('shine'); }
-
-  const prizeCard = document.getElementById('prizeCard');
-  prizeCard.classList.remove('premium-rare','premium-legendary');
-  if(rarity === 'rare') prizeCard.classList.add('premium-rare');
-  if(rarity === 'legendary') prizeCard.classList.add('premium-legendary');
-  spawnPrizeBurst(rarity);
-  spawnCrackGlow();
 
   document.querySelectorAll('.burst').forEach(el=>el.remove());
   crackTop.style.animation = 'none'; crackBottom.style.animation = 'none';
@@ -510,10 +442,8 @@ function renderCabinet(result){
   crank.style.pointerEvents = '';
   busy = false;
   instruction.textContent = stock.length
-    ? "แตะที่จับเพื่อลุ้นรางวัล 👇"
+    ? "👉 แตะที่จับเพื่อลุ้นรางวัล"
     : "ยังไม่มีกล่องให้เปิดในตอนนี้";
-  spawnDomeSparkles();
-  if(stock.length) startCrankGleam();
 }
 
 async function loadLootBoxForRoom(roomNo) {
