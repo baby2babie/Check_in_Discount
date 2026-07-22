@@ -83,12 +83,10 @@ const resultNote     = document.getElementById('resultNote');
 const rarityRibbon   = document.getElementById('rarityRibbon');
 const closeBtn       = document.getElementById('closeBtn');
 const cabinet        = document.querySelector('.cabinet');
-const stage          = document.querySelector('.stage');
 const tickRing       = document.getElementById('tickRing');
 const crankGlow      = document.getElementById('crankGlow');
 const screenFlash    = document.getElementById('screenFlash');
 const confettiLayer  = document.getElementById('confettiLayer');
-const flapLid        = document.getElementById('flapLid');
 const idlePulse      = document.getElementById('idlePulse');
 const crankBase      = document.querySelector('.crank-base');
 const crankWrap      = document.getElementById('crankWrap');
@@ -206,35 +204,8 @@ function jigglePile(){
 }
 
 // ============================================================
-//  SUSPENSE EFFECTS — เล่นระหว่างรอผลจริงจาก backend
-//  (แทนที่จะปล่อยให้ค้างเฉยๆ ตรงข้อความ "ลุ้นๆ...")
+//  กันไม่ให้ค้างตลอดไปถ้า backend ไม่ตอบเลย
 // ============================================================
-let suspenseDotsTimer = null;
-let suspenseShakeTimers = [];
-const SHAKE_OFFSETS_MS = [100, 550, 1300, 2200]; // จังหวะไม่สมมาตร ถี่ขึ้นเรื่อยๆ ให้รู้สึกใกล้จะได้ผล
-
-function burstShake(capsuleEl){
-  capsuleEl.classList.remove('shake-burst'); void capsuleEl.offsetWidth; capsuleEl.classList.add('shake-burst');
-}
-
-function startSuspenseEffects(capsuleEl){
-  capsuleEl.classList.add('landed'); // แคปซูลขยายใหญ่ขึ้นค้างไว้ระหว่างรอ
-  let dots = 0;
-  suspenseDotsTimer = setInterval(()=>{
-    dots = (dots + 1) % 4;
-    instruction.textContent = "ลุ้นๆ" + ".".repeat(dots);
-  }, 350);
-  suspenseShakeTimers = SHAKE_OFFSETS_MS.map(ms => setTimeout(()=>burstShake(capsuleEl), ms));
-}
-
-function stopSuspenseEffects(){
-  clearInterval(suspenseDotsTimer);
-  suspenseShakeTimers.forEach(t => clearTimeout(t));
-  suspenseShakeTimers = [];
-  suspenseDotsTimer = null;
-}
-
-// กันไม่ให้ค้างตลอดไปถ้า backend ไม่ตอบเลย
 function withTimeout(promise, ms, fallback){
   return Promise.race([
     promise,
@@ -287,40 +258,137 @@ function dropCapsule(milestone, apiPromise){
   falling.style.background = capsuleBg;
   dropZone.appendChild(falling);
   instruction.textContent = "แคปซูลกำลังหล่นลงราง...";
-
   jigglePile();
 
   setTimeout(()=>{
-    flapLid.classList.add('open');
-    startSuspenseEffects(falling);
+    launchCapsuleFullscreen(falling, capsuleBg, milestone, apiPromise, isPaid);
   }, 700);
+}
 
+// ============================================================
+//  แคปซูลเด้งขึ้นบังจอเต็มที่ ค้างลุ้นผลจาก backend
+//  แล้วแตกออกเป็น 2 ซีก เผยป้ายรางวัล (overlay เดิม)
+// ============================================================
+let megaShakeTimers = [];
+let megaDotsTimer = null;
+
+function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, isPaid){
+  const rect = fallingEl.getBoundingClientRect();
+  fallingEl.remove();
+
+  const dim = document.createElement('div');
+  dim.className = 'mega-dim';
+  document.body.appendChild(dim);
+  requestAnimationFrame(()=> dim.classList.add('on'));
+
+  const mega = document.createElement('div');
+  mega.className = 'mega-capsule';
+  mega.style.background = capsuleBg;
+  mega.style.left   = rect.left + 'px';
+  mega.style.top    = rect.top + 'px';
+  mega.style.width  = rect.width + 'px';
+  mega.style.height = rect.height + 'px';
+  document.body.appendChild(mega);
+
+  requestAnimationFrame(()=>{
+    mega.style.transition = 'left .85s cubic-bezier(.22,1.6,.4,1), top .85s cubic-bezier(.22,1.6,.4,1), width .85s cubic-bezier(.22,1.6,.4,1), height .85s cubic-bezier(.22,1.6,.4,1)';
+    const size = Math.min(window.innerWidth, window.innerHeight) * 0.8;
+    mega.style.left   = (window.innerWidth / 2 - size / 2) + 'px';
+    mega.style.top    = (window.innerHeight / 2 - size / 2) + 'px';
+    mega.style.width  = size + 'px';
+    mega.style.height = size + 'px';
+  });
+
+  instruction.textContent = "ลุ้นๆ...";
+  let dots = 0;
+  megaDotsTimer = setInterval(()=>{
+    dots = (dots + 1) % 4;
+    instruction.textContent = "ลุ้นๆ" + ".".repeat(dots);
+  }, 350);
+
+  const SHAKE_OFFSETS_MS = [950, 1500, 2200, 2900]; // เริ่มสั่นหลังเด้งขึ้นบังจอเต็มที่แล้วเท่านั้น
+  megaShakeTimers = SHAKE_OFFSETS_MS.map(ms => setTimeout(()=>{
+    mega.classList.remove('mega-shake'); void mega.offsetWidth; mega.classList.add('mega-shake');
+  }, ms));
+
+  const MIN_LAUNCH_MS = 950; // กันไว้ให้เห็นจังหวะเด้งบังจอเต็มที่ก่อนเสมอ แม้ backend จะตอบเร็วกว่านี้
   setTimeout(async ()=>{
     const result = await apiPromise;
-    stopSuspenseEffects();
 
-    dropZone.innerHTML = "";
-    flapLid.classList.remove('open');
+    clearInterval(megaDotsTimer);
+    megaShakeTimers.forEach(t => clearTimeout(t));
+    megaShakeTimers = [];
 
-    if(!result || !result.success){
-      showToast('❌ ' + (result && result.message || 'เกิดข้อผิดพลาด'), 'error');
-      instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกล่องให้เปิดแล้วตอนนี้";
+    splitCapsuleOpen(mega, dim, ()=>{
+      dropZone.innerHTML = "";
+
+      if(!result || !result.success){
+        showToast('❌ ' + (result && result.message || 'เกิดข้อผิดพลาด'), 'error');
+        instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกล่องให้เปิดแล้วตอนนี้";
+        busy = false;
+        return;
+      }
+
+      // เปิดสำเร็จ — ตัด milestone นี้ออกจาก stock queue จริง
+      stock.shift();
+      delete lootTokens[milestone];
+      renderPile();
+      updatePlateText();
+      pile.classList.add('pile-settle');
+      setTimeout(()=> pile.classList.remove('pile-settle'), 400);
+
+      showResult(milestone, result, isPaid);
+      instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป" : "เปิดครบแล้วตอนนี้";
       busy = false;
-      return;
-    }
+    });
+  }, MIN_LAUNCH_MS);
+}
 
-    // เปิดสำเร็จ — ตัด milestone นี้ออกจาก stock queue จริง
-    stock.shift();
-    delete lootTokens[milestone];
-    renderPile();
-    updatePlateText();
-    pile.classList.add('pile-settle');
-    setTimeout(()=> pile.classList.remove('pile-settle'), 400);
+function splitCapsuleOpen(mega, dim, onDone){
+  const rect = mega.getBoundingClientRect();
 
-    showResult(milestone, result, isPaid);
-    instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป" : "เปิดครบแล้วตอนนี้";
-    busy = false;
-  }, 1050);
+  const top = document.createElement('div');
+  top.className = 'mega-half mega-top';
+  top.style.background = mega.style.background;
+  top.style.left = rect.left + 'px';
+  top.style.top = rect.top + 'px';
+  top.style.width = rect.width + 'px';
+  top.style.height = rect.height + 'px';
+
+  const bottom = document.createElement('div');
+  bottom.className = 'mega-half mega-bottom';
+  bottom.style.background = mega.style.background;
+  bottom.style.left = rect.left + 'px';
+  bottom.style.top = rect.top + 'px';
+  bottom.style.width = rect.width + 'px';
+  bottom.style.height = rect.height + 'px';
+
+  document.body.appendChild(top);
+  document.body.appendChild(bottom);
+  mega.remove();
+
+  const flash = document.createElement('div');
+  flash.className = 'mega-flash';
+  document.body.appendChild(flash);
+  requestAnimationFrame(()=> flash.classList.add('go'));
+
+  requestAnimationFrame(()=>{
+    top.classList.add('mega-split-top');
+    bottom.classList.add('mega-split-bottom');
+  });
+
+  dim.classList.remove('on');
+
+  // เผยป้ายรางวัลทันทีตอนแสงแฟลชขึ้น ไม่ต้องรอซีกแคปซูลบินสุดก่อน
+  setTimeout(()=> onDone(), 180);
+
+  // เคลียร์ element ซีกแคปซูล/แสง/dim ทิ้งหลังเล่นแอนิเมชันจบจริง
+  setTimeout(()=>{
+    top.remove();
+    bottom.remove();
+    dim.remove();
+    flash.remove();
+  }, 640);
 }
 
 function spawnConfetti(count){
@@ -372,15 +440,12 @@ function showResult(milestone, result, isPaid){
 
   screenFlash.classList.remove('go','big'); void screenFlash.offsetWidth;
   document.querySelectorAll('.confetti-piece').forEach(el=>el.remove());
-  stage.classList.remove('shake-big'); void stage.offsetWidth;
 
   if(rarity === 'legendary'){
     screenFlash.classList.add('go','big');
-    stage.classList.add('shake-big');
     setTimeout(()=> spawnConfetti(46), 300);
   } else if(rarity === 'rare'){
     screenFlash.classList.add('go');
-    stage.classList.add('shake-big');
     setTimeout(()=> spawnConfetti(20), 300);
   } else {
     screenFlash.classList.add('go');
