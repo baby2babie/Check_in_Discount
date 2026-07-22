@@ -89,7 +89,6 @@ const crankGlow      = document.getElementById('crankGlow');
 const screenFlash    = document.getElementById('screenFlash');
 const confettiLayer  = document.getElementById('confettiLayer');
 const flapLid        = document.getElementById('flapLid');
-const flapTray       = document.querySelector('.flap-tray');
 const idlePulse      = document.getElementById('idlePulse');
 const crankBase      = document.querySelector('.crank-base');
 const crankWrap      = document.getElementById('crankWrap');
@@ -214,23 +213,21 @@ let suspenseDotsTimer = null;
 let suspenseShakeTimers = [];
 const SHAKE_OFFSETS_MS = [100, 550, 1300, 2200]; // จังหวะไม่สมมาตร ถี่ขึ้นเรื่อยๆ ให้รู้สึกใกล้จะได้ผล
 
-function burstShake(){
-  flapTray.classList.remove('shake-burst'); void flapTray.offsetWidth; flapTray.classList.add('shake-burst');
+function burstShake(capsuleEl){
+  capsuleEl.classList.remove('shake-burst'); void capsuleEl.offsetWidth; capsuleEl.classList.add('shake-burst');
 }
 
-function startSuspenseEffects(){
-  flapTray.classList.add('waiting');
+function startSuspenseEffects(capsuleEl){
+  capsuleEl.classList.add('landed'); // แคปซูลขยายใหญ่ขึ้นค้างไว้ระหว่างรอ
   let dots = 0;
   suspenseDotsTimer = setInterval(()=>{
     dots = (dots + 1) % 4;
     instruction.textContent = "ลุ้นๆ" + ".".repeat(dots);
   }, 350);
-  suspenseShakeTimers = SHAKE_OFFSETS_MS.map(ms => setTimeout(burstShake, ms));
+  suspenseShakeTimers = SHAKE_OFFSETS_MS.map(ms => setTimeout(()=>burstShake(capsuleEl), ms));
 }
 
 function stopSuspenseEffects(){
-  flapTray.classList.remove('waiting');
-  flapTray.classList.remove('shake-burst');
   clearInterval(suspenseDotsTimer);
   suspenseShakeTimers.forEach(t => clearTimeout(t));
   suspenseShakeTimers = [];
@@ -295,7 +292,7 @@ function dropCapsule(milestone, apiPromise){
 
   setTimeout(()=>{
     flapLid.classList.add('open');
-    startSuspenseEffects();
+    startSuspenseEffects(falling);
   }, 700);
 
   setTimeout(async ()=>{
