@@ -186,34 +186,27 @@ h1{
 .capsule{
   position:absolute;
   border-radius:50%;
-  overflow:hidden;
-  box-shadow: inset -4px -5px 6px rgba(0,0,0,.1), inset 3px 4px 6px rgba(255,255,255,.8);
+  background:#DCEEF5;
+  box-shadow:0 3px 6px rgba(46,38,32,.18);
 }
 .capsule-number{
   position:absolute; inset:0;
-  display:flex; align-items:center; justify-content:center;
+  display:flex; align-items:flex-end; justify-content:center;
+  padding-bottom:18%;
   font-family:'Mali', sans-serif; font-weight:700;
-  color:rgba(255,255,255,.92);
-  text-shadow:0 1px 2px rgba(46,38,32,.35);
+  color:rgba(255,255,255,.95);
+  text-shadow:0 1px 2px rgba(0,0,0,.3);
   pointer-events:none;
   z-index:1;
 }
-.capsule::after{
-  content:"";
-  position:absolute;
-  top:16%; left:20%;
-  width:32%; height:22%;
-  background:rgba(255,255,255,.85);
-  border-radius:50%;
-}
 .capsule.shimmer{
   background: radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep)) !important;
-  box-shadow: inset -4px -5px 6px rgba(0,0,0,.1), inset 3px 4px 6px rgba(255,255,255,.8), 0 0 10px rgba(180,130,42,.6);
+  box-shadow: 0 0 10px rgba(180,130,42,.6), 0 3px 6px rgba(46,38,32,.18);
   animation: shimmer-pulse 1.9s ease-in-out infinite;
 }
 @keyframes shimmer-pulse{
-  0%,100%{ box-shadow: inset -4px -5px 6px rgba(0,0,0,.1), inset 3px 4px 6px rgba(255,255,255,.8), 0 0 6px rgba(180,130,42,.4); }
-  50%{ box-shadow: inset -4px -5px 6px rgba(0,0,0,.1), inset 3px 4px 6px rgba(255,255,255,.8), 0 0 16px rgba(180,130,42,.9); }
+  0%,100%{ box-shadow: 0 0 6px rgba(180,130,42,.4), 0 3px 6px rgba(46,38,32,.18); }
+  50%{ box-shadow: 0 0 16px rgba(180,130,42,.9), 0 3px 6px rgba(46,38,32,.18); }
 }
 .pile-settle{ animation: settle .4s ease; }
 @keyframes settle{ 0%{ transform:translateY(-5px); } 60%{ transform:translateY(2px); } 100%{ transform:translateY(0); } }
@@ -360,15 +353,13 @@ h1{
   overflow:hidden;
 }
 .falling-capsule{
-  width:26px; height:26px;
+  width:28px; height:28px;
   border-radius:50%;
   position:absolute;
-  left:50%; margin-left:-13px;
+  left:50%; margin-left:-14px;
   top:-4px;
   box-shadow:
     0 0 0 2px rgba(255,255,255,.95),
-    inset -4px -5px 6px rgba(0,0,0,.1),
-    inset 3px 4px 6px rgba(255,255,255,.9),
     0 6px 12px rgba(0,0,0,.35);
   opacity:0;
 }
@@ -376,23 +367,16 @@ h1{
 @keyframes fall{ 0%{ top:-4px; opacity:1; } 85%{ top:12px; opacity:1; } 100%{ top:9px; opacity:1; } }
 @keyframes spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
 
-.impact-ring{
-  position:absolute; top:16px; left:50%;
-  width:10px; height:10px; border-radius:50%;
-  border:2px solid var(--gold);
-  transform:translate(-50%,-50%) scale(0); opacity:0;
-  pointer-events:none;
+.flap-tray.shake-burst{ animation: tray-shake-burst .32s ease-in-out; }
+@keyframes tray-shake-burst{
+  0%{ transform:translate(0,0) rotate(0deg); }
+  15%{ transform:translate(-3px,1px) rotate(-1.4deg); }
+  35%{ transform:translate(2.4px,-2px) rotate(1.1deg); }
+  55%{ transform:translate(-2px,1.4px) rotate(-.7deg); }
+  75%{ transform:translate(1.2px,-1px) rotate(.4deg); }
+  100%{ transform:translate(0,0) rotate(0deg); }
 }
-.impact-ring.go{ animation: ring-out .5s ease-out forwards; }
-@keyframes ring-out{ 0%{ transform:translate(-50%,-50%) scale(0); opacity:.9; } 100%{ transform:translate(-50%,-50%) scale(5); opacity:0; } }
 
-.cabinet.shake{ animation: shake-it .35s ease; }
-@keyframes shake-it{
-  0%,100%{ transform:translate(0,0); }
-  25%{ transform:translate(-2px,1px); }
-  50%{ transform:translate(2px,-1px); }
-  75%{ transform:translate(-1px,1px); }
-}
 .stage.shake-big{ animation: shake-big .5s ease; }
 @keyframes shake-big{
   0%,100%{ transform:translate(0,0) rotate(0deg); }
@@ -411,6 +395,7 @@ h1{
   box-shadow:inset 0 4px 6px rgba(0,0,0,.12);
 }
 .flap-tray.waiting{ animation: tray-glow 1s ease-in-out infinite; }
+.flap-tray.waiting.shake-burst{ animation: tray-glow 1s ease-in-out infinite, tray-shake-burst .32s ease-in-out; }
 @keyframes tray-glow{
   0%,100%{ box-shadow:inset 0 4px 6px rgba(0,0,0,.12); }
   50%{ box-shadow:inset 0 4px 6px rgba(0,0,0,.12), 0 0 14px 2px rgba(231,185,74,.55); }
@@ -526,20 +511,8 @@ h1{
 }
 .overlay.show{ opacity:1; pointer-events:auto; }
 .reveal-stage{ width:min(270px,100%); display:flex; flex-direction:column; align-items:center; }
-.crack-wrap{ position:relative; width:90px; height:90px; margin-bottom:-16px; }
-.crack-half{
-  position:absolute; width:90px; height:45px; left:0;
-  border-radius:90px 90px 0 0 / 90px 90px 0 0;
-  box-shadow: inset -6px -6px 10px rgba(0,0,0,.1), inset 5px 5px 8px rgba(255,255,255,.8);
-}
-.crack-half.top{ top:0; transform-origin:bottom center; }
-.crack-half.bottom{ bottom:0; border-radius:0 0 90px 90px / 0 0 90px 90px; transform-origin:top center; }
-.overlay.show .crack-half.top{ animation: crack-open-top .5s cubic-bezier(.3,1.4,.5,1) .1s both; }
-.overlay.show .crack-half.bottom{ animation: crack-open-bottom .5s cubic-bezier(.3,1.4,.5,1) .1s both; }
-@keyframes crack-open-top{ 0%{ transform:translateY(24px) rotate(0deg); opacity:0; } 40%{ opacity:1; } 100%{ transform:translateY(-14px) rotate(-16deg); opacity:1; } }
-@keyframes crack-open-bottom{ 0%{ transform:translateY(-24px) rotate(0deg); opacity:0; } 40%{ opacity:1; } 100%{ transform:translateY(14px) rotate(16deg); opacity:1; } }
 
-.burst{ position:absolute; left:50%; top:45px; width:6px; height:6px; border-radius:50%; background:var(--gold); pointer-events:none; opacity:0; }
+.burst{ position:absolute; left:50%; top:-6px; width:6px; height:6px; border-radius:50%; background:var(--gold); pointer-events:none; opacity:0; }
 .burst.go{ animation: burst-fly .6s ease-out .15s forwards; }
 @keyframes burst-fly{ 0%{ opacity:1; transform:translate(-50%,-50%) translate(0,0) scale(1); } 100%{ opacity:0; transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(.2); } }
 
@@ -714,6 +687,6 @@ h1{
 .loading{ text-align:center; color:var(--muted); padding:40px 20px; font-size:14px; }
 
 @media (prefers-reduced-motion: reduce){
-  .falling-capsule.drop, .crank.turn, .cabinet.shake, .cabinet.rumble, .crank-wrap.rumble, .stage.shake-big, .impact-ring.go, .crack-half, .burst.go, .prize-card,
+  .falling-capsule.drop, .crank.turn, .cabinet.rumble, .crank-wrap.rumble, .stage.shake-big, .flap-tray.shake-burst, .burst.go, .prize-card,
   .capsule-pile.jiggle .capsule, .ratchet-tick.go, .crank-glow.go, .screen-flash.go, .confetti-piece, .flap-lid, .dome-glass-hi, .flap-tray.waiting{ animation:none !important; transition:none !important; }
 }

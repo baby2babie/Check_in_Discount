@@ -76,9 +76,7 @@ const dropZone       = document.getElementById('dropZone');
 const instruction    = document.getElementById('instruction');
 const stockCount     = document.getElementById('stockCount');
 const overlay        = document.getElementById('overlay');
-const crackTop       = document.getElementById('crackTop');
-const crackBottom    = document.getElementById('crackBottom');
-const crackWrap      = document.getElementById('crackWrap');
+const prizeCard      = document.getElementById('prizeCard');
 const resultTierLabel = document.getElementById('resultTierLabel');
 const resultPrize    = document.getElementById('resultPrize');
 const resultNote     = document.getElementById('resultNote');
@@ -104,8 +102,26 @@ function dismissTapHints(){
 }
 
 const DOME_FILL = 15;
-const palette = ["#FFC9DE","#BFF3E1","#FFE39A","#C6E6FF","#D9C4FF"]; // pastel capsule variety
+const FROST = "#DCEEF5"; // กระจกฝ้าฟ้าอ่อน — ใช้เป็นสีฐานของทุกลูกเหมือนกันหมด
+const NEW_PALETTE = [
+  { main:"#F2C230", shine:"#FFE58A" },
+  { main:"#2E7FD1", shine:"#6FB4EC" },
+  { main:"#C1372C", shine:"#E8703F" },
+  { main:"#3FA07A", shine:"#7FD1AF" },
+  { main:"#8B5CF6", shine:"#C4B5FD" },
+];
 const CAPSULE_NUMBERS = [5, 10, 15, 20, 25, 30, 50];
+
+// สร้าง background แบบ "โดมฝ้า + แถบสีทแยงมุม + แถบไฮไลต์บาง" ในเลเยอร์เดียว ไม่ต้องมี child element
+function gachaBallBg(mainColor, shineColor, splitPct){
+  const angle = 100;
+  const s = splitPct;
+  return [
+    `radial-gradient(circle at 24% 20%, rgba(255,255,255,.9), rgba(255,255,255,0) 32%)`,
+    `linear-gradient(${angle}deg, transparent 0%, transparent ${s-9}%, ${shineColor} ${s-9}%, ${shineColor} ${s+3}%, transparent ${s+3}%, transparent 100%)`,
+    `linear-gradient(${angle}deg, ${FROST} 0%, ${FROST} ${s}%, ${mainColor} ${s+1}%, ${mainColor} 100%)`
+  ].join(', ');
+}
 
 // stock = milestone keys (string) ที่มีกล่องเปิดได้จริงตอนนี้ เรียงตามลำดับที่จะเปิด
 // lootTokens = { "7": token, "PAID": token, ... } token จริงจาก backend สำหรับแต่ละ milestone
@@ -138,28 +154,20 @@ function renderPile(){
     if(i === paidIndex){
       c.classList.add('shimmer');
     } else {
-      const base = palette[Math.floor(Math.random()*palette.length)];
-      c.style.background = `radial-gradient(circle at 32% 28%, #fff, ${base} 60%, ${shade(base,-14)})`;
-      // ตัวเลขส่วนลดปั๊มอยู่กลางแคปซูล — หมุนไปตามลูก เลยธรรมชาติที่บางลูกจะเห็นเต็ม
+      const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
+      const split = 25 + Math.random() * 40; // สัดส่วนแถบสีต่อลูกไม่เท่ากัน เหมือนของจริง
+      c.style.background = gachaBallBg(col.main, col.shine, split);
+      // ตัวเลขส่วนลดปั๊มอยู่ในโซนสีของแคปซูล — หมุนไปตามลูก เลยธรรมชาติที่บางลูกจะเห็นเต็ม
       // บางลูกโดนลูกอื่นซ้อนทับบังบางส่วน (ซ้อนทับกันเองจากตำแหน่ง/z-index ที่สุ่มไว้อยู่แล้ว)
       const num = document.createElement('div');
       num.className = 'capsule-number';
       num.textContent = CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)];
-      num.style.fontSize = (size * 0.34) + 'px';
+      num.style.fontSize = (size * 0.3) + 'px';
       c.appendChild(num);
     }
     pile.appendChild(c);
   }
   stockCount.textContent = stock.length ? `เปิดได้อีก ${stock.length} กล่อง` : `ไม่มีกล่องให้เปิดตอนนี้`;
-}
-
-function shade(hex, percent){
-  const num = parseInt(hex.replace("#",""),16);
-  let r = (num>>16) + Math.round(255*percent/100);
-  let g = (num>>8 & 0x00FF) + Math.round(255*percent/100);
-  let b = (num & 0x0000FF) + Math.round(255*percent/100);
-  r = Math.max(0,Math.min(255,r)); g = Math.max(0,Math.min(255,g)); b = Math.max(0,Math.min(255,b));
-  return "#" + (0x1000000 + r*0x10000 + g*0x100 + b).toString(16).slice(1);
 }
 
 function rarityOf(amount){
@@ -202,19 +210,12 @@ function jigglePile(){
 //  SUSPENSE EFFECTS — เล่นระหว่างรอผลจริงจาก backend
 //  (แทนที่จะปล่อยให้ค้างเฉยๆ ตรงข้อความ "ลุ้นๆ...")
 // ============================================================
-let suspenseRingTimer = null;
 let suspenseDotsTimer = null;
+let suspenseShakeTimers = [];
+const SHAKE_OFFSETS_MS = [100, 550, 1300, 2200]; // จังหวะไม่สมมาตร ถี่ขึ้นเรื่อยๆ ให้รู้สึกใกล้จะได้ผล
 
-function spawnPulseRing(){
-  const ring = document.createElement('div');
-  ring.className = 'impact-ring go';
-  dropZone.appendChild(ring);
-  const ring2 = document.createElement('div');
-  ring2.className = 'impact-ring go';
-  ring2.style.animationDelay = '90ms';
-  ring2.style.borderColor = 'var(--red-light)';
-  dropZone.appendChild(ring2);
-  setTimeout(()=>{ ring.remove(); ring2.remove(); }, 650);
+function burstShake(){
+  flapTray.classList.remove('shake-burst'); void flapTray.offsetWidth; flapTray.classList.add('shake-burst');
 }
 
 function startSuspenseEffects(){
@@ -224,14 +225,15 @@ function startSuspenseEffects(){
     dots = (dots + 1) % 4;
     instruction.textContent = "ลุ้นๆ" + ".".repeat(dots);
   }, 350);
-  suspenseRingTimer = setInterval(spawnPulseRing, 550);
+  suspenseShakeTimers = SHAKE_OFFSETS_MS.map(ms => setTimeout(burstShake, ms));
 }
 
 function stopSuspenseEffects(){
   flapTray.classList.remove('waiting');
-  clearInterval(suspenseRingTimer);
+  flapTray.classList.remove('shake-burst');
   clearInterval(suspenseDotsTimer);
-  suspenseRingTimer = null;
+  suspenseShakeTimers.forEach(t => clearTimeout(t));
+  suspenseShakeTimers = [];
   suspenseDotsTimer = null;
 }
 
@@ -278,31 +280,22 @@ function playOpen(){
 
 function dropCapsule(milestone, apiPromise){
   const isPaid = milestone === 'PAID';
-  const capsuleGrad = isPaid
+  const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
+  const capsuleBg = isPaid
     ? `radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`
-    : `radial-gradient(circle at 32% 28%, #fff, ${palette[Math.floor(Math.random()*palette.length)]} 60%)`;
+    : gachaBallBg(col.main, col.shine, 35 + Math.random()*30);
 
   const falling = document.createElement('div');
   falling.className = 'falling-capsule drop';
-  falling.style.background = capsuleGrad;
+  falling.style.background = capsuleBg;
   dropZone.appendChild(falling);
   instruction.textContent = "แคปซูลกำลังหล่นลงราง...";
 
   jigglePile();
 
   setTimeout(()=>{
-    cabinet.classList.add('shake');
-    const ring = document.createElement('div');
-    ring.className = 'impact-ring go';
-    dropZone.appendChild(ring);
-    const ring2 = document.createElement('div');
-    ring2.className = 'impact-ring go';
-    ring2.style.animationDelay = '80ms';
-    ring2.style.borderColor = 'var(--red-light)';
-    dropZone.appendChild(ring2);
     flapLid.classList.add('open');
     startSuspenseEffects();
-    setTimeout(()=> cabinet.classList.remove('shake'), 350);
   }, 700);
 
   setTimeout(async ()=>{
@@ -355,12 +348,6 @@ function showResult(milestone, result, isPaid){
   const amount = Number(result.discount_amount) || 0;
   const rarity = rarityOf(amount);
 
-  const capGrad = isPaid
-    ? `radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`
-    : `radial-gradient(circle at 32% 28%, #fff, ${palette[Math.floor(Math.random()*palette.length)]} 60%)`;
-  crackTop.style.background = capGrad;
-  crackBottom.style.background = capGrad;
-
   resultTierLabel.textContent = (stockLabels[milestone] || milestone).toUpperCase();
   resultPrize.textContent = `ส่วนลด ${amount} บาท`;
   resultNote.textContent = isPaid
@@ -372,9 +359,6 @@ function showResult(milestone, result, isPaid){
   if(rarity !== 'common'){ void rarityRibbon.offsetWidth; rarityRibbon.classList.add('shine'); }
 
   document.querySelectorAll('.burst').forEach(el=>el.remove());
-  crackTop.style.animation = 'none'; crackBottom.style.animation = 'none';
-  void crackWrap.offsetWidth;
-  crackTop.style.animation = ''; crackBottom.style.animation = '';
 
   const count = rarity === 'legendary' ? 28 : rarity === 'rare' ? 18 : 9;
   for(let i=0;i<count;i++){
@@ -384,8 +368,8 @@ function showResult(milestone, result, isPaid){
     const dist = 30 + Math.random()*30;
     b.style.setProperty('--dx', `${Math.cos(angle)*dist}px`);
     b.style.setProperty('--dy', `${Math.sin(angle)*dist}px`);
-    b.style.background = Math.random() > .5 ? 'var(--gold)' : palette[Math.floor(Math.random()*palette.length)];
-    crackWrap.appendChild(b);
+    b.style.background = Math.random() > .5 ? 'var(--gold)' : NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)].main;
+    prizeCard.appendChild(b);
     setTimeout(()=> b.classList.add('go'), 10);
   }
 
