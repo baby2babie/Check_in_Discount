@@ -77,16 +77,23 @@ const instruction    = document.getElementById('instruction');
 const stockCount     = document.getElementById('stockCount');
 const overlay        = document.getElementById('overlay');
 const prizeCard      = document.getElementById('prizeCard');
+const bigCapsule     = document.getElementById('bigCapsule');
+const halfTop        = document.getElementById('halfTop');
+const halfBottom     = document.getElementById('halfBottom');
+const halfTopInner   = document.getElementById('halfTopInner');
+const halfBottomInner = document.getElementById('halfBottomInner');
 const resultTierLabel = document.getElementById('resultTierLabel');
 const resultPrize    = document.getElementById('resultPrize');
 const resultNote     = document.getElementById('resultNote');
 const rarityRibbon   = document.getElementById('rarityRibbon');
 const closeBtn       = document.getElementById('closeBtn');
 const cabinet        = document.querySelector('.cabinet');
+const stage          = document.querySelector('.stage');
 const tickRing       = document.getElementById('tickRing');
 const crankGlow      = document.getElementById('crankGlow');
 const screenFlash    = document.getElementById('screenFlash');
 const confettiLayer  = document.getElementById('confettiLayer');
+const flapLid        = document.getElementById('flapLid');
 const idlePulse      = document.getElementById('idlePulse');
 const crankBase      = document.querySelector('.crank-base');
 const crankWrap      = document.getElementById('crankWrap');
@@ -100,6 +107,7 @@ function dismissTapHints(){
 
 const DOME_FILL = 15;
 const FROST = "#DCEEF5"; // กระจกฝ้าฟ้าอ่อน — ใช้เป็นสีฐานของทุกลูกเหมือนกันหมด
+const BAND_ANGLE = 100; // มุมแถบสี/ตะเข็บ — ใช้ร่วมกันทั้ง background และการหมุนตัวเลขให้ตรงแนวตะเข็บ
 const NEW_PALETTE = [
   { main:"#F2C230", shine:"#FFE58A" },
   { main:"#2E7FD1", shine:"#6FB4EC" },
@@ -109,15 +117,30 @@ const NEW_PALETTE = [
 ];
 const CAPSULE_NUMBERS = [5, 10, 15, 20, 25, 30, 50];
 
-// สร้าง background แบบ "โดมฝ้า + แถบสีทแยงมุม + แถบไฮไลต์บาง" ในเลเยอร์เดียว ไม่ต้องมี child element
-function gachaBallBg(mainColor, shineColor, splitPct){
-  const angle = 100;
+function shadeColor(hex, percent){
+  const num = parseInt(hex.replace("#",""), 16);
+  let r = (num>>16) + Math.round(255*percent/100);
+  let g = ((num>>8)&0x00FF) + Math.round(255*percent/100);
+  let b = (num&0x0000FF) + Math.round(255*percent/100);
+  r = Math.max(0,Math.min(255,r)); g = Math.max(0,Math.min(255,g)); b = Math.max(0,Math.min(255,b));
+  return "#" + (0x1000000 + r*0x10000 + g*0x100 + b).toString(16).slice(1);
+}
+
+// สร้าง background แบบ "โดมฝ้า + แถบสีทแยงมุมไล่เฉดมีมิติ + ตะเข็บบาง + ไฮไลต์ฟุ้ง" ในเลเยอร์เดียว
+// คืนทั้ง background string และสีเงาที่เข้าชุดกัน (ใช้กับ box-shadow ให้ดูพรีเมียมขึ้น ไม่ใช่เงาดำแบน)
+function gachaBallStyle(mainColor, shineColor, splitPct){
+  const angle = BAND_ANGLE;
   const s = splitPct;
-  return [
-    `radial-gradient(circle at 24% 20%, rgba(255,255,255,.9), rgba(255,255,255,0) 32%)`,
-    `linear-gradient(${angle}deg, transparent 0%, transparent ${s-9}%, ${shineColor} ${s-9}%, ${shineColor} ${s+3}%, transparent ${s+3}%, transparent 100%)`,
-    `linear-gradient(${angle}deg, ${FROST} 0%, ${FROST} ${s}%, ${mainColor} ${s+1}%, ${mainColor} 100%)`
+  const mainLight = shadeColor(mainColor, 14);
+  const mainDark  = shadeColor(mainColor, -20);
+  const seam      = shadeColor(mainColor, -30);
+  const background = [
+    `radial-gradient(circle at 22% 18%, rgba(255,255,255,.95), rgba(255,255,255,0) 34%)`,               // ไฮไลต์ฟุ้งนุ่ม
+    `linear-gradient(${angle}deg, transparent 0%, transparent ${s-9}%, ${shineColor} ${s-9}%, ${shineColor} ${s+3}%, transparent ${s+3}%, transparent 100%)`, // แถบชายน์
+    `linear-gradient(${angle}deg, transparent 0%, transparent ${s-0.6}%, ${seam} ${s-0.6}%, ${seam} ${s+0.6}%, transparent ${s+0.6}%, transparent 100%)`,   // ตะเข็บบาง
+    `linear-gradient(${angle}deg, ${FROST} 0%, ${FROST} ${s}%, ${mainLight} ${s+1}%, ${mainColor} ${s+18}%, ${mainDark} 100%)` // แถบสีไล่เฉดมีมิติ
   ].join(', ');
+  return { background, shadowHex: mainDark };
 }
 
 // stock = milestone keys (string) ที่มีกล่องเปิดได้จริงตอนนี้ เรียงตามลำดับที่จะเปิด
@@ -137,7 +160,7 @@ function renderPile(){
     const size = 26 + Math.random() * 20;
     const left = Math.random() * 78;
     const top = 26 + Math.pow(Math.random(), 1.7) * 70;
-    const rot = (Math.random() * 34 - 17).toFixed(1);
+    const rot = (Math.random() * 360).toFixed(1); // หมุนเต็มวง สุ่มทิศทางอิสระ เหมือนแคปซูลถูกเขย่าคละกันจริงๆ
 
     c.style.width = size + "px";
     c.style.height = size + "px";
@@ -153,13 +176,17 @@ function renderPile(){
     } else {
       const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
       const split = 25 + Math.random() * 40; // สัดส่วนแถบสีต่อลูกไม่เท่ากัน เหมือนของจริง
-      c.style.background = gachaBallBg(col.main, col.shine, split);
-      // ตัวเลขส่วนลดปั๊มอยู่ในโซนสีของแคปซูล — หมุนไปตามลูก เลยธรรมชาติที่บางลูกจะเห็นเต็ม
-      // บางลูกโดนลูกอื่นซ้อนทับบังบางส่วน (ซ้อนทับกันเองจากตำแหน่ง/z-index ที่สุ่มไว้อยู่แล้ว)
+      const { background, shadowHex } = gachaBallStyle(col.main, col.shine, split);
+      c.style.background = background;
+      c.style.setProperty('--shadow-color', shadowHex + 'B3');
+      // ตัวเลขส่วนลดปั๊มอยู่ในโซนสีของแคปซูล — หมุนตามแนวตะเข็บ (BAND_ANGLE) ไม่ใช่แนวนอนตรงๆ
+      // เพราะแนวนอนจะตัดกับแนวตะเข็บทแยงมุมเกือบ 90 องศา ดูขัดตา ไม่เป็นธรรมชาติ
+      // ตำแหน่งไม่บังคับกึ่งกลางเป๊ะ เพราะแคปซูลกลิ้งคละทิศทางแล้ว ขอแค่อยู่ในโซนสีคร่าวๆ ก็พอ
       const num = document.createElement('div');
       num.className = 'capsule-number';
       num.textContent = CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)];
       num.style.fontSize = (size * 0.3) + 'px';
+      num.style.transform = `rotate(${BAND_ANGLE}deg)`;
       c.appendChild(num);
     }
     pile.appendChild(c);
@@ -249,146 +276,49 @@ function playOpen(){
 function dropCapsule(milestone, apiPromise){
   const isPaid = milestone === 'PAID';
   const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
-  const capsuleBg = isPaid
-    ? `radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`
-    : gachaBallBg(col.main, col.shine, 35 + Math.random()*30);
+  const { background, shadowHex } = isPaid
+    ? { background:`radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`, shadowHex:'#B4822A' }
+    : gachaBallStyle(col.main, col.shine, 35 + Math.random()*30);
 
   const falling = document.createElement('div');
   falling.className = 'falling-capsule drop';
-  falling.style.background = capsuleBg;
+  falling.style.background = background;
+  falling.style.setProperty('--shadow-color', shadowHex + 'B3');
   dropZone.appendChild(falling);
   instruction.textContent = "แคปซูลกำลังหล่นลงราง...";
+
   jigglePile();
 
   setTimeout(()=>{
-    launchCapsuleFullscreen(falling, capsuleBg, milestone, apiPromise, isPaid);
+    flapLid.classList.add('open');
+    falling.classList.add('landed'); // ตกถึงพื้นแล้วเด่งทันที ไม่มีช่วงลุ้นค้างรอ
   }, 700);
-}
 
-// ============================================================
-//  แคปซูลเด้งขึ้นบังจอเต็มที่ ค้างลุ้นผลจาก backend
-//  แล้วแตกออกเป็น 2 ซีก เผยป้ายรางวัล (overlay เดิม)
-// ============================================================
-let megaShakeTimers = [];
-let megaDotsTimer = null;
-
-function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, isPaid){
-  const rect = fallingEl.getBoundingClientRect();
-  fallingEl.remove();
-
-  const dim = document.createElement('div');
-  dim.className = 'mega-dim';
-  document.body.appendChild(dim);
-  requestAnimationFrame(()=> dim.classList.add('on'));
-
-  const mega = document.createElement('div');
-  mega.className = 'mega-capsule';
-  mega.style.background = capsuleBg;
-  mega.style.left   = rect.left + 'px';
-  mega.style.top    = rect.top + 'px';
-  mega.style.width  = rect.width + 'px';
-  mega.style.height = rect.height + 'px';
-  document.body.appendChild(mega);
-
-  requestAnimationFrame(()=>{
-    mega.style.transition = 'left .85s cubic-bezier(.22,1.6,.4,1), top .85s cubic-bezier(.22,1.6,.4,1), width .85s cubic-bezier(.22,1.6,.4,1), height .85s cubic-bezier(.22,1.6,.4,1)';
-    const size = Math.min(window.innerWidth, window.innerHeight) * 0.8;
-    mega.style.left   = (window.innerWidth / 2 - size / 2) + 'px';
-    mega.style.top    = (window.innerHeight / 2 - size / 2) + 'px';
-    mega.style.width  = size + 'px';
-    mega.style.height = size + 'px';
-  });
-
-  instruction.textContent = "ลุ้นๆ...";
-  let dots = 0;
-  megaDotsTimer = setInterval(()=>{
-    dots = (dots + 1) % 4;
-    instruction.textContent = "ลุ้นๆ" + ".".repeat(dots);
-  }, 350);
-
-  const SHAKE_OFFSETS_MS = [950, 1500, 2200, 2900]; // เริ่มสั่นหลังเด้งขึ้นบังจอเต็มที่แล้วเท่านั้น
-  megaShakeTimers = SHAKE_OFFSETS_MS.map(ms => setTimeout(()=>{
-    mega.classList.remove('mega-shake'); void mega.offsetWidth; mega.classList.add('mega-shake');
-  }, ms));
-
-  const MIN_LAUNCH_MS = 950; // กันไว้ให้เห็นจังหวะเด้งบังจอเต็มที่ก่อนเสมอ แม้ backend จะตอบเร็วกว่านี้
   setTimeout(async ()=>{
     const result = await apiPromise;
 
-    clearInterval(megaDotsTimer);
-    megaShakeTimers.forEach(t => clearTimeout(t));
-    megaShakeTimers = [];
+    dropZone.innerHTML = "";
+    flapLid.classList.remove('open');
 
-    splitCapsuleOpen(mega, dim, ()=>{
-      dropZone.innerHTML = "";
-
-      if(!result || !result.success){
-        showToast('❌ ' + (result && result.message || 'เกิดข้อผิดพลาด'), 'error');
-        instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกล่องให้เปิดแล้วตอนนี้";
-        busy = false;
-        return;
-      }
-
-      // เปิดสำเร็จ — ตัด milestone นี้ออกจาก stock queue จริง
-      stock.shift();
-      delete lootTokens[milestone];
-      renderPile();
-      updatePlateText();
-      pile.classList.add('pile-settle');
-      setTimeout(()=> pile.classList.remove('pile-settle'), 400);
-
-      showResult(milestone, result, isPaid);
-      instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป" : "เปิดครบแล้วตอนนี้";
+    if(!result || !result.success){
+      showToast('❌ ' + (result && result.message || 'เกิดข้อผิดพลาด'), 'error');
+      instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกล่องให้เปิดแล้วตอนนี้";
       busy = false;
-    });
-  }, MIN_LAUNCH_MS);
-}
+      return;
+    }
 
-function splitCapsuleOpen(mega, dim, onDone){
-  const rect = mega.getBoundingClientRect();
+    // เปิดสำเร็จ — ตัด milestone นี้ออกจาก stock queue จริง
+    stock.shift();
+    delete lootTokens[milestone];
+    renderPile();
+    updatePlateText();
+    pile.classList.add('pile-settle');
+    setTimeout(()=> pile.classList.remove('pile-settle'), 400);
 
-  const top = document.createElement('div');
-  top.className = 'mega-half mega-top';
-  top.style.background = mega.style.background;
-  top.style.left = rect.left + 'px';
-  top.style.top = rect.top + 'px';
-  top.style.width = rect.width + 'px';
-  top.style.height = rect.height + 'px';
-
-  const bottom = document.createElement('div');
-  bottom.className = 'mega-half mega-bottom';
-  bottom.style.background = mega.style.background;
-  bottom.style.left = rect.left + 'px';
-  bottom.style.top = rect.top + 'px';
-  bottom.style.width = rect.width + 'px';
-  bottom.style.height = rect.height + 'px';
-
-  document.body.appendChild(top);
-  document.body.appendChild(bottom);
-  mega.remove();
-
-  const flash = document.createElement('div');
-  flash.className = 'mega-flash';
-  document.body.appendChild(flash);
-  requestAnimationFrame(()=> flash.classList.add('go'));
-
-  requestAnimationFrame(()=>{
-    top.classList.add('mega-split-top');
-    bottom.classList.add('mega-split-bottom');
-  });
-
-  dim.classList.remove('on');
-
-  // เผยป้ายรางวัลทันทีตอนแสงแฟลชขึ้น ไม่ต้องรอซีกแคปซูลบินสุดก่อน
-  setTimeout(()=> onDone(), 180);
-
-  // เคลียร์ element ซีกแคปซูล/แสง/dim ทิ้งหลังเล่นแอนิเมชันจบจริง
-  setTimeout(()=>{
-    top.remove();
-    bottom.remove();
-    dim.remove();
-    flash.remove();
-  }, 640);
+    showResult(milestone, result, isPaid);
+    instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป" : "เปิดครบแล้วตอนนี้";
+    busy = false;
+  }, 750);
 }
 
 function spawnConfetti(count){
@@ -421,37 +351,62 @@ function showResult(milestone, result, isPaid){
 
   rarityRibbon.textContent = rarity === 'legendary' ? '★ พิเศษสุด' : rarity === 'rare' ? '✦ หายาก' : '✓ ธรรมดา';
   rarityRibbon.classList.remove('shine');
-  if(rarity !== 'common'){ void rarityRibbon.offsetWidth; rarityRibbon.classList.add('shine'); }
 
+  // สีแคปซูลลูกใหญ่ที่จะเด้งเข้ามาบัง แล้วแตกออกเป็น 2 ซีก — โทนเดียวกับแคปซูลในโดม
+  const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
+  const { background: capsuleBg, shadowHex } = isPaid
+    ? { background:`radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`, shadowHex:'#B4822A' }
+    : gachaBallStyle(col.main, col.shine, 35 + Math.random()*30);
+  bigCapsule.style.background = capsuleBg;
+  bigCapsule.style.setProperty('--shadow-color', shadowHex + 'B3');
+  halfTopInner.style.background = capsuleBg;
+  halfBottomInner.style.background = capsuleBg;
+
+  // รีเซ็ตสถานะแอนิเมชันทั้งหมดก่อนเล่นใหม่
+  bigCapsule.classList.remove('bounce-in','hide');
+  halfTop.classList.remove('crack-go');
+  halfBottom.classList.remove('crack-go');
   document.querySelectorAll('.burst').forEach(el=>el.remove());
-
-  const count = rarity === 'legendary' ? 28 : rarity === 'rare' ? 18 : 9;
-  for(let i=0;i<count;i++){
-    const b = document.createElement('div');
-    b.className = 'burst';
-    const angle = Math.random()*Math.PI*2;
-    const dist = 30 + Math.random()*30;
-    b.style.setProperty('--dx', `${Math.cos(angle)*dist}px`);
-    b.style.setProperty('--dy', `${Math.sin(angle)*dist}px`);
-    b.style.background = Math.random() > .5 ? 'var(--gold)' : NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)].main;
-    prizeCard.appendChild(b);
-    setTimeout(()=> b.classList.add('go'), 10);
-  }
-
-  screenFlash.classList.remove('go','big'); void screenFlash.offsetWidth;
   document.querySelectorAll('.confetti-piece').forEach(el=>el.remove());
-
-  if(rarity === 'legendary'){
-    screenFlash.classList.add('go','big');
-    setTimeout(()=> spawnConfetti(46), 300);
-  } else if(rarity === 'rare'){
-    screenFlash.classList.add('go');
-    setTimeout(()=> spawnConfetti(20), 300);
-  } else {
-    screenFlash.classList.add('go');
-  }
+  screenFlash.classList.remove('go','big');
+  stage.classList.remove('shake-big');
+  prizeCard.classList.remove('reveal');
+  void bigCapsule.offsetWidth;
 
   overlay.classList.remove('show'); void overlay.offsetWidth; overlay.classList.add('show');
+  bigCapsule.classList.add('bounce-in');
+
+  // ~950ms: แคปซูลเด้งนิ่งแล้ว — แฟลช + เริ่มแตกออกเป็น 2 ซีก
+  setTimeout(()=>{
+    screenFlash.classList.add('go');
+    if(rarity === 'legendary') screenFlash.classList.add('big');
+    if(rarity !== 'common') stage.classList.add('shake-big');
+    bigCapsule.classList.add('hide');
+    halfTop.classList.add('crack-go');
+    halfBottom.classList.add('crack-go');
+  }, 950);
+
+  // ~1350ms: แฟลชหายพอดี — ป้ายรางวัลโผล่ขึ้นมาทันที ไม่มีอนิเมชันลอยเข้า
+  setTimeout(()=>{
+    prizeCard.classList.add('reveal');
+    if(rarity !== 'common'){ rarityRibbon.classList.remove('shine'); void rarityRibbon.offsetWidth; rarityRibbon.classList.add('shine'); }
+
+    const count = rarity === 'legendary' ? 28 : rarity === 'rare' ? 18 : 9;
+    for(let i=0;i<count;i++){
+      const b = document.createElement('div');
+      b.className = 'burst';
+      const angle = Math.random()*Math.PI*2;
+      const dist = 30 + Math.random()*30;
+      b.style.setProperty('--dx', `${Math.cos(angle)*dist}px`);
+      b.style.setProperty('--dy', `${Math.sin(angle)*dist}px`);
+      b.style.background = Math.random() > .5 ? 'var(--gold)' : NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)].main;
+      prizeCard.appendChild(b);
+      setTimeout(()=> b.classList.add('go'), 10);
+    }
+
+    if(rarity === 'legendary') spawnConfetti(46);
+    else if(rarity === 'rare') spawnConfetti(20);
+  }, 1350);
 }
 
 closeBtn.addEventListener('click', ()=> overlay.classList.remove('show'));
