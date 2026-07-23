@@ -369,21 +369,6 @@ h1{
 @keyframes fall{ 0%{ top:-4px; opacity:1; } 85%{ top:12px; opacity:1; } 100%{ top:9px; opacity:1; } }
 @keyframes spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
 
-.falling-capsule.landed{
-  transition: transform .38s cubic-bezier(.34,1.56,.42,1);
-  transform: scale(3.6);
-  z-index:6;
-}
-.falling-capsule.shake-burst{ animation: capsule-shake-burst .32s ease-in-out; }
-@keyframes capsule-shake-burst{
-  0%{ transform: scale(3.6) translate(0,0) rotate(0deg); }
-  15%{ transform: scale(3.6) translate(-3.5px,1.2px) rotate(-4deg); }
-  35%{ transform: scale(3.6) translate(2.6px,-2.2px) rotate(3.4deg); }
-  55%{ transform: scale(3.6) translate(-2px,1.6px) rotate(-2deg); }
-  75%{ transform: scale(3.6) translate(1.2px,-1px) rotate(1.2deg); }
-  100%{ transform: scale(3.6) translate(0,0) rotate(0deg); }
-}
-
 .stage.shake-big{ animation: shake-big .5s ease; }
 @keyframes shake-big{
   0%,100%{ transform:translate(0,0) rotate(0deg); }
@@ -465,8 +450,8 @@ h1{
 .screen-flash{ position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:15; }
 .screen-flash.go{ animation: flash-pop .4s ease; }
 .screen-flash.go.big{ animation: flash-pop-big .5s ease; }
-@keyframes flash-pop{ 0%{ opacity:0; } 18%{ opacity:.55; } 100%{ opacity:0; } }
-@keyframes flash-pop-big{ 0%{ opacity:0; } 15%{ opacity:.9; } 100%{ opacity:0; } }
+@keyframes flash-pop{ 0%{ opacity:0; } 18%{ opacity:.96; } 100%{ opacity:0; } }
+@keyframes flash-pop-big{ 0%{ opacity:0; } 15%{ opacity:1; } 100%{ opacity:0; } }
 
 .confetti-layer{ position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:65; }
 .confetti-piece{ position:absolute; top:-20px; border-radius:2px; opacity:.95; animation: confetti-fall linear forwards; }
@@ -730,7 +715,7 @@ h1{
 .loading{ text-align:center; color:var(--muted); padding:40px 20px; font-size:14px; }
 
 @media (prefers-reduced-motion: reduce){
-  .falling-capsule.drop, .falling-capsule.landed, .falling-capsule.shake-burst, .crank.turn, .cabinet.rumble, .crank-wrap.rumble, .stage.shake-big, .burst.go, .prize-card,
+  .falling-capsule.drop, .crank.turn, .cabinet.rumble, .crank-wrap.rumble, .stage.shake-big, .burst.go, .prize-card,
   .capsule-pile.jiggle .capsule, .ratchet-tick.go, .crank-glow.go, .screen-flash.go, .confetti-piece, .flap-lid, .dome-glass-hi{ animation:none !important; transition:none !important; }
   .big-capsule, .half{ display:none !important; }
   .overlay.show .prize-card{ opacity:1 !important; transform:none !important; }

@@ -287,36 +287,66 @@ function dropCapsule(milestone, apiPromise){
 
   jigglePile();
 
-  setTimeout(async ()=>{
-    // แคปซูลตกถึงพื้นแล้วเด้งเข้าที่ทันที ไม่ต้องมีขั้นตอน "ลุ้นๆ" คั่นเวลาอีก
+  setTimeout(()=>{
+    // แคปซูลตกถึงถาดแล้ว ต่อเนื่องไปเลยด้วยการเด้งบังเต็มจอลูกเดียวกัน (สีเดิม) ไม่มีขั้นตอนค้างรอคั่นกลาง
     flapLid.classList.add('open');
-    falling.classList.add('landed');
-    instruction.textContent = "กำลังเปิดกล่อง...";
-
-    const result = await apiPromise;
-
-    dropZone.innerHTML = "";
-    flapLid.classList.remove('open');
-
-    if(!result || !result.success){
-      showToast('❌ ' + (result && result.message || 'เกิดข้อผิดพลาด'), 'error');
-      instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกล่องให้เปิดแล้วตอนนี้";
-      busy = false;
-      return;
-    }
-
-    // เปิดสำเร็จ — ตัด milestone นี้ออกจาก stock queue จริง
-    stock.shift();
-    delete lootTokens[milestone];
-    renderPile();
-    updatePlateText();
-    pile.classList.add('pile-settle');
-    setTimeout(()=> pile.classList.remove('pile-settle'), 400);
-
-    showResult(milestone, result, isPaid);
-    instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป" : "เปิดครบแล้วตอนนี้";
-    busy = false;
+    revealSequence(milestone, apiPromise, isPaid, background, shadowHex);
+    setTimeout(()=>{
+      dropZone.innerHTML = "";
+      flapLid.classList.remove('open');
+    }, 180);
   }, 750);
+}
+
+// แคปซูลลูกใหญ่เด้งเข้ามาบังจอทันทีที่ตกถึงถาด (สีเดียวกับที่เพิ่งหล่นลงมา) ไม่ต้องรอผลจาก backend ก่อน
+function beginCapsuleCover(capsuleBg, shadowHex){
+  bigCapsule.style.background = capsuleBg;
+  bigCapsule.style.setProperty('--shadow-color', shadowHex + 'B3');
+  halfTopInner.style.background = capsuleBg;
+  halfBottomInner.style.background = capsuleBg;
+
+  bigCapsule.classList.remove('bounce-in','hide');
+  halfTop.classList.remove('crack-go');
+  halfBottom.classList.remove('crack-go');
+  prizeCard.classList.remove('reveal');
+  document.querySelectorAll('.burst').forEach(el=>el.remove());
+  document.querySelectorAll('.confetti-piece').forEach(el=>el.remove());
+  screenFlash.classList.remove('go','big');
+  stage.classList.remove('shake-big');
+  void bigCapsule.offsetWidth;
+
+  overlay.classList.remove('show'); void overlay.offsetWidth; overlay.classList.add('show');
+  bigCapsule.classList.add('bounce-in');
+}
+
+async function revealSequence(milestone, apiPromise, isPaid, capsuleBg, shadowHex){
+  beginCapsuleCover(capsuleBg, shadowHex);
+  const bounceStartedAt = Date.now();
+  instruction.textContent = "กำลังเปิดกล่อง...";
+
+  const result = await apiPromise;
+
+  if(!result || !result.success){
+    overlay.classList.remove('show');
+    showToast('❌ ' + (result && result.message || 'เกิดข้อผิดพลาด'), 'error');
+    instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกล่องให้เปิดแล้วตอนนี้";
+    busy = false;
+    return;
+  }
+
+  // เปิดสำเร็จ — ตัด milestone นี้ออกจาก stock queue จริง
+  stock.shift();
+  delete lootTokens[milestone];
+  renderPile();
+  updatePlateText();
+  pile.classList.add('pile-settle');
+  setTimeout(()=> pile.classList.remove('pile-settle'), 400);
+
+  // ให้แคปซูลเด้งบังจอเสร็จสมบูรณ์ก่อนค่อยแตกออก (เผื่อ backend ตอบเร็วกว่า .65s ของอนิเมชันเด้ง)
+  const bounceRemaining = Math.max(0, 650 - (Date.now() - bounceStartedAt));
+  showResult(milestone, result, isPaid, bounceRemaining);
+  instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป" : "เปิดครบแล้วตอนนี้";
+  busy = false;
 }
 
 function spawnConfetti(count){
@@ -337,7 +367,7 @@ function spawnConfetti(count){
   }
 }
 
-function showResult(milestone, result, isPaid){
+function showResult(milestone, result, isPaid, revealDelay){
   const amount = Number(result.discount_amount) || 0;
   const rarity = rarityOf(amount);
 
@@ -350,31 +380,7 @@ function showResult(milestone, result, isPaid){
   rarityRibbon.textContent = rarity === 'legendary' ? '★ พิเศษสุด' : rarity === 'rare' ? '✦ หายาก' : '✓ ธรรมดา';
   rarityRibbon.classList.remove('shine');
 
-  // สีแคปซูลลูกใหญ่ที่จะเด้งเข้ามาบัง แล้วแตกออกเป็น 2 ซีก — โทนเดียวกับแคปซูลในโดม
-  const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
-  const { background: capsuleBg, shadowHex } = isPaid
-    ? { background:`radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`, shadowHex:'#B4822A' }
-    : gachaBallStyle(col.main, col.shine, 35 + Math.random()*30);
-  bigCapsule.style.background = capsuleBg;
-  bigCapsule.style.setProperty('--shadow-color', shadowHex + 'B3');
-  halfTopInner.style.background = capsuleBg;
-  halfBottomInner.style.background = capsuleBg;
-
-  // รีเซ็ตสถานะแอนิเมชันทั้งหมดก่อนเล่นใหม่
-  bigCapsule.classList.remove('bounce-in','hide');
-  halfTop.classList.remove('crack-go');
-  halfBottom.classList.remove('crack-go');
-  prizeCard.classList.remove('reveal');
-  document.querySelectorAll('.burst').forEach(el=>el.remove());
-  document.querySelectorAll('.confetti-piece').forEach(el=>el.remove());
-  screenFlash.classList.remove('go','big');
-  stage.classList.remove('shake-big');
-  void bigCapsule.offsetWidth;
-
-  overlay.classList.remove('show'); void overlay.offsetWidth; overlay.classList.add('show');
-  bigCapsule.classList.add('bounce-in');
-
-  // ~650ms: แคปซูลเด้งนิ่งแล้ว — แฟลชจ้าทันที แตกออกเป็น 2 ซีก และโชว์ป้ายรางวัลพร้อมกันเลย
+  // แฟลชขาวเต็มจอ + แตกฝาแคปซูล + โชว์ป้ายรางวัลพร้อมกันทันที ต่อเนื่องจากแคปซูลที่เด้งบังจอไปแล้ว
   // (ไม่ลอยเข้ามาแบบเดิม — พอแสงแฟลชหาย ป้ายรางวัลก็โผล่ให้เห็นทันที)
   setTimeout(()=>{
     screenFlash.classList.add('go');
@@ -402,7 +408,7 @@ function showResult(milestone, result, isPaid){
 
     if(rarity === 'legendary') spawnConfetti(46);
     else if(rarity === 'rare') spawnConfetti(20);
-  }, 650);
+  }, revealDelay || 0);
 }
 
 closeBtn.addEventListener('click', ()=> overlay.classList.remove('show'));
