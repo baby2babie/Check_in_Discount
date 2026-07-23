@@ -447,7 +447,7 @@ h1{
 .idle-pulse.hide{ animation:none; opacity:0; }
 
 
-.screen-flash{ position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:15; }
+.screen-flash{ position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:200; }
 .screen-flash.go{ animation: flash-pop .4s ease; }
 .screen-flash.go.big{ animation: flash-pop-big .5s ease; }
 @keyframes flash-pop{ 0%{ opacity:0; } 18%{ opacity:.96; } 100%{ opacity:0; } }
@@ -524,6 +524,8 @@ h1{
   100%{ top:0;      transform:scale(1,1); }
 }
 .big-capsule.hide{ animation:none; opacity:0; }
+.big-capsule.idle{ animation: capsule-idle-pulse 1.2s ease-in-out infinite; }
+@keyframes capsule-idle-pulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.03); } }
 
 .half{
   position:absolute; top:0; left:50%; width:230px; height:115px; margin-left:-115px;

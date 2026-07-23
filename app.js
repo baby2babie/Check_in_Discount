@@ -148,6 +148,7 @@ function gachaBallStyle(mainColor, shineColor, splitPct){
 let stock = [];
 let lootTokens = {};
 let busy = true; // true จนกว่าจะโหลดข้อมูลจริงเสร็จ
+let idlePulseTimer = null; // กันไม่ให้แคปซูลลูกใหญ่ดูค้างเฉยๆ ถ้า backend ตอบช้ากว่าอนิเมชันเด้ง
 
 function renderPile(){
   pile.innerHTML = "";
@@ -316,7 +317,11 @@ function beginCapsuleCover(capsuleBg, shadowHex){
   void bigCapsule.offsetWidth;
 
   overlay.classList.remove('show'); void overlay.offsetWidth; overlay.classList.add('show');
+  bigCapsule.classList.remove('idle');
   bigCapsule.classList.add('bounce-in');
+
+  clearTimeout(idlePulseTimer);
+  idlePulseTimer = setTimeout(()=> bigCapsule.classList.add('idle'), 650);
 }
 
 async function revealSequence(milestone, apiPromise, isPaid, capsuleBg, shadowHex){
@@ -383,6 +388,8 @@ function showResult(milestone, result, isPaid, revealDelay){
   // แฟลชขาวเต็มจอ + แตกฝาแคปซูล + โชว์ป้ายรางวัลพร้อมกันทันที ต่อเนื่องจากแคปซูลที่เด้งบังจอไปแล้ว
   // (ไม่ลอยเข้ามาแบบเดิม — พอแสงแฟลชหาย ป้ายรางวัลก็โผล่ให้เห็นทันที)
   setTimeout(()=>{
+    clearTimeout(idlePulseTimer);
+    bigCapsule.classList.remove('idle');
     screenFlash.classList.add('go');
     if(rarity === 'legendary') screenFlash.classList.add('big');
     if(rarity !== 'common') stage.classList.add('shake-big');
