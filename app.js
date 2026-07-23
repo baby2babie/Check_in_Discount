@@ -289,9 +289,10 @@ function dropCapsule(milestone, apiPromise){
   jigglePile();
 
   setTimeout(()=>{
-    // แคปซูลตกถึงถาดแล้ว ต่อเนื่องไปเลยด้วยการเด้งบังเต็มจอลูกเดียวกัน (สีเดิม) ไม่มีขั้นตอนค้างรอคั่นกลาง
+    // แคปซูลตกถึงถาดแล้ว ต่อเนื่องไปเลยด้วยการเด้งบังเต็มจอลูกเดียวกัน (สีเดิม ตำแหน่งเดิม) ไม่มีขั้นตอนค้างรอคั่นกลาง
     flapLid.classList.add('open');
-    revealSequence(milestone, apiPromise, isPaid, background, shadowHex);
+    const originRect = falling.getBoundingClientRect();
+    revealSequence(milestone, apiPromise, isPaid, background, shadowHex, originRect);
     setTimeout(()=>{
       dropZone.innerHTML = "";
       flapLid.classList.remove('open');
@@ -299,14 +300,15 @@ function dropCapsule(milestone, apiPromise){
   }, 750);
 }
 
-// แคปซูลลูกใหญ่เด้งเข้ามาบังจอทันทีที่ตกถึงถาด (สีเดียวกับที่เพิ่งหล่นลงมา) ไม่ต้องรอผลจาก backend ก่อน
-function beginCapsuleCover(capsuleBg, shadowHex){
+// แคปซูลลูกใหญ่เด้งเข้ามาบังจอทันทีที่ตกถึงถาด (สีเดียวกับที่เพิ่งหล่นลงมา) เริ่มขยายจากตำแหน่งจริงที่มันเพิ่งตกถึง
+// (originRect = getBoundingClientRect ของแคปซูลเล็กตอนตกถึงถาด) ไม่ต้องรอผลจาก backend ก่อน
+function beginCapsuleCover(capsuleBg, shadowHex, originRect){
   bigCapsule.style.background = capsuleBg;
   bigCapsule.style.setProperty('--shadow-color', shadowHex + 'B3');
   halfTopInner.style.background = capsuleBg;
   halfBottomInner.style.background = capsuleBg;
 
-  bigCapsule.classList.remove('bounce-in','hide');
+  bigCapsule.classList.remove('bounce-in','hide','idle');
   halfTop.classList.remove('crack-go');
   halfBottom.classList.remove('crack-go');
   prizeCard.classList.remove('reveal');
@@ -314,18 +316,36 @@ function beginCapsuleCover(capsuleBg, shadowHex){
   document.querySelectorAll('.confetti-piece').forEach(el=>el.remove());
   screenFlash.classList.remove('go','big');
   stage.classList.remove('shake-big');
+
+  // คำนวณจุดเริ่มต้นจริงบนจอ (FLIP) ให้แคปซูลลูกใหญ่โผล่ขึ้นตรงตำแหน่งที่แคปซูลเล็กเพิ่งตกถึงพอดี
+  const finalSize = 230;
+  let dx = 0, dy = -260, scale = .12;
+  if(originRect && originRect.width){
+    const originCX = originRect.left + originRect.width / 2;
+    const originCY = originRect.top + originRect.height / 2;
+    dx = originCX - window.innerWidth / 2;
+    dy = originCY - window.innerHeight / 2;
+    scale = Math.max(originRect.width, originRect.height) / finalSize;
+  }
+
+  bigCapsule.style.transition = 'none';
+  bigCapsule.style.transform = `translate(-50%,-50%) translate(${dx}px, ${dy}px) scale(${scale})`;
   void bigCapsule.offsetWidth;
 
   overlay.classList.remove('show'); void overlay.offsetWidth; overlay.classList.add('show');
-  bigCapsule.classList.remove('idle');
   bigCapsule.classList.add('bounce-in');
+
+  requestAnimationFrame(()=>{
+    bigCapsule.style.transition = 'transform .55s cubic-bezier(.28,.9,.32,1.28)';
+    bigCapsule.style.transform = 'translate(-50%,-50%) translate(0,0) scale(1)';
+  });
 
   clearTimeout(idlePulseTimer);
   idlePulseTimer = setTimeout(()=> bigCapsule.classList.add('idle'), 650);
 }
 
-async function revealSequence(milestone, apiPromise, isPaid, capsuleBg, shadowHex){
-  beginCapsuleCover(capsuleBg, shadowHex);
+async function revealSequence(milestone, apiPromise, isPaid, capsuleBg, shadowHex, originRect){
+  beginCapsuleCover(capsuleBg, shadowHex, originRect);
   const bounceStartedAt = Date.now();
   instruction.textContent = "กำลังเปิดกล่อง...";
 

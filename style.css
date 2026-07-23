@@ -502,30 +502,27 @@ h1{
 .burst.go{ animation: burst-fly .6s ease-out .15s forwards; }
 @keyframes burst-fly{ 0%{ opacity:1; transform:translate(-50%,-50%) translate(0,0) scale(1); } 100%{ opacity:0; transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(.2); } }
 
-/* ---- big capsule bouncing in to cover the reveal, then cracking open ---- */
+/* ---- big capsule growing in from the exact spot the small capsule landed, covering the reveal, then cracking open ---- */
 .big-capsule{
-  position:absolute; top:-260px; left:50%;
-  width:230px; height:230px; margin-left:-115px;
+  position:fixed; top:50%; left:50%;
+  width:230px; height:230px; margin:0;
   border-radius:50%;
   box-shadow:
     0 20px 44px var(--shadow-color, rgba(0,0,0,.35)),
     inset 0 0 0 2px rgba(255,255,255,.35);
   z-index:5;
   opacity:0;
+  transition: opacity .12s ease;
+  transform: translate(-50%,-50%) translate(0,-260px) scale(.12);
 }
-.big-capsule.bounce-in{ opacity:1; animation: capsule-bounce-in .65s cubic-bezier(.28,.85,.4,1) forwards; }
-@keyframes capsule-bounce-in{
-  0%{   top:-260px; transform:scale(1,1); }
-  55%{  top:0;      transform:scale(1,1); }
-  63%{  top:14px;   transform:scale(1.12,.82); }
-  72%{  top:-10px;  transform:scale(.92,1.12); }
-  82%{  top:6px;    transform:scale(1.04,.96); }
-  92%{  top:-2px;   transform:scale(.98,1.02); }
-  100%{ top:0;      transform:scale(1,1); }
-}
-.big-capsule.hide{ animation:none; opacity:0; }
+/* ตำแหน่งเริ่มต้นจริง (dx, dy, scale) ถูกตั้งจาก JS (inline style) ให้ตรงกับตำแหน่งแคปซูลที่เพิ่งตกถึงถาดพอดี */
+.big-capsule.bounce-in{ opacity:1; }
+.big-capsule.hide{ opacity:0; }
 .big-capsule.idle{ animation: capsule-idle-pulse 1.2s ease-in-out infinite; }
-@keyframes capsule-idle-pulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.03); } }
+@keyframes capsule-idle-pulse{
+  0%,100%{ transform: translate(-50%,-50%) translate(0,0) scale(1); }
+  50%{ transform: translate(-50%,-50%) translate(0,0) scale(1.03); }
+}
 
 .half{
   position:absolute; top:0; left:50%; width:230px; height:115px; margin-left:-115px;
