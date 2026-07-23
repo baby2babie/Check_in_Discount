@@ -528,7 +528,7 @@ h1{
   z-index:5;
   opacity:0;
 }
-.big-capsule.bounce-in{ opacity:1; animation: capsule-bounce-in 1s cubic-bezier(.28,.85,.4,1) forwards; }
+.big-capsule.bounce-in{ opacity:1; animation: capsule-bounce-in .65s cubic-bezier(.28,.85,.4,1) forwards; }
 @keyframes capsule-bounce-in{
   0%{   top:-260px; transform:scale(1,1); }
   55%{  top:0;      transform:scale(1,1); }
@@ -561,10 +561,11 @@ h1{
 .prize-card{
   width:100%; background:var(--cream); border-radius:22px; padding:30px 22px 22px; text-align:center;
   box-shadow: 0 20px 40px -14px rgba(46,38,32,.45);
-  position:relative; transform:translateY(14px) scale(.92); opacity:0; z-index:1;
+  position:relative; transform:scale(.92); opacity:0; z-index:1;
+  transition: opacity .2s ease, transform .2s cubic-bezier(.34,1.56,.64,1);
 }
-.overlay.show .prize-card{ animation: card-rise .45s cubic-bezier(.3,1.4,.5,1) 1.25s both; }
-@keyframes card-rise{ 0%{ transform:translateY(14px) scale(.9); opacity:0; } 100%{ transform:translateY(0) scale(1); opacity:1; } }
+/* โผล่ขึ้นมาตรงที่เดิมทันทีพร้อมแฟลช ไม่ลอยเข้ามาจากด้านล่างแบบเดิม */
+.prize-card.reveal{ opacity:1; transform:scale(1); }
 
 .ribbon{
   position:absolute; top:-12px; left:50%; transform:translateX(-50%);

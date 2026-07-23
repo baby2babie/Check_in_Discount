@@ -230,35 +230,6 @@ function jigglePile(){
   pile.classList.add('jiggle');
 }
 
-// ============================================================
-//  SUSPENSE EFFECTS — เล่นระหว่างรอผลจริงจาก backend
-//  (แทนที่จะปล่อยให้ค้างเฉยๆ ตรงข้อความ "ลุ้นๆ...")
-// ============================================================
-let suspenseDotsTimer = null;
-let suspenseShakeTimers = [];
-const SHAKE_OFFSETS_MS = [100, 550, 1300, 2200]; // จังหวะไม่สมมาตร ถี่ขึ้นเรื่อยๆ ให้รู้สึกใกล้จะได้ผล
-
-function burstShake(capsuleEl){
-  capsuleEl.classList.remove('shake-burst'); void capsuleEl.offsetWidth; capsuleEl.classList.add('shake-burst');
-}
-
-function startSuspenseEffects(capsuleEl){
-  capsuleEl.classList.add('landed'); // แคปซูลขยายใหญ่ขึ้นค้างไว้ระหว่างรอ
-  let dots = 0;
-  suspenseDotsTimer = setInterval(()=>{
-    dots = (dots + 1) % 4;
-    instruction.textContent = "ลุ้นๆ" + ".".repeat(dots);
-  }, 350);
-  suspenseShakeTimers = SHAKE_OFFSETS_MS.map(ms => setTimeout(()=>burstShake(capsuleEl), ms));
-}
-
-function stopSuspenseEffects(){
-  clearInterval(suspenseDotsTimer);
-  suspenseShakeTimers.forEach(t => clearTimeout(t));
-  suspenseShakeTimers = [];
-  suspenseDotsTimer = null;
-}
-
 // กันไม่ให้ค้างตลอดไปถ้า backend ไม่ตอบเลย
 function withTimeout(promise, ms, fallback){
   return Promise.race([
@@ -316,14 +287,13 @@ function dropCapsule(milestone, apiPromise){
 
   jigglePile();
 
-  setTimeout(()=>{
-    flapLid.classList.add('open');
-    startSuspenseEffects(falling);
-  }, 700);
-
   setTimeout(async ()=>{
+    // แคปซูลตกถึงพื้นแล้วเด้งเข้าที่ทันที ไม่ต้องมีขั้นตอน "ลุ้นๆ" คั่นเวลาอีก
+    flapLid.classList.add('open');
+    falling.classList.add('landed');
+    instruction.textContent = "กำลังเปิดกล่อง...";
+
     const result = await apiPromise;
-    stopSuspenseEffects();
 
     dropZone.innerHTML = "";
     flapLid.classList.remove('open');
@@ -346,7 +316,7 @@ function dropCapsule(milestone, apiPromise){
     showResult(milestone, result, isPaid);
     instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป" : "เปิดครบแล้วตอนนี้";
     busy = false;
-  }, 1050);
+  }, 750);
 }
 
 function spawnConfetti(count){
@@ -394,6 +364,7 @@ function showResult(milestone, result, isPaid){
   bigCapsule.classList.remove('bounce-in','hide');
   halfTop.classList.remove('crack-go');
   halfBottom.classList.remove('crack-go');
+  prizeCard.classList.remove('reveal');
   document.querySelectorAll('.burst').forEach(el=>el.remove());
   document.querySelectorAll('.confetti-piece').forEach(el=>el.remove());
   screenFlash.classList.remove('go','big');
@@ -403,7 +374,8 @@ function showResult(milestone, result, isPaid){
   overlay.classList.remove('show'); void overlay.offsetWidth; overlay.classList.add('show');
   bigCapsule.classList.add('bounce-in');
 
-  // ~950ms: แคปซูลเด้งนิ่งแล้ว — แฟลช + เริ่มแตกออกเป็น 2 ซีก
+  // ~650ms: แคปซูลเด้งนิ่งแล้ว — แฟลชจ้าทันที แตกออกเป็น 2 ซีก และโชว์ป้ายรางวัลพร้อมกันเลย
+  // (ไม่ลอยเข้ามาแบบเดิม — พอแสงแฟลชหาย ป้ายรางวัลก็โผล่ให้เห็นทันที)
   setTimeout(()=>{
     screenFlash.classList.add('go');
     if(rarity === 'legendary') screenFlash.classList.add('big');
@@ -411,10 +383,8 @@ function showResult(milestone, result, isPaid){
     bigCapsule.classList.add('hide');
     halfTop.classList.add('crack-go');
     halfBottom.classList.add('crack-go');
-  }, 950);
+    prizeCard.classList.add('reveal');
 
-  // ~1250ms: ซีกแคปซูลแตกหายไปพอดีกับตอนป้ายรางวัลเด้งขึ้นมา (ตรงกับ card-rise delay 1.25s ใน CSS)
-  setTimeout(()=>{
     if(rarity !== 'common'){ rarityRibbon.classList.remove('shine'); void rarityRibbon.offsetWidth; rarityRibbon.classList.add('shine'); }
 
     const count = rarity === 'legendary' ? 28 : rarity === 'rare' ? 18 : 9;
@@ -432,7 +402,7 @@ function showResult(milestone, result, isPaid){
 
     if(rarity === 'legendary') spawnConfetti(46);
     else if(rarity === 'rare') spawnConfetti(20);
-  }, 1250);
+  }, 650);
 }
 
 closeBtn.addEventListener('click', ()=> overlay.classList.remove('show'));
