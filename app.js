@@ -252,24 +252,16 @@ function dropCapsule(milestone, apiPromise){
   const capsuleBg = isPaid
     ? `radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`
     : gachaBallBg(col.main, col.shine, 35 + Math.random()*30);
-  const num = isPaid ? null : CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)];
 
   const falling = document.createElement('div');
   falling.className = 'falling-capsule drop';
   falling.style.background = capsuleBg;
-  if(num !== null){
-    const numEl = document.createElement('div');
-    numEl.className = 'capsule-number';
-    numEl.textContent = num;
-    numEl.style.fontSize = '8.4px';
-    falling.appendChild(numEl);
-  }
   dropZone.appendChild(falling);
   instruction.textContent = "แคปซูลกำลังหล่นลงราง...";
   jigglePile();
 
   setTimeout(()=>{
-    launchCapsuleFullscreen(falling, capsuleBg, num, milestone, apiPromise, isPaid);
+    launchCapsuleFullscreen(falling, capsuleBg, milestone, apiPromise, isPaid);
   }, 700);
 }
 
@@ -278,8 +270,9 @@ function dropCapsule(milestone, apiPromise){
 //  แล้วแตกออกเป็น 2 ซีก เผยป้ายรางวัล (overlay เดิม)
 // ============================================================
 let megaShakeTimers = [];
+let megaDotsTimer = null;
 
-function launchCapsuleFullscreen(fallingEl, capsuleBg, num, milestone, apiPromise, isPaid){
+function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, isPaid){
   const rect = fallingEl.getBoundingClientRect();
   fallingEl.remove();
 
@@ -295,14 +288,6 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, num, milestone, apiPromis
   mega.style.top    = rect.top + 'px';
   mega.style.width  = rect.width + 'px';
   mega.style.height = rect.height + 'px';
-  let megaNumEl = null;
-  if(num !== null){
-    megaNumEl = document.createElement('div');
-    megaNumEl.className = 'capsule-number';
-    megaNumEl.textContent = num;
-    megaNumEl.style.fontSize = (rect.width * 0.3) + 'px';
-    mega.appendChild(megaNumEl);
-  }
   document.body.appendChild(mega);
 
   requestAnimationFrame(()=>{
@@ -312,12 +297,16 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, num, milestone, apiPromis
     mega.style.top    = (window.innerHeight / 2 - size / 2) + 'px';
     mega.style.width  = size + 'px';
     mega.style.height = size + 'px';
-    if(megaNumEl) megaNumEl.style.fontSize = (size * 0.3) + 'px';
   });
 
   instruction.textContent = "ลุ้นๆ...";
+  let dots = 0;
+  megaDotsTimer = setInterval(()=>{
+    dots = (dots + 1) % 4;
+    instruction.textContent = "ลุ้นๆ" + ".".repeat(dots);
+  }, 350);
 
-  const SHAKE_OFFSETS_MS = [950, 1600]; // สั่นแค่ 2 จังหวะหลังเด้งขึ้นบังจอเต็มที่แล้ว ไม่ยืดเยื้อ
+  const SHAKE_OFFSETS_MS = [950, 1500, 2200, 2900]; // เริ่มสั่นหลังเด้งขึ้นบังจอเต็มที่แล้วเท่านั้น
   megaShakeTimers = SHAKE_OFFSETS_MS.map(ms => setTimeout(()=>{
     mega.classList.remove('mega-shake'); void mega.offsetWidth; mega.classList.add('mega-shake');
   }, ms));
@@ -326,6 +315,7 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, num, milestone, apiPromis
   setTimeout(async ()=>{
     const result = await apiPromise;
 
+    clearInterval(megaDotsTimer);
     megaShakeTimers.forEach(t => clearTimeout(t));
     megaShakeTimers = [];
 
