@@ -187,13 +187,12 @@ h1{
   position:absolute;
   border-radius:50%;
   background:#DCEEF5;
-  box-shadow:
-    0 4px 10px var(--shadow-color, rgba(46,38,32,.3)),
-    inset 0 0 0 1.4px rgba(255,255,255,.4);
+  box-shadow:0 3px 6px rgba(46,38,32,.18);
 }
 .capsule-number{
   position:absolute; inset:0;
-  display:flex; align-items:center; justify-content:center;
+  display:flex; align-items:flex-end; justify-content:center;
+  padding-bottom:18%;
   font-family:'Mali', sans-serif; font-weight:700;
   color:rgba(255,255,255,.95);
   text-shadow:0 1px 2px rgba(0,0,0,.3);
@@ -361,23 +360,12 @@ h1{
   top:-4px;
   box-shadow:
     0 0 0 2px rgba(255,255,255,.95),
-    0 6px 14px var(--shadow-color, rgba(0,0,0,.35)),
-    inset 0 0 0 1.4px rgba(255,255,255,.35);
+    0 6px 12px rgba(0,0,0,.35);
   opacity:0;
 }
 .falling-capsule.drop{ animation: fall .75s cubic-bezier(.6,.02,.85,.6) forwards, spin .75s linear forwards; }
 @keyframes fall{ 0%{ top:-4px; opacity:1; } 85%{ top:12px; opacity:1; } 100%{ top:9px; opacity:1; } }
 @keyframes spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
-
-.stage.shake-big{ animation: shake-big .5s ease; }
-@keyframes shake-big{
-  0%,100%{ transform:translate(0,0) rotate(0deg); }
-  15%{ transform:translate(-5px,3px) rotate(-1.2deg); }
-  35%{ transform:translate(5px,-3px) rotate(1.2deg); }
-  55%{ transform:translate(-4px,3px) rotate(-.8deg); }
-  75%{ transform:translate(4px,-2px) rotate(.8deg); }
-  90%{ transform:translate(-2px,1px) rotate(-.3deg); }
-}
 
 .flap-wrap{ position:relative; height:28px; margin:0 6px; }
 .flap-tray{
@@ -447,11 +435,11 @@ h1{
 .idle-pulse.hide{ animation:none; opacity:0; }
 
 
-.screen-flash{ position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:200; }
+.screen-flash{ position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:15; }
 .screen-flash.go{ animation: flash-pop .4s ease; }
 .screen-flash.go.big{ animation: flash-pop-big .5s ease; }
-@keyframes flash-pop{ 0%{ opacity:0; } 18%{ opacity:.96; } 100%{ opacity:0; } }
-@keyframes flash-pop-big{ 0%{ opacity:0; } 15%{ opacity:1; } 100%{ opacity:0; } }
+@keyframes flash-pop{ 0%{ opacity:0; } 18%{ opacity:.55; } 100%{ opacity:0; } }
+@keyframes flash-pop-big{ 0%{ opacity:0; } 15%{ opacity:.9; } 100%{ opacity:0; } }
 
 .confetti-layer{ position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:65; }
 .confetti-piece{ position:absolute; top:-20px; border-radius:2px; opacity:.95; animation: confetti-fall linear forwards; }
@@ -496,60 +484,19 @@ h1{
   z-index:60; padding:20px;
 }
 .overlay.show{ opacity:1; pointer-events:auto; }
-.reveal-stage{ width:min(270px,100%); display:flex; align-items:center; justify-content:center; position:relative; min-height:230px; }
+.reveal-stage{ width:min(270px,100%); display:flex; flex-direction:column; align-items:center; }
 
 .burst{ position:absolute; left:50%; top:-6px; width:6px; height:6px; border-radius:50%; background:var(--gold); pointer-events:none; opacity:0; }
 .burst.go{ animation: burst-fly .6s ease-out .15s forwards; }
 @keyframes burst-fly{ 0%{ opacity:1; transform:translate(-50%,-50%) translate(0,0) scale(1); } 100%{ opacity:0; transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(.2); } }
 
-/* ---- big capsule growing in from the exact spot the small capsule landed, covering the reveal, then cracking open ---- */
-.big-capsule{
-  position:fixed; top:50%; left:50%;
-  width:230px; height:230px; margin:0;
-  border-radius:50%;
-  box-shadow:
-    0 20px 44px var(--shadow-color, rgba(0,0,0,.35)),
-    inset 0 0 0 2px rgba(255,255,255,.35);
-  z-index:5;
-  opacity:0;
-  transition: opacity .12s ease;
-  transform: translate(-50%,-50%) translate(0,-260px) scale(.12);
-}
-/* ตำแหน่งเริ่มต้นจริง (dx, dy, scale) ถูกตั้งจาก JS (inline style) ให้ตรงกับตำแหน่งแคปซูลที่เพิ่งตกถึงถาดพอดี */
-.big-capsule.bounce-in{ opacity:1; }
-.big-capsule.hide{ opacity:0; }
-.big-capsule.idle{ animation: capsule-idle-pulse 1.2s ease-in-out infinite; }
-@keyframes capsule-idle-pulse{
-  0%,100%{ transform: translate(-50%,-50%) translate(0,0) scale(1); }
-  50%{ transform: translate(-50%,-50%) translate(0,0) scale(1.03); }
-}
-
-.half{
-  position:absolute; top:0; left:50%; width:230px; height:115px; margin-left:-115px;
-  overflow:hidden; z-index:4; opacity:0; pointer-events:none;
-}
-.half.top{ margin-top:-230px; }
-.half-inner{ width:230px; height:230px; border-radius:50%; }
-.half.bottom .half-inner{ margin-top:-115px; }
-.half.crack-go.top{ animation: crack-open-top .55s cubic-bezier(.3,1.3,.4,1) forwards; }
-.half.crack-go.bottom{ animation: crack-open-bottom .55s cubic-bezier(.3,1.3,.4,1) forwards; }
-@keyframes crack-open-top{
-  0%{ opacity:1; transform:translateY(0) rotate(0deg); }
-  100%{ opacity:0; transform:translateY(-90px) rotate(-22deg); }
-}
-@keyframes crack-open-bottom{
-  0%{ opacity:1; transform:translateY(0) rotate(0deg); }
-  100%{ opacity:0; transform:translateY(90px) rotate(22deg); }
-}
-
 .prize-card{
   width:100%; background:var(--cream); border-radius:22px; padding:30px 22px 22px; text-align:center;
   box-shadow: 0 20px 40px -14px rgba(46,38,32,.45);
-  position:relative; transform:scale(.92); opacity:0; z-index:1;
-  transition: opacity .2s ease, transform .2s cubic-bezier(.34,1.56,.64,1);
+  position:relative; transform:translateY(14px) scale(.92); opacity:0;
 }
-/* โผล่ขึ้นมาตรงที่เดิมทันทีพร้อมแฟลช ไม่ลอยเข้ามาจากด้านล่างแบบเดิม */
-.prize-card.reveal{ opacity:1; transform:scale(1); }
+.overlay.show .prize-card{ animation: card-rise .35s cubic-bezier(.3,1.4,.5,1) both; }
+@keyframes card-rise{ 0%{ transform:translateY(14px) scale(.9); opacity:0; } 100%{ transform:translateY(0) scale(1); opacity:1; } }
 
 .ribbon{
   position:absolute; top:-12px; left:50%; transform:translateX(-50%);
@@ -558,7 +505,7 @@ h1{
   padding:5px 16px; border-radius:999px; box-shadow: 0 4px 8px rgba(180,130,42,.45); overflow:hidden;
 }
 .ribbon::after{ content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(115deg, transparent, rgba(255,255,255,.85), transparent); opacity:0; }
-.ribbon.shine::after{ animation: ribbon-shine 1s ease; }
+.ribbon.shine::after{ animation: ribbon-shine 1s ease .55s; }
 @keyframes ribbon-shine{ 0%{ left:-60%; opacity:0; } 15%{ opacity:1; } 100%{ left:130%; opacity:0; } }
 
 .prize-tier{ font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; font-weight:600; color:var(--ink-soft); margin:6px 0 4px; }
@@ -713,9 +660,51 @@ h1{
 
 .loading{ text-align:center; color:var(--muted); padding:40px 20px; font-size:14px; }
 
+/* ===================================================================
+   NEW — mega capsule (falls, launches, bounces to cover screen, splits open)
+   =================================================================== */
+.mega-dim{
+  position:fixed; inset:0; z-index:70; pointer-events:none;
+  background:rgba(46,38,32,0); transition:background .4s ease;
+}
+.mega-dim.on{ background:rgba(46,38,32,.55); }
+
+.mega-capsule{
+  position:fixed; border-radius:50%; z-index:71;
+  box-shadow:0 0 0 2px rgba(255,255,255,.95), 0 30px 60px -12px rgba(0,0,0,.5);
+}
+.mega-capsule.mega-shake{ animation: mega-shake-kf .32s ease-in-out; }
+@keyframes mega-shake-kf{
+  0%{ transform:translate(0,0) rotate(0deg); }
+  15%{ transform:translate(-7px,4px) rotate(-2.2deg); }
+  35%{ transform:translate(6px,-5px) rotate(1.8deg); }
+  55%{ transform:translate(-5px,4px) rotate(-1.1deg); }
+  75%{ transform:translate(3px,-2px) rotate(.7deg); }
+  100%{ transform:translate(0,0) rotate(0deg); }
+}
+
+.mega-half{ position:fixed; border-radius:50%; z-index:72; box-shadow:0 30px 60px -12px rgba(0,0,0,.5); }
+.mega-half.mega-top{ clip-path:inset(0 0 50% 0); }
+.mega-half.mega-bottom{ clip-path:inset(50% 0 0 0); }
+.mega-half.mega-split-top{ animation: mega-fly-up .62s ease-in forwards; }
+.mega-half.mega-split-bottom{ animation: mega-fly-down .62s ease-in forwards; }
+@keyframes mega-fly-up{ 0%{ transform:translateY(0) rotate(0deg); opacity:1; } 100%{ transform:translateY(-72vh) rotate(-28deg); opacity:0; } }
+@keyframes mega-fly-down{ 0%{ transform:translateY(0) rotate(0deg); opacity:1; } 100%{ transform:translateY(72vh) rotate(28deg); opacity:0; } }
+
+.mega-flash{
+  position:fixed; left:50%; top:50%; width:30px; height:30px; margin:-15px 0 0 -15px;
+  border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,.95), rgba(255,255,255,0) 70%);
+  z-index:73; opacity:0; pointer-events:none;
+}
+.mega-flash.go{ animation: mega-flash-grow .7s ease-out forwards; }
+@keyframes mega-flash-grow{
+  0%{ width:30px; height:30px; margin:-15px 0 0 -15px; opacity:0; }
+  30%{ opacity:1; }
+  100%{ width:160vw; height:160vw; margin-left:-80vw; margin-top:-80vw; opacity:0; }
+}
+
 @media (prefers-reduced-motion: reduce){
-  .falling-capsule.drop, .crank.turn, .cabinet.rumble, .crank-wrap.rumble, .stage.shake-big, .burst.go, .prize-card,
-  .capsule-pile.jiggle .capsule, .ratchet-tick.go, .crank-glow.go, .screen-flash.go, .confetti-piece, .flap-lid, .dome-glass-hi{ animation:none !important; transition:none !important; }
-  .big-capsule, .half{ display:none !important; }
-  .overlay.show .prize-card{ opacity:1 !important; transform:none !important; }
+  .falling-capsule.drop, .crank.turn, .cabinet.rumble, .crank-wrap.rumble, .burst.go, .prize-card,
+  .capsule-pile.jiggle .capsule, .ratchet-tick.go, .crank-glow.go, .screen-flash.go, .confetti-piece, .flap-lid, .dome-glass-hi,
+  .mega-capsule.mega-shake, .mega-half, .mega-flash{ animation:none !important; transition:none !important; }
 }
