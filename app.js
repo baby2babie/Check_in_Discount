@@ -99,24 +99,27 @@ function dismissTapHints(){
 }
 
 const DOME_FILL = 15;
-const FROST = "#DCEEF5"; // กระจกฝ้าฟ้าอ่อน — ใช้เป็นสีฐานของทุกลูกเหมือนกันหมด
+const FROST = "#EAF6FB"; // กระจกฝ้าใส ครึ่งบนของลูกแคปซูล — ใช้เป็นสีฐานของทุกลูกเหมือนกันหมด
 const NEW_PALETTE = [
-  { main:"#F2C230", shine:"#FFE58A" },
-  { main:"#2E7FD1", shine:"#6FB4EC" },
-  { main:"#C1372C", shine:"#E8703F" },
-  { main:"#3FA07A", shine:"#7FD1AF" },
-  { main:"#8B5CF6", shine:"#C4B5FD" },
+  { main:"#F2941A", shine:"#FFCB80" }, // ส้ม
+  { main:"#2E9E4F", shine:"#8FE3A8" }, // เขียว
+  { main:"#2E7FD1", shine:"#8FC4F5" }, // น้ำเงิน
+  { main:"#29ABE2", shine:"#9FE0F5" }, // ฟ้า
+  { main:"#C1372C", shine:"#E8703F" }, // แดง
+  { main:"#F2C230", shine:"#FFE58A" }, // เหลือง
+  { main:"#8B5CF6", shine:"#C4B5FD" }, // ม่วง
+  { main:"#E64980", shine:"#FFB8D2" }, // ชมพู
 ];
-const CAPSULE_NUMBERS = [5, 10, 15, 20, 25, 30, 50];
+const CAPSULE_NUMBERS = [20, 30, 40, 50, 60, 70, 80, 100];
 
-// สร้าง background แบบ "โดมฝ้า + แถบสีทแยงมุม + แถบไฮไลต์บาง" ในเลเยอร์เดียว ไม่ต้องมี child element
-function gachaBallBg(mainColor, shineColor, splitPct){
-  const angle = 100;
-  const s = splitPct;
+// สร้าง background ทรงกลม "แคปซูลน้ำ" 2 โทน — ครึ่งบนกระจกใส ครึ่งล่างสีสันเข้ม
+// พร้อมเส้นไฮไลต์บางๆ ตรงระดับน้ำ + แสงเงาวาวมุมบนซ้าย เลียนแบบภาพตัวอย่าง
+function gachaBallBg(mainColor, shineColor, levelPct){
+  const lvl = levelPct;
   return [
-    `radial-gradient(circle at 24% 20%, rgba(255,255,255,.9), rgba(255,255,255,0) 32%)`,
-    `linear-gradient(${angle}deg, transparent 0%, transparent ${s-9}%, ${shineColor} ${s-9}%, ${shineColor} ${s+3}%, transparent ${s+3}%, transparent 100%)`,
-    `linear-gradient(${angle}deg, ${FROST} 0%, ${FROST} ${s}%, ${mainColor} ${s+1}%, ${mainColor} 100%)`
+    `radial-gradient(circle at 30% 20%, rgba(255,255,255,.95), rgba(255,255,255,0) 40%)`,
+    `linear-gradient(180deg, transparent 0%, transparent ${lvl-3}%, ${shineColor} ${lvl-3}%, ${shineColor} ${lvl+1}%, transparent ${lvl+1}%, transparent 100%)`,
+    `linear-gradient(180deg, ${FROST} 0%, ${FROST} ${lvl}%, ${mainColor} ${lvl}%, ${mainColor} 100%)`
   ].join(', ');
 }
 
@@ -152,15 +155,22 @@ function renderPile(){
       c.classList.add('shimmer');
     } else {
       const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
-      const split = 25 + Math.random() * 40; // สัดส่วนแถบสีต่อลูกไม่เท่ากัน เหมือนของจริง
-      c.style.background = gachaBallBg(col.main, col.shine, split);
-      // ตัวเลขส่วนลดปั๊มอยู่ในโซนสีของแคปซูล — หมุนไปตามลูก เลยธรรมชาติที่บางลูกจะเห็นเต็ม
-      // บางลูกโดนลูกอื่นซ้อนทับบังบางส่วน (ซ้อนทับกันเองจากตำแหน่ง/z-index ที่สุ่มไว้อยู่แล้ว)
-      const num = document.createElement('div');
-      num.className = 'capsule-number';
-      num.textContent = CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)];
-      num.style.fontSize = (size * 0.3) + 'px';
-      c.appendChild(num);
+      const level = 38 + Math.random() * 26; // ระดับน้ำสีในลูกไม่เท่ากัน เหมือนของจริง
+      c.style.background = gachaBallBg(col.main, col.shine, level);
+
+      // ป้ายตั๋วส่วนลดลอยกลางลูก คว่ำเอียงเล็กน้อย — หมุนสวนไปกับลูกเพื่อให้ตั๋วดูตั้งตรงเสมอ
+      const tilt = (Math.random() * 12 - 6).toFixed(1);
+      const ticket = document.createElement('div');
+      ticket.className = 'capsule-ticket';
+      ticket.style.width = (size * 0.72) + 'px';
+      ticket.style.borderRadius = (size * 0.08) + 'px';
+      ticket.style.padding = (size * 0.05) + 'px 0';
+      ticket.style.transform = `translate(-50%,-50%) rotate(${(-rot * 1 + Number(tilt))}deg)`;
+      ticket.innerHTML =
+        `<div class="capsule-ticket-label" style="font-size:${(size * 0.13).toFixed(1)}px">ส่วนลด</div>` +
+        `<div class="capsule-ticket-amount" style="font-size:${(size * 0.32).toFixed(1)}px;color:${col.main}">${CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)]}</div>` +
+        `<div class="capsule-ticket-unit" style="font-size:${(size * 0.12).toFixed(1)}px">บาท</div>`;
+      c.appendChild(ticket);
     }
     pile.appendChild(c);
   }
@@ -290,6 +300,10 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
   mega.style.height = rect.height + 'px';
   document.body.appendChild(mega);
 
+  // ป้ายตั๋วปริศนา — หน้าตาแบบเดียวกับตั๋วในลูกเล็ก แต่ไม่มีตัวเลขรางวัลให้เห็นก่อนผลจริง
+  const megaTicket = document.createElement('div');
+  megaTicket.className = 'mega-ticket';
+
   requestAnimationFrame(()=>{
     mega.style.transition = 'left .85s cubic-bezier(.22,1.6,.4,1), top .85s cubic-bezier(.22,1.6,.4,1), width .85s cubic-bezier(.22,1.6,.4,1), height .85s cubic-bezier(.22,1.6,.4,1)';
     const size = Math.min(window.innerWidth, window.innerHeight) * 0.8;
@@ -297,6 +311,10 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
     mega.style.top    = (window.innerHeight / 2 - size / 2) + 'px';
     mega.style.width  = size + 'px';
     mega.style.height = size + 'px';
+    megaTicket.innerHTML =
+      `<div class="mega-ticket-icon" style="font-size:${(size * 0.16).toFixed(1)}px">?</div>` +
+      `<div class="mega-ticket-label" style="font-size:${(size * 0.045).toFixed(1)}px">กำลังลุ้นรางวัล</div>`;
+    mega.appendChild(megaTicket);
   });
 
   instruction.textContent = "ลุ้นๆ...";
