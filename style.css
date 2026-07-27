@@ -186,6 +186,7 @@ h1{
 .capsule{
   position:absolute;
   border-radius:50%;
+  overflow:hidden;
   background:#DCEEF5;
   box-shadow:
     0 3px 6px rgba(46,38,32,.2),

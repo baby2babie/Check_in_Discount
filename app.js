@@ -158,14 +158,18 @@ function renderPile(){
       const level = 38 + Math.random() * 26; // ระดับน้ำสีในลูกไม่เท่ากัน เหมือนของจริง
       c.style.background = gachaBallBg(col.main, col.shine, level);
 
-      // ป้ายตั๋วส่วนลดลอยกลางลูก คว่ำเอียงเล็กน้อย — หมุนสวนไปกับลูกเพื่อให้ตั๋วดูตั้งตรงเสมอ
-      // ขนาดคิดมาให้เส้นทแยงมุมของตั๋วสั้นกว่าเส้นผ่านศูนย์กลางลูกเสมอ ตั๋วจะไม่โผล่พ้นขอบแคปซูลไม่ว่าจะหมุนมุมไหน
-      const tilt = (Math.random() * 12 - 6).toFixed(1);
+      // ป้ายตั๋วส่วนลด "บรรจุอยู่ในแคปซูล" จริงๆ — ขนาดใหญ่เกือบเต็มลูก ตำแหน่ง/มุมเอียงสุ่มแบบธรรมชาติ
+      // ไม่มีลูกไหนอยู่กลางเป๊ะเหมือนกันหมด แล้วให้ขอบวงกลมของแคปซูล (overflow:hidden) ตัดขอบตั๋วที่เกินออกไปเอง เหมือนของจริงที่ตั๋วถูกอัดอยู่ในเปลือกใส
+      const tilt = (Math.random() * 34 - 17).toFixed(1);
+      const offX = (Math.random() * 20 - 10).toFixed(1);
+      const offY = (Math.random() * 18 - 9).toFixed(1);
       const ticket = document.createElement('div');
       ticket.className = 'capsule-ticket';
-      ticket.style.width = (size * 0.60) + 'px';
+      ticket.style.width = (size * (0.8 + Math.random() * 0.16)) + 'px';
       ticket.style.borderRadius = (size * 0.07) + 'px';
       ticket.style.padding = (size * 0.032) + 'px 0';
+      ticket.style.left = (50 + Number(offX)) + '%';
+      ticket.style.top = (50 + Number(offY)) + '%';
       ticket.style.transform = `translate(-50%,-50%) rotate(${(-rot * 1 + Number(tilt))}deg)`;
       ticket.innerHTML =
         `<div class="capsule-ticket-label" style="font-size:${(size * 0.105).toFixed(1)}px">ส่วนลด</div>` +
