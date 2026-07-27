@@ -137,7 +137,7 @@ function renderPile(){
     const c = document.createElement('div');
     c.className = 'capsule';
 
-    const size = 26 + Math.random() * 20;
+    const size = 34 + Math.random() * 24;
     const left = Math.random() * 78;
     const top = 26 + Math.pow(Math.random(), 1.7) * 70;
     const rot = (Math.random() * 34 - 17).toFixed(1);
@@ -159,17 +159,18 @@ function renderPile(){
       c.style.background = gachaBallBg(col.main, col.shine, level);
 
       // ป้ายตั๋วส่วนลดลอยกลางลูก คว่ำเอียงเล็กน้อย — หมุนสวนไปกับลูกเพื่อให้ตั๋วดูตั้งตรงเสมอ
+      // ขนาดคิดมาให้เส้นทแยงมุมของตั๋วสั้นกว่าเส้นผ่านศูนย์กลางลูกเสมอ ตั๋วจะไม่โผล่พ้นขอบแคปซูลไม่ว่าจะหมุนมุมไหน
       const tilt = (Math.random() * 12 - 6).toFixed(1);
       const ticket = document.createElement('div');
       ticket.className = 'capsule-ticket';
-      ticket.style.width = (size * 0.72) + 'px';
-      ticket.style.borderRadius = (size * 0.08) + 'px';
-      ticket.style.padding = (size * 0.05) + 'px 0';
+      ticket.style.width = (size * 0.60) + 'px';
+      ticket.style.borderRadius = (size * 0.07) + 'px';
+      ticket.style.padding = (size * 0.032) + 'px 0';
       ticket.style.transform = `translate(-50%,-50%) rotate(${(-rot * 1 + Number(tilt))}deg)`;
       ticket.innerHTML =
-        `<div class="capsule-ticket-label" style="font-size:${(size * 0.13).toFixed(1)}px">ส่วนลด</div>` +
-        `<div class="capsule-ticket-amount" style="font-size:${(size * 0.32).toFixed(1)}px;color:${col.main}">${CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)]}</div>` +
-        `<div class="capsule-ticket-unit" style="font-size:${(size * 0.12).toFixed(1)}px">บาท</div>`;
+        `<div class="capsule-ticket-label" style="font-size:${(size * 0.105).toFixed(1)}px">ส่วนลด</div>` +
+        `<div class="capsule-ticket-amount" style="font-size:${(size * 0.25).toFixed(1)}px;color:${col.main}">${CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)]}</div>` +
+        `<div class="capsule-ticket-unit" style="font-size:${(size * 0.095).toFixed(1)}px">บาท</div>`;
       c.appendChild(ticket);
     }
     pile.appendChild(c);
