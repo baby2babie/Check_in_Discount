@@ -300,9 +300,17 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
   mega.style.height = rect.height + 'px';
   document.body.appendChild(mega);
 
-  // ป้ายตั๋วปริศนา — หน้าตาแบบเดียวกับตั๋วในลูกเล็ก แต่ไม่มีตัวเลขรางวัลให้เห็นก่อนผลจริง
-  const megaTicket = document.createElement('div');
-  megaTicket.className = 'mega-ticket';
+  // แสงระยิบระยับลอยรอบลูก แทนป้ายตั๋ว — ไม่มีข้อความ/ตัวเลขใดๆ ให้เห็นก่อนผลจริง
+  const megaSparkles = document.createElement('div');
+  megaSparkles.className = 'mega-sparkles';
+  const SPARKLE_COUNT = 10;
+  const sparkleSpecs = Array.from({length: SPARKLE_COUNT}, (_, i) => ({
+    angle: (360 / SPARKLE_COUNT) * i + (Math.random() * 22 - 11),
+    radius: 42 + Math.random() * 14,
+    glyph: Math.random() > 0.5 ? '✦' : '✧',
+    delay: (Math.random() * 1.4).toFixed(2),
+    duration: (0.9 + Math.random() * 0.9).toFixed(2)
+  }));
 
   requestAnimationFrame(()=>{
     mega.style.transition = 'left .85s cubic-bezier(.22,1.6,.4,1), top .85s cubic-bezier(.22,1.6,.4,1), width .85s cubic-bezier(.22,1.6,.4,1), height .85s cubic-bezier(.22,1.6,.4,1)';
@@ -311,10 +319,20 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
     mega.style.top    = (window.innerHeight / 2 - size / 2) + 'px';
     mega.style.width  = size + 'px';
     mega.style.height = size + 'px';
-    megaTicket.innerHTML =
-      `<div class="mega-ticket-icon" style="font-size:${(size * 0.16).toFixed(1)}px">?</div>` +
-      `<div class="mega-ticket-label" style="font-size:${(size * 0.045).toFixed(1)}px">กำลังลุ้นรางวัล</div>`;
-    mega.appendChild(megaTicket);
+
+    sparkleSpecs.forEach(spec => {
+      const rad = spec.angle * Math.PI / 180;
+      const star = document.createElement('div');
+      star.className = 'mega-sparkle';
+      star.textContent = spec.glyph;
+      star.style.left = (50 + Math.cos(rad) * spec.radius) + '%';
+      star.style.top  = (50 + Math.sin(rad) * spec.radius) + '%';
+      star.style.fontSize = (size * (0.07 + Math.random() * 0.05)).toFixed(1) + 'px';
+      star.style.animationDelay = spec.delay + 's';
+      star.style.animationDuration = spec.duration + 's';
+      megaSparkles.appendChild(star);
+    });
+    mega.appendChild(megaSparkles);
   });
 
   instruction.textContent = "ลุ้นๆ...";
