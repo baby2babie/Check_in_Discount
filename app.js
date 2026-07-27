@@ -176,6 +176,11 @@ function renderPile(){
         `<div class="capsule-ticket-amount" style="font-size:${(size * 0.25).toFixed(1)}px;color:${col.main}">${CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)]}</div>` +
         `<div class="capsule-ticket-unit" style="font-size:${(size * 0.095).toFixed(1)}px">บาท</div>`;
       c.appendChild(ticket);
+
+      // ชั้นแสงสะท้อนกระจกทับหน้าตั๋วอีกที ให้ตั๋วดูเหมือนอยู่ลึกเข้าไปหลังผิวโค้งใส ไม่ใช่แปะลอยอยู่หน้าลูก
+      const shine = document.createElement('div');
+      shine.className = 'capsule-glass-shine';
+      c.appendChild(shine);
     }
     pile.appendChild(c);
   }
