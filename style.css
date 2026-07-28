@@ -197,20 +197,19 @@ h1{
 .capsule-ticket{
   position:absolute;
   left:50%; top:50%;
-  background:rgba(255,255,255,.97);
+  background:#FFFAF0;
   border-radius:15%;
   box-shadow:0 3px 7px rgba(46,38,32,.4);
   text-align:center;
   z-index:2;
   pointer-events:none;
   overflow:hidden;
+  box-sizing:border-box;
 }
-.capsule-ticket::before{
-  content:"";
-  position:absolute; inset:0;
-  background:
-    radial-gradient(circle at 12% 18%, rgba(231,185,74,.5), transparent 40%),
-    radial-gradient(circle at 88% 82%, rgba(193,55,44,.3), transparent 40%);
+.capsule-ticket-spark{
+  position:absolute;
+  line-height:1;
+  opacity:.7;
 }
 .capsule-ticket-label,
 .capsule-ticket-amount,
@@ -229,14 +228,15 @@ h1{
   color:var(--ink-soft);
   line-height:1.15;
 }
-/* แสงสะท้อนกระจกผิวลูกแคปซูล ทับอยู่บนตั๋วอีกที — ให้ความรู้สึกว่าตั๋วอยู่ "หลัง" เปลือกใสโค้งจริงๆ ไม่ใช่แปะลอยไว้ข้างหน้า */
-/* ครึ่งล่างทึบสีของแคปซูล วางทับตั๋วอีกที — จำลองว่าส่วนสีทึบบังตั๋วไว้จริงๆ เห็นตั๋วแค่ผ่านฝาใสด้านบนเท่านั้น */
-.capsule-bottom-mask{
+/* เปลือกทึบสีของแคปซูล วางทับตั๋วอีกที (บนสุดเหนือตั๋ว) — ใช้ angle/level เดียวกับพื้นหลังลูกเป๊ะ
+   ต่อเนื้อสีให้เนียนสนิทไปกับพื้นหลัง ผลคือส่วนตั๋วที่จมอยู่ใต้เส้นระดับน้ำถูกบังไว้จริง เห็นตั๋วแค่ผ่านฝาใสเท่านั้น */
+.capsule-shell-top{
   position:absolute; inset:0;
   border-radius:50%;
   pointer-events:none;
   z-index:3;
 }
+/* แสงสะท้อนกระจกผิวลูกแคปซูล ทับอยู่บนสุดอีกที — ให้ความรู้สึกลึกเป็นทรงกลมโค้งใสจริง */
 .capsule-glass-shine{
   position:absolute; inset:0;
   border-radius:50%;

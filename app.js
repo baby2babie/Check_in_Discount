@@ -114,23 +114,37 @@ const CAPSULE_NUMBERS = [20, 30, 40, 50, 60, 70, 80, 100];
 
 // สร้าง background ทรงกลม "แคปซูลน้ำ" 2 โทน — ครึ่งบนกระจกใส ครึ่งล่างสีสันเข้ม
 // พร้อมเส้นไฮไลต์บางๆ ตรงระดับน้ำ + แสงเงาวาวมุมบนซ้าย เลียนแบบภาพตัวอย่าง
-function gachaBallBg(mainColor, shineColor, levelPct){
+// angleDeg คือมุมของเส้นแบ่งกระจก/สี — ปรับต่อลูกให้ไม่เท่ากัน จำลองว่าแต่ละลูกถูกมองจากมุมกล้อง/องศาเอียงคนละแบบ
+function gachaBallBg(mainColor, shineColor, levelPct, angleDeg){
   const lvl = levelPct;
+  const ang = angleDeg;
   return [
     `radial-gradient(circle at 30% 20%, rgba(255,255,255,.95), rgba(255,255,255,0) 40%)`,
-    `linear-gradient(180deg, transparent 0%, transparent ${lvl-3}%, ${shineColor} ${lvl-3}%, ${shineColor} ${lvl+1}%, transparent ${lvl+1}%, transparent 100%)`,
-    `linear-gradient(180deg, ${FROST} 0%, ${FROST} ${lvl}%, ${mainColor} ${lvl}%, ${mainColor} 100%)`
+    `linear-gradient(${ang}deg, transparent 0%, transparent ${lvl-4}%, ${shineColor} ${lvl-4}%, ${shineColor} ${lvl-1}%, rgba(0,0,0,.16) ${lvl-1}%, rgba(0,0,0,.16) ${lvl+0.6}%, transparent ${lvl+0.6}%, transparent 100%)`,
+    `linear-gradient(${ang}deg, ${FROST} 0%, ${FROST} ${lvl}%, ${mainColor} ${lvl}%, ${mainColor} 100%)`
   ].join(', ');
 }
 
-// มาสก์ครึ่งล่างทึบสี — ใช้ level เดียวกับ gachaBallBg เป๊ะๆ แล้ววางทับ "บน" ตั๋วอีกที
-// เพื่อให้ส่วนสีทึบของแคปซูลบังตั๋วที่จมอยู่ใต้ระดับน้ำไว้จริง เห็นตั๋วแค่ผ่านฝาใสด้านบนเท่านั้น
-function gachaBallBottomMask(mainColor, shineColor, levelPct){
+// ชั้นเปลือกทึบสี วางทับ "บนสุด" เหนือตั๋วอีกที — ใช้ angle/level ตัวเดียวกับพื้นหลังลูกเป๊ะ (รวมเส้นไฮไลต์ระดับน้ำด้วย)
+// เพื่อให้ส่วนทึบของแคปซูลบังตั๋วที่จมอยู่ใต้เส้นระดับน้ำไว้จริง เนียนสนิทไปกับพื้นหลังลูก ไม่ใช่สี่เหลี่ยมสีทึบลอยๆ
+function gachaBallShellTop(mainColor, shineColor, levelPct, angleDeg){
   const lvl = levelPct;
+  const ang = angleDeg;
   return [
-    `linear-gradient(180deg, transparent 0%, transparent ${lvl-3}%, ${shineColor} ${lvl-3}%, ${shineColor} ${lvl+1}%, transparent ${lvl+1}%, transparent 100%)`,
-    `linear-gradient(180deg, transparent 0%, transparent ${lvl}%, ${mainColor} ${lvl}%, ${mainColor} 100%)`
+    `linear-gradient(${ang}deg, transparent 0%, transparent ${lvl-4}%, ${shineColor} ${lvl-4}%, ${shineColor} ${lvl-1}%, rgba(0,0,0,.16) ${lvl-1}%, rgba(0,0,0,.16) ${lvl+0.6}%, transparent ${lvl+0.6}%, transparent 100%)`,
+    `linear-gradient(${ang}deg, transparent 0%, transparent ${lvl}%, ${mainColor} ${lvl}%, ${mainColor} 100%)`
   ].join(', ');
+}
+
+// องศาเส้นแบ่งที่เป็นไปได้ — ผสมทั้งเกือบตั้ง (มองจากด้านข้าง/มุมสูง เห็นตั๋วเกือบเต็ม) และเกือบนอน (มองตรง)
+const SPLIT_ANGLES = [95, 120, 150, 175, 195, 220, 255, 280];
+
+function hexToRgba(hex, alpha){
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0,2), 16);
+  const g = parseInt(h.substring(2,4), 16);
+  const b = parseInt(h.substring(4,6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 // stock = milestone keys (string) ที่มีกล่องเปิดได้จริงตอนนี้ เรียงตามลำดับที่จะเปิด
@@ -165,33 +179,47 @@ function renderPile(){
       c.classList.add('shimmer');
     } else {
       const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
-      const level = 38 + Math.random() * 26; // ระดับน้ำสีในลูกไม่เท่ากัน เหมือนของจริง
-      c.style.background = gachaBallBg(col.main, col.shine, level);
+      const angle = SPLIT_ANGLES[Math.floor(Math.random()*SPLIT_ANGLES.length)] + (Math.random() * 14 - 7);
+      const level = 26 + Math.random() * 40; // ระดับน้ำสีในลูกไม่เท่ากัน บางลูกมุมสูงเห็นตั๋วเกือบเต็ม บางลูกสีเยอะกว่า เหมือนของจริง
+      c.style.background = gachaBallBg(col.main, col.shine, level, angle);
 
-      // ป้ายตั๋วส่วนลด "บรรจุอยู่ในแคปซูล" — ตั๋วต้องเล็กกว่าลูกเสมอ (ถึงจะใส่เข้าไปข้างในได้จริง)
-      // ความรู้สึก "ถูกบังบางส่วน" มาจาก .capsule-rim-shade (เงาขอบโค้งของเปลือกแคปซูล) ที่ทับอยู่ด้านบนอีกที ไม่ใช่จากการทำตั๋วให้ใหญ่เกินลูก
-      const tilt = (Math.random() * 30 - 15).toFixed(1);
-      const offX = (Math.random() * 12 - 6).toFixed(1);
-      const offY = (Math.random() * 18 - 9).toFixed(1);
+      // ลำดับชั้นแบบแคปซูลจริง: (1) ฝาใส/พื้นหลังลูก อยู่ล่างสุด (2) ตั๋ว อยู่ตรงกลาง (3) เปลือกทึบสี อยู่บนสุด
+      // ทำให้ส่วนทึบบังตั๋วที่จมอยู่ใต้เส้นระดับน้ำไว้จริง เห็นตั๋วแค่ผ่านฝาใสเท่านั้น
+      // ดันตำแหน่งตั๋วเข้าไปทาง "ฝั่งฝาใส" ตามสัดส่วนพื้นที่สีของลูกนั้นๆ ให้ตั๋วอยู่ในโซนใสเป็นหลักเสมอ (เห็นตั๋วเกือบเต็มใบแบบภาพตัวอย่าง)
+      const splitTilt = angle - 180;
+      const tilt = (splitTilt * 0.4 + (Math.random() * 10 - 5)).toFixed(1);
+      const ticketRotation = Number((-rot * 1 + Number(tilt)).toFixed(1));
+      const rad = angle * Math.PI / 180;
+      const clearDirX = -Math.sin(rad);
+      const clearDirY = Math.cos(rad);
+      const pushPct = Math.min(15, Math.max(0, (level - 32) * 0.34));
+      const offX = (clearDirX * pushPct + (Math.random() * 6 - 3)).toFixed(1);
+      const offY = (clearDirY * pushPct + (Math.random() * 6 - 3)).toFixed(1);
       const ticket = document.createElement('div');
       ticket.className = 'capsule-ticket';
-      ticket.style.width = (size * (0.66 + Math.random() * 0.14)) + 'px';
-      ticket.style.borderRadius = (size * 0.07) + 'px';
-      ticket.style.padding = (size * 0.032) + 'px 0';
+      // ขนาดตั๋วพอดีลูก ไม่ใหญ่จนล้น ไม่เล็กจนดูลอย — ลูกใหญ่ตั๋วขยับสัดส่วนลงนิดหน่อยให้ดูเนียนตา
+      const ticketWidthFactor = 0.68 + Math.random() * 0.12 - Math.min(0.05, size / 3400);
+      ticket.style.width = (size * ticketWidthFactor) + 'px';
+      ticket.style.borderRadius = (size * 0.06) + 'px';
+      ticket.style.padding = (size * 0.03) + 'px 0';
       ticket.style.left = (50 + Number(offX)) + '%';
       ticket.style.top = (50 + Number(offY)) + '%';
-      ticket.style.transform = `translate(-50%,-50%) rotate(${(-rot * 1 + Number(tilt))}deg)`;
+      ticket.style.transform = `translate(-50%,-50%) rotate(${ticketRotation}deg)`;
+      ticket.style.border = (size * 0.016 + 1) + 'px solid ' + hexToRgba(col.main, .55);
+      const sparkSize = (size * ticketWidthFactor * 0.15).toFixed(1);
       ticket.innerHTML =
+        `<span class="capsule-ticket-spark" style="top:5%;left:6%;font-size:${sparkSize}px;color:${col.main}">✦</span>` +
         `<div class="capsule-ticket-label" style="font-size:${(size * 0.105).toFixed(1)}px">ส่วนลด</div>` +
-        `<div class="capsule-ticket-amount" style="font-size:${(size * 0.25).toFixed(1)}px;color:${col.main}">${CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)]}</div>` +
-        `<div class="capsule-ticket-unit" style="font-size:${(size * 0.095).toFixed(1)}px">บาท</div>`;
+        `<div class="capsule-ticket-amount" style="font-size:${(size * 0.255).toFixed(1)}px;color:${col.main}">${CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)]}</div>` +
+        `<div class="capsule-ticket-unit" style="font-size:${(size * 0.095).toFixed(1)}px">บาท</div>` +
+        `<span class="capsule-ticket-spark" style="bottom:5%;right:6%;font-size:${sparkSize}px;color:${col.main}">✦</span>`;
       c.appendChild(ticket);
 
-      // ครึ่งล่างทึบสีทับตั๋วอีกที — ใช้ level เดียวกับพื้นหลังลูกเป๊ะ ให้ตั๋วส่วนที่จมอยู่ใต้เส้นระดับน้ำถูกบังจริง
-      const bottomMask = document.createElement('div');
-      bottomMask.className = 'capsule-bottom-mask';
-      bottomMask.style.background = gachaBallBottomMask(col.main, col.shine, level);
-      c.appendChild(bottomMask);
+      // เปลือกทึบสีวางทับตั๋วอีกที (เลเยอร์บนสุด) — ใช้ angle/level เดียวกับพื้นหลังลูกเป๊ะ
+      const shell = document.createElement('div');
+      shell.className = 'capsule-shell-top';
+      shell.style.background = gachaBallShellTop(col.main, col.shine, level, angle);
+      c.appendChild(shell);
 
       // ชั้นแสงสะท้อนกระจกทับหน้าตั๋วอีกที ให้ตั๋วดูเหมือนอยู่ลึกเข้าไปหลังผิวโค้งใส ไม่ใช่แปะลอยอยู่หน้าลูก
       const shine = document.createElement('div');
