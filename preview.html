@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>พรีวิวลูกแคปซูล</title>
+<style>
+  @font-face { font-family: 'Prompt'; src: local('Prompt'); }
+  body{
+    margin:0; min-height:100vh;
+    background:#f4f4f4;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Prompt', sans-serif;
+  }
+  .stage{ position:relative; width:900px; height:900px; }
+
+  .capsule{
+    position:absolute;
+    border-radius:50%;
+    overflow:hidden;
+    background:#DCEEF5;
+    box-shadow:
+      0 3px 6px rgba(46,38,32,.2),
+      inset 0 0 0 1px rgba(255,255,255,.6),
+      inset -2px -3px 5px rgba(0,0,0,.08);
+  }
+  .capsule-ticket{
+    position:absolute;
+    left:50%; top:50%;
+    background:rgba(255,255,255,.97);
+    border-radius:15%;
+    box-shadow:0 3px 7px rgba(46,38,32,.4);
+    text-align:center;
+    z-index:2;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .capsule-ticket::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(231,185,74,.5), transparent 40%),
+      radial-gradient(circle at 88% 82%, rgba(193,55,44,.3), transparent 40%);
+  }
+  .capsule-ticket-label, .capsule-ticket-amount, .capsule-ticket-unit{ position:relative; }
+  .capsule-ticket-label{ font-weight:600; color:#6C5D4E; line-height:1.15; }
+  .capsule-ticket-amount{ font-weight:700; line-height:1; }
+  .capsule-ticket-unit{ font-weight:600; color:#6C5D4E; line-height:1.15; }
+
+  .capsule-bottom-mask{
+    position:absolute; inset:0;
+    border-radius:50%;
+    pointer-events:none;
+    z-index:3;
+  }
+  .capsule-glass-shine{
+    position:absolute; inset:0;
+    border-radius:50%;
+    pointer-events:none;
+    z-index:4;
+    background:
+      radial-gradient(circle at 26% 18%, rgba(255,255,255,.92), rgba(255,255,255,0) 44%),
+      linear-gradient(115deg, rgba(255,255,255,0) 26%, rgba(255,255,255,.42) 44%, rgba(255,255,255,0) 60%);
+  }
+  .capsule-rim-shade{
+    position:absolute; inset:0;
+    border-radius:50%;
+    pointer-events:none;
+    z-index:5;
+    background: radial-gradient(circle at 50% 50%,
+      rgba(20,20,30,0) 60%,
+      rgba(20,20,30,.12) 78%,
+      rgba(15,15,25,.32) 90%,
+      rgba(10,10,20,.55) 100%);
+  }
+
+  .label{
+    position:absolute; bottom:16px; left:0; right:0;
+    text-align:center; font-size:13px; color:#999;
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage"></div>
+<div class="label">พรีวิวสไตล์ปัจจุบัน (โค้ดเดียวกับใน app.js) — สุ่มใหม่ทุกครั้งที่รีเฟรช</div>
+<script>
+const FROST = "#EAF6FB";
+const NEW_PALETTE = [
+  { main:"#F2941A", shine:"#FFCB80" },
+  { main:"#2E9E4F", shine:"#8FE3A8" },
+  { main:"#2E7FD1", shine:"#8FC4F5" },
+  { main:"#29ABE2", shine:"#9FE0F5" },
+  { main:"#C1372C", shine:"#E8703F" },
+  { main:"#F2C230", shine:"#FFE58A" },
+  { main:"#8B5CF6", shine:"#C4B5FD" },
+  { main:"#E64980", shine:"#FFB8D2" },
+];
+const CAPSULE_NUMBERS = [20, 30, 40, 50, 60, 70, 80, 100];
+
+function gachaBallBg(mainColor, shineColor, levelPct){
+  const lvl = levelPct;
+  return [
+    `radial-gradient(circle at 30% 20%, rgba(255,255,255,.95), rgba(255,255,255,0) 40%)`,
+    `linear-gradient(180deg, transparent 0%, transparent ${lvl-3}%, ${shineColor} ${lvl-3}%, ${shineColor} ${lvl+1}%, transparent ${lvl+1}%, transparent 100%)`,
+    `linear-gradient(180deg, ${FROST} 0%, ${FROST} ${lvl}%, ${mainColor} ${lvl}%, ${mainColor} 100%)`
+  ].join(', ');
+}
+function gachaBallBottomMask(mainColor, shineColor, levelPct){
+  const lvl = levelPct;
+  return [
+    `linear-gradient(180deg, transparent 0%, transparent ${lvl-3}%, ${shineColor} ${lvl-3}%, ${shineColor} ${lvl+1}%, transparent ${lvl+1}%, transparent 100%)`,
+    `linear-gradient(180deg, transparent 0%, transparent ${lvl}%, ${mainColor} ${lvl}%, ${mainColor} 100%)`
+  ].join(', ');
+}
+
+// ตำแหน่งจัดวางแบบเดียวกับภาพตัวอย่างที่ผู้ใช้ส่งมา (กระจายเป็นกลุ่ม มีลูกกลางใหญ่)
+const layout = [
+  { x: 18,  y: 10, s: 150 },
+  { x: 68,  y: 8,  s: 150 },
+  { x: 42,  y: 22, s: 90  },
+  { x: 6,   y: 38, s: 150 },
+  { x: 78,  y: 40, s: 165 },
+  { x: 40,  y: 46, s: 260 },
+  { x: 10,  y: 70, s: 150 },
+  { x: 46,  y: 78, s: 140 },
+  { x: 76,  y: 74, s: 150 },
+];
+
+const stage = document.getElementById('stage');
+layout.forEach(pos=>{
+  const size = pos.s;
+  const c = document.createElement('div');
+  c.className = 'capsule';
+  c.style.width = size + 'px';
+  c.style.height = size + 'px';
+  c.style.left = pos.x + '%';
+  c.style.top = pos.y + '%';
+
+  const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
+  const level = 38 + Math.random() * 26;
+  c.style.background = gachaBallBg(col.main, col.shine, level);
+
+  const rot = (Math.random() * 34 - 17).toFixed(1);
+  const tilt = (Math.random() * 30 - 15).toFixed(1);
+  const offX = (Math.random() * 12 - 6).toFixed(1);
+  const offY = (Math.random() * 18 - 9).toFixed(1);
+  const ticket = document.createElement('div');
+  ticket.className = 'capsule-ticket';
+  ticket.style.width = (size * (0.66 + Math.random() * 0.14)) + 'px';
+  ticket.style.borderRadius = (size * 0.07) + 'px';
+  ticket.style.padding = (size * 0.032) + 'px 0';
+  ticket.style.left = (50 + Number(offX)) + '%';
+  ticket.style.top = (50 + Number(offY)) + '%';
+  ticket.style.transform = `translate(-50%,-50%) rotate(${(-rot * 1 + Number(tilt))}deg)`;
+  ticket.innerHTML =
+    `<div class="capsule-ticket-label" style="font-size:${(size * 0.105).toFixed(1)}px">ส่วนลด</div>` +
+    `<div class="capsule-ticket-amount" style="font-size:${(size * 0.25).toFixed(1)}px;color:${col.main}">${CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)]}</div>` +
+    `<div class="capsule-ticket-unit" style="font-size:${(size * 0.095).toFixed(1)}px">บาท</div>`;
+  c.appendChild(ticket);
+
+  const bottomMask = document.createElement('div');
+  bottomMask.className = 'capsule-bottom-mask';
+  bottomMask.style.background = gachaBallBottomMask(col.main, col.shine, level);
+  c.appendChild(bottomMask);
+
+  const shine = document.createElement('div');
+  shine.className = 'capsule-glass-shine';
+  c.appendChild(shine);
+
+  const rimShade = document.createElement('div');
+  rimShade.className = 'capsule-rim-shade';
+  c.appendChild(rimShade);
+
+  stage.appendChild(c);
+});
+</script>
+</body>
+</html>

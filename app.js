@@ -123,6 +123,16 @@ function gachaBallBg(mainColor, shineColor, levelPct){
   ].join(', ');
 }
 
+// มาสก์ครึ่งล่างทึบสี — ใช้ level เดียวกับ gachaBallBg เป๊ะๆ แล้ววางทับ "บน" ตั๋วอีกที
+// เพื่อให้ส่วนสีทึบของแคปซูลบังตั๋วที่จมอยู่ใต้ระดับน้ำไว้จริง เห็นตั๋วแค่ผ่านฝาใสด้านบนเท่านั้น
+function gachaBallBottomMask(mainColor, shineColor, levelPct){
+  const lvl = levelPct;
+  return [
+    `linear-gradient(180deg, transparent 0%, transparent ${lvl-3}%, ${shineColor} ${lvl-3}%, ${shineColor} ${lvl+1}%, transparent ${lvl+1}%, transparent 100%)`,
+    `linear-gradient(180deg, transparent 0%, transparent ${lvl}%, ${mainColor} ${lvl}%, ${mainColor} 100%)`
+  ].join(', ');
+}
+
 // stock = milestone keys (string) ที่มีกล่องเปิดได้จริงตอนนี้ เรียงตามลำดับที่จะเปิด
 // lootTokens = { "7": token, "PAID": token, ... } token จริงจาก backend สำหรับแต่ละ milestone
 let stock = [];
@@ -162,7 +172,7 @@ function renderPile(){
       // ความรู้สึก "ถูกบังบางส่วน" มาจาก .capsule-rim-shade (เงาขอบโค้งของเปลือกแคปซูล) ที่ทับอยู่ด้านบนอีกที ไม่ใช่จากการทำตั๋วให้ใหญ่เกินลูก
       const tilt = (Math.random() * 30 - 15).toFixed(1);
       const offX = (Math.random() * 12 - 6).toFixed(1);
-      const offY = (Math.random() * 10 - 5).toFixed(1);
+      const offY = (Math.random() * 18 - 9).toFixed(1);
       const ticket = document.createElement('div');
       ticket.className = 'capsule-ticket';
       ticket.style.width = (size * (0.66 + Math.random() * 0.14)) + 'px';
@@ -176,6 +186,12 @@ function renderPile(){
         `<div class="capsule-ticket-amount" style="font-size:${(size * 0.25).toFixed(1)}px;color:${col.main}">${CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)]}</div>` +
         `<div class="capsule-ticket-unit" style="font-size:${(size * 0.095).toFixed(1)}px">บาท</div>`;
       c.appendChild(ticket);
+
+      // ครึ่งล่างทึบสีทับตั๋วอีกที — ใช้ level เดียวกับพื้นหลังลูกเป๊ะ ให้ตั๋วส่วนที่จมอยู่ใต้เส้นระดับน้ำถูกบังจริง
+      const bottomMask = document.createElement('div');
+      bottomMask.className = 'capsule-bottom-mask';
+      bottomMask.style.background = gachaBallBottomMask(col.main, col.shine, level);
+      c.appendChild(bottomMask);
 
       // ชั้นแสงสะท้อนกระจกทับหน้าตั๋วอีกที ให้ตั๋วดูเหมือนอยู่ลึกเข้าไปหลังผิวโค้งใส ไม่ใช่แปะลอยอยู่หน้าลูก
       const shine = document.createElement('div');

@@ -230,11 +230,18 @@ h1{
   line-height:1.15;
 }
 /* แสงสะท้อนกระจกผิวลูกแคปซูล ทับอยู่บนตั๋วอีกที — ให้ความรู้สึกว่าตั๋วอยู่ "หลัง" เปลือกใสโค้งจริงๆ ไม่ใช่แปะลอยไว้ข้างหน้า */
-.capsule-glass-shine{
+/* ครึ่งล่างทึบสีของแคปซูล วางทับตั๋วอีกที — จำลองว่าส่วนสีทึบบังตั๋วไว้จริงๆ เห็นตั๋วแค่ผ่านฝาใสด้านบนเท่านั้น */
+.capsule-bottom-mask{
   position:absolute; inset:0;
   border-radius:50%;
   pointer-events:none;
   z-index:3;
+}
+.capsule-glass-shine{
+  position:absolute; inset:0;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:4;
   background:
     radial-gradient(circle at 26% 18%, rgba(255,255,255,.92), rgba(255,255,255,0) 44%),
     linear-gradient(115deg, rgba(255,255,255,0) 26%, rgba(255,255,255,.42) 44%, rgba(255,255,255,0) 60%);
@@ -245,7 +252,7 @@ h1{
   position:absolute; inset:0;
   border-radius:50%;
   pointer-events:none;
-  z-index:4;
+  z-index:5;
   background: radial-gradient(circle at 50% 50%,
     rgba(20,20,30,0) 60%,
     rgba(20,20,30,.12) 78%,
