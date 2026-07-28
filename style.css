@@ -239,6 +239,19 @@ h1{
     radial-gradient(circle at 26% 18%, rgba(255,255,255,.92), rgba(255,255,255,0) 44%),
     linear-gradient(115deg, rgba(255,255,255,0) 26%, rgba(255,255,255,.42) 44%, rgba(255,255,255,0) 60%);
 }
+/* ขอบโค้งทึบของเปลือกแคปซูล — บังส่วนตั๋วที่อยู่ใกล้ขอบวงกลมให้จางลง/มืดลงตามธรรมชาติ
+   (ตั๋วเองมีขนาดเล็กกว่าลูกเสมอ แค่มุมที่ชิดขอบจะถูกความหนา/ความโค้งของเปลือกบังบางส่วนไว้ เหมือนของจริง) */
+.capsule-rim-shade{
+  position:absolute; inset:0;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:4;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(20,20,30,0) 60%,
+    rgba(20,20,30,.12) 78%,
+    rgba(15,15,25,.32) 90%,
+    rgba(10,10,20,.55) 100%);
+}
 .capsule.shimmer{
   background: radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep)) !important;
   box-shadow: 0 0 10px rgba(180,130,42,.6), 0 3px 6px rgba(46,38,32,.18);

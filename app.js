@@ -158,14 +158,14 @@ function renderPile(){
       const level = 38 + Math.random() * 26; // ระดับน้ำสีในลูกไม่เท่ากัน เหมือนของจริง
       c.style.background = gachaBallBg(col.main, col.shine, level);
 
-      // ป้ายตั๋วส่วนลด "บรรจุอยู่ในแคปซูล" จริงๆ — ขนาดใหญ่เกือบเต็มลูก ตำแหน่ง/มุมเอียงสุ่มแบบธรรมชาติ
-      // ไม่มีลูกไหนอยู่กลางเป๊ะเหมือนกันหมด แล้วให้ขอบวงกลมของแคปซูล (overflow:hidden) ตัดขอบตั๋วที่เกินออกไปเอง เหมือนของจริงที่ตั๋วถูกอัดอยู่ในเปลือกใส
-      const tilt = (Math.random() * 34 - 17).toFixed(1);
-      const offX = (Math.random() * 20 - 10).toFixed(1);
-      const offY = (Math.random() * 18 - 9).toFixed(1);
+      // ป้ายตั๋วส่วนลด "บรรจุอยู่ในแคปซูล" — ตั๋วต้องเล็กกว่าลูกเสมอ (ถึงจะใส่เข้าไปข้างในได้จริง)
+      // ความรู้สึก "ถูกบังบางส่วน" มาจาก .capsule-rim-shade (เงาขอบโค้งของเปลือกแคปซูล) ที่ทับอยู่ด้านบนอีกที ไม่ใช่จากการทำตั๋วให้ใหญ่เกินลูก
+      const tilt = (Math.random() * 30 - 15).toFixed(1);
+      const offX = (Math.random() * 12 - 6).toFixed(1);
+      const offY = (Math.random() * 10 - 5).toFixed(1);
       const ticket = document.createElement('div');
       ticket.className = 'capsule-ticket';
-      ticket.style.width = (size * (0.8 + Math.random() * 0.16)) + 'px';
+      ticket.style.width = (size * (0.66 + Math.random() * 0.14)) + 'px';
       ticket.style.borderRadius = (size * 0.07) + 'px';
       ticket.style.padding = (size * 0.032) + 'px 0';
       ticket.style.left = (50 + Number(offX)) + '%';
@@ -181,6 +181,11 @@ function renderPile(){
       const shine = document.createElement('div');
       shine.className = 'capsule-glass-shine';
       c.appendChild(shine);
+
+      // เงาขอบโค้งทึบของเปลือกแคปซูล ทับบนสุด — ทำให้ตั๋วส่วนที่ชิดขอบดูจางลง/มืดลงเหมือนถูกความหนาของเปลือกบัง
+      const rimShade = document.createElement('div');
+      rimShade.className = 'capsule-rim-shade';
+      c.appendChild(rimShade);
     }
     pile.appendChild(c);
   }
