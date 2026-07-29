@@ -342,25 +342,44 @@ let megaShakeTimers = [];
 let megaDotsTimer = null;
 
 // ============================================================
-//  แสงพลังงานวิ่งรอบลูกแคปซูลใบใหญ่ — โผล่ทีละเส้น (lvl1→lvl4)
-//  แต่ละเส้นมี energy-base (เส้นแสงจาง ค้างอยู่) + energy-run (จุดแสงสว่างวิ่งไปตามเส้นวนซ้ำ)
-//  pathLength="100" ทำให้ animate stroke-dashoffset ได้ง่ายไม่ต้องคำนวณความยาวจริง
+//  รอยร้าวเปลือกแคปซูลใบใหญ่แบบ "กำลังจะฟักออกมา" (เส้นเดียว ไม่ใช่ใยแมงมุม)
+//  สั่นครั้งที่ 1 (lvl1): รอยร้าวหลักโผล่แบบธรรมชาติ เส้นหนาไม่เท่ากัน ปลายเรียวแหลม ยังไม่มีแสง
+//  สั่นครั้งที่ 2 (lvl2): รอยร้าวขยายตัว/แตกกิ่งเพิ่ม พร้อมเริ่มมีแสงจ้าเรืองออกมา (glow-1)
+//  สั่นครั้งที่ 3-4: แสงสว่างมากขึ้นเรื่อยๆ (glow-2 → glow-3) ก่อนวาบพุ่งสุดตอนแตกออกจริง
+//  แต่ละท่อนเป็น path แยกกัน stroke-width ต่างกัน + linecap มน ทำให้ต่อกันแล้วดูเรียวธรรมชาติ
 // ============================================================
-function createMegaEnergy(){
+const MEGA_CRACK_SEGMENTS = {
+  // รอยร้าวหลัก: ปลายซ้ายเรียวบาง -> หนาขึ้นตรงกลาง -> เรียวบางลงทางขวา พร้อมกิ่งแยกขึ้นบน
+  1: [
+    { d:"M27,58 L35,53", w:0.9 },
+    { d:"M35,53 L31,49", w:1.7 },
+    { d:"M31,49 L41,45", w:2.1 },
+    { d:"M41,45 L49,47", w:1.9 },
+    { d:"M49,47 L57,43", w:1.7 },
+    { d:"M57,43 L64,47", w:1.9 },
+    { d:"M64,47 L71,43", w:1.4 },
+    { d:"M71,43 L78,49", w:0.8 },
+    { d:"M57,43 L53,33", w:1.3 },
+    { d:"M53,33 L56,24", w:0.6 }
+  ],
+  // รอยร้าวขยายตัว: ปลายทั้งสองข้างยืดออกไปอีก + แตกกิ่งใหม่เล็กๆ ตรงกลาง
+  2: [
+    { d:"M78,49 L85,53", w:0.5 },
+    { d:"M56,24 L59,16", w:0.35 },
+    { d:"M41,45 L36,38", w:0.6 }
+  ]
+};
+function createMegaCrack(){
   const wrap = document.createElement('div');
-  wrap.className = 'mega-energy';
-  wrap.innerHTML = `
-    <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-      <path class="energy-base lvl1" pathLength="100" d="M88.5,64.4 Q56,63.5 35.6,89.5"/>
-      <path class="energy-run  lvl1" pathLength="100" d="M88.5,64.4 Q56,63.5 35.6,89.5"/>
-      <path class="energy-base lvl2" pathLength="100" d="M35.6,89.5 Q36.5,56.3 10.5,35.6"/>
-      <path class="energy-run  lvl2" pathLength="100" d="M35.6,89.5 Q36.5,56.3 10.5,35.6"/>
-      <path class="energy-base lvl3" pathLength="100" d="M10.5,35.6 Q43.7,36.5 64.4,10.5"/>
-      <path class="energy-run  lvl3" pathLength="100" d="M10.5,35.6 Q43.7,36.5 64.4,10.5"/>
-      <path class="energy-base lvl4" pathLength="100" d="M64.4,10.5 Q63.2,43.7 88.5,64.4"/>
-      <path class="energy-run  lvl4" pathLength="100" d="M64.4,10.5 Q63.2,43.7 88.5,64.4"/>
-      <circle class="energy-core lvl1" cx="50" cy="50" r="3.2"/>
-    </svg>`;
+  wrap.className = 'mega-crack';
+  let paths = '';
+  for(const lvl of [1,2]){
+    MEGA_CRACK_SEGMENTS[lvl].forEach(seg=>{
+      paths += `<path class="crack-shadow lvl${lvl}" pathLength="100" stroke-width="${seg.w}" d="${seg.d}"/>`;
+      paths += `<path class="crack-glow lvl${lvl}" pathLength="100" stroke-width="${seg.w + 0.3}" d="${seg.d}"/>`;
+    });
+  }
+  wrap.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">${paths}</svg>`;
   return wrap;
 }
 
@@ -417,9 +436,9 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
     mega.appendChild(megaSparkles);
   });
 
-  // แสงพลังงานวิ่งรอบลูก ค่อยๆ โผล่ทีละเส้นตอนเขย่าแต่ละครั้ง
-  const megaEnergy = createMegaEnergy();
-  mega.appendChild(megaEnergy);
+  // รอยร้าวแบบเปลือกไข่กำลังฟัก ค่อยๆ ลามทีละระดับตอนเขย่าแต่ละครั้ง
+  const megaCrack = createMegaCrack();
+  mega.appendChild(megaCrack);
 
   instruction.textContent = "ลุ้นๆ...";
   let dots = 0;
@@ -431,10 +450,22 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
   const SHAKE_OFFSETS_MS = [950, 1500, 2200, 2900]; // เริ่มสั่นหลังเด้งขึ้นบังจอเต็มที่แล้วเท่านั้น
   megaShakeTimers = SHAKE_OFFSETS_MS.map((ms, i) => setTimeout(()=>{
     mega.classList.remove('mega-shake'); void mega.offsetWidth; mega.classList.add('mega-shake');
-    // แสงเพิ่มเส้นทีละระดับ ให้โผล่ตามจังหวะแรงกระแทกของการเขย่าแต่ละครั้ง
-    const lvl = i + 1;
     setTimeout(()=>{
-      megaEnergy.querySelectorAll('.lvl' + lvl).forEach(p => p.classList.add('show'));
+      if(i === 0){
+        // สั่นครั้งที่ 1: รอยร้าวหลักโผล่แบบธรรมชาติ ยังไม่มีแสง
+        megaCrack.querySelectorAll('.crack-shadow.lvl1').forEach(p => p.classList.add('show'));
+      } else if(i === 1){
+        // สั่นครั้งที่ 2: รอยร้าวขยายตัว/แตกกิ่งเพิ่ม พร้อมเริ่มมีแสงจ้าเรืองออกมา
+        megaCrack.querySelectorAll('.crack-shadow.lvl2').forEach(p => p.classList.add('show'));
+        megaCrack.querySelectorAll('.crack-glow').forEach(p => p.classList.add('show'));
+        megaCrack.classList.add('glow-1');
+      } else if(i === 2){
+        // สั่นครั้งที่ 3: แสงสว่างมากขึ้น
+        megaCrack.classList.remove('glow-1'); megaCrack.classList.add('glow-2');
+      } else {
+        // สั่นครั้งที่ 4: แสงสว่างมากที่สุดก่อนแตกออกจริง
+        megaCrack.classList.remove('glow-2'); megaCrack.classList.add('glow-3');
+      }
     }, 90);
   }, ms));
 
@@ -446,7 +477,7 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
     megaShakeTimers.forEach(t => clearTimeout(t));
     megaShakeTimers = [];
 
-    splitCapsuleOpen(mega, dim, megaEnergy, ()=>{
+    splitCapsuleOpen(mega, dim, megaCrack, ()=>{
       dropZone.innerHTML = "";
 
       if(!result || !result.success){
@@ -471,7 +502,7 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
   }, MIN_LAUNCH_MS);
 }
 
-function splitCapsuleOpen(mega, dim, megaEnergy, onDone){
+function splitCapsuleOpen(mega, dim, megaCrack, onDone){
   const doSplit = ()=>{
     const rect = mega.getBoundingClientRect();
 
@@ -519,11 +550,11 @@ function splitCapsuleOpen(mega, dim, megaEnergy, onDone){
     }, 640);
   };
 
-  if(megaEnergy){
-    // ก่อนแยกเปลือกจริง ให้แสงโผล่ครบทุกเส้นแล้ววาบพุ่งแรงทันที เป็นจังหวะ "ปลดพลัง" ก่อนหลุดออกเป็น 2 ซีก
-    megaEnergy.querySelectorAll('.energy-base, .energy-run, .energy-core').forEach(p => p.classList.add('show'));
-    void megaEnergy.offsetWidth;
-    megaEnergy.classList.add('shatter');
+  if(megaCrack){
+    // ก่อนแยกเปลือกจริง ให้ร้าวลามเต็มลูกแล้วแสงข้างในวาบพุ่งทันที เหมือนกำลังจะฟักออกมา
+    megaCrack.querySelectorAll('.crack-shadow, .crack-glow').forEach(p => p.classList.add('show'));
+    void megaCrack.offsetWidth;
+    megaCrack.classList.add('shatter');
     setTimeout(doSplit, 130);
   } else {
     doSplit();
