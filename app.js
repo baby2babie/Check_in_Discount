@@ -114,37 +114,13 @@ const CAPSULE_NUMBERS = [20, 30, 40, 50, 60, 70, 80, 100];
 
 // สร้าง background ทรงกลม "แคปซูลน้ำ" 2 โทน — ครึ่งบนกระจกใส ครึ่งล่างสีสันเข้ม
 // พร้อมเส้นไฮไลต์บางๆ ตรงระดับน้ำ + แสงเงาวาวมุมบนซ้าย เลียนแบบภาพตัวอย่าง
-// angleDeg คือมุมของเส้นแบ่งกระจก/สี — ปรับต่อลูกให้ไม่เท่ากัน จำลองว่าแต่ละลูกถูกมองจากมุมกล้อง/องศาเอียงคนละแบบ
-function gachaBallBg(mainColor, shineColor, levelPct, angleDeg){
+function gachaBallBg(mainColor, shineColor, levelPct){
   const lvl = levelPct;
-  const ang = angleDeg;
   return [
     `radial-gradient(circle at 30% 20%, rgba(255,255,255,.95), rgba(255,255,255,0) 40%)`,
-    `linear-gradient(${ang}deg, transparent 0%, transparent ${lvl-4}%, ${shineColor} ${lvl-4}%, ${shineColor} ${lvl-1}%, rgba(0,0,0,.16) ${lvl-1}%, rgba(0,0,0,.16) ${lvl+0.6}%, transparent ${lvl+0.6}%, transparent 100%)`,
-    `linear-gradient(${ang}deg, ${FROST} 0%, ${FROST} ${lvl}%, ${mainColor} ${lvl}%, ${mainColor} 100%)`
+    `linear-gradient(180deg, transparent 0%, transparent ${lvl-3}%, ${shineColor} ${lvl-3}%, ${shineColor} ${lvl+1}%, transparent ${lvl+1}%, transparent 100%)`,
+    `linear-gradient(180deg, ${FROST} 0%, ${FROST} ${lvl}%, ${mainColor} ${lvl}%, ${mainColor} 100%)`
   ].join(', ');
-}
-
-// ชั้นเปลือกทึบสี วางทับ "บนสุด" เหนือตั๋วอีกที — ใช้ angle/level ตัวเดียวกับพื้นหลังลูกเป๊ะ (รวมเส้นไฮไลต์ระดับน้ำด้วย)
-// เพื่อให้ส่วนทึบของแคปซูลบังตั๋วที่จมอยู่ใต้เส้นระดับน้ำไว้จริง เนียนสนิทไปกับพื้นหลังลูก ไม่ใช่สี่เหลี่ยมสีทึบลอยๆ
-function gachaBallShellTop(mainColor, shineColor, levelPct, angleDeg){
-  const lvl = levelPct;
-  const ang = angleDeg;
-  return [
-    `linear-gradient(${ang}deg, transparent 0%, transparent ${lvl-4}%, ${shineColor} ${lvl-4}%, ${shineColor} ${lvl-1}%, rgba(0,0,0,.16) ${lvl-1}%, rgba(0,0,0,.16) ${lvl+0.6}%, transparent ${lvl+0.6}%, transparent 100%)`,
-    `linear-gradient(${ang}deg, transparent 0%, transparent ${lvl}%, ${mainColor} ${lvl}%, ${mainColor} 100%)`
-  ].join(', ');
-}
-
-// องศาเส้นแบ่งที่เป็นไปได้ — ผสมทั้งเกือบตั้ง (มองจากด้านข้าง/มุมสูง เห็นตั๋วเกือบเต็ม) และเกือบนอน (มองตรง)
-const SPLIT_ANGLES = [95, 120, 150, 175, 195, 220, 255, 280];
-
-function hexToRgba(hex, alpha){
-  const h = hex.replace('#', '');
-  const r = parseInt(h.substring(0,2), 16);
-  const g = parseInt(h.substring(2,4), 16);
-  const b = parseInt(h.substring(4,6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 // stock = milestone keys (string) ที่มีกล่องเปิดได้จริงตอนนี้ เรียงตามลำดับที่จะเปิด
@@ -179,57 +155,32 @@ function renderPile(){
       c.classList.add('shimmer');
     } else {
       const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
-      const angle = SPLIT_ANGLES[Math.floor(Math.random()*SPLIT_ANGLES.length)] + (Math.random() * 14 - 7);
-      const level = 26 + Math.random() * 40; // ระดับน้ำสีในลูกไม่เท่ากัน บางลูกมุมสูงเห็นตั๋วเกือบเต็ม บางลูกสีเยอะกว่า เหมือนของจริง
-      c.style.background = gachaBallBg(col.main, col.shine, level, angle);
+      const level = 38 + Math.random() * 26; // ระดับน้ำสีในลูกไม่เท่ากัน เหมือนของจริง
+      c.style.background = gachaBallBg(col.main, col.shine, level);
 
-      // ลำดับชั้นแบบแคปซูลจริง: (1) ฝาใส/พื้นหลังลูก อยู่ล่างสุด (2) ตั๋ว อยู่ตรงกลาง (3) เปลือกทึบสี อยู่บนสุด
-      // ทำให้ส่วนทึบบังตั๋วที่จมอยู่ใต้เส้นระดับน้ำไว้จริง เห็นตั๋วแค่ผ่านฝาใสเท่านั้น
-      // ดันตำแหน่งตั๋วเข้าไปทาง "ฝั่งฝาใส" ตามสัดส่วนพื้นที่สีของลูกนั้นๆ ให้ตั๋วอยู่ในโซนใสเป็นหลักเสมอ (เห็นตั๋วเกือบเต็มใบแบบภาพตัวอย่าง)
-      const splitTilt = angle - 180;
-      const tilt = (splitTilt * 0.4 + (Math.random() * 10 - 5)).toFixed(1);
-      const ticketRotation = Number((-rot * 1 + Number(tilt)).toFixed(1));
-      const rad = angle * Math.PI / 180;
-      const clearDirX = -Math.sin(rad);
-      const clearDirY = Math.cos(rad);
-      const pushPct = Math.min(15, Math.max(0, (level - 32) * 0.34));
-      const offX = (clearDirX * pushPct + (Math.random() * 6 - 3)).toFixed(1);
-      const offY = (clearDirY * pushPct + (Math.random() * 6 - 3)).toFixed(1);
+      // ป้ายตั๋วส่วนลด "บรรจุอยู่ในแคปซูล" จริงๆ — ขนาดใหญ่เกือบเต็มลูก ตำแหน่ง/มุมเอียงสุ่มแบบธรรมชาติ
+      // ไม่มีลูกไหนอยู่กลางเป๊ะเหมือนกันหมด แล้วให้ขอบวงกลมของแคปซูล (overflow:hidden) ตัดขอบตั๋วที่เกินออกไปเอง เหมือนของจริงที่ตั๋วถูกอัดอยู่ในเปลือกใส
+      const tilt = (Math.random() * 34 - 17).toFixed(1);
+      const offX = (Math.random() * 20 - 10).toFixed(1);
+      const offY = (Math.random() * 18 - 9).toFixed(1);
       const ticket = document.createElement('div');
       ticket.className = 'capsule-ticket';
-      // ขนาดตั๋วพอดีลูก ไม่ใหญ่จนล้น ไม่เล็กจนดูลอย — ลูกใหญ่ตั๋วขยับสัดส่วนลงนิดหน่อยให้ดูเนียนตา
-      const ticketWidthFactor = 0.68 + Math.random() * 0.12 - Math.min(0.05, size / 3400);
-      ticket.style.width = (size * ticketWidthFactor) + 'px';
-      ticket.style.borderRadius = (size * 0.06) + 'px';
-      ticket.style.padding = (size * 0.03) + 'px 0';
+      ticket.style.width = (size * (0.8 + Math.random() * 0.16)) + 'px';
+      ticket.style.borderRadius = (size * 0.07) + 'px';
+      ticket.style.padding = (size * 0.032) + 'px 0';
       ticket.style.left = (50 + Number(offX)) + '%';
       ticket.style.top = (50 + Number(offY)) + '%';
-      ticket.style.transform = `translate(-50%,-50%) rotate(${ticketRotation}deg)`;
-      ticket.style.border = (size * 0.016 + 1) + 'px solid ' + hexToRgba(col.main, .55);
-      const sparkSize = (size * ticketWidthFactor * 0.15).toFixed(1);
+      ticket.style.transform = `translate(-50%,-50%) rotate(${(-rot * 1 + Number(tilt))}deg)`;
       ticket.innerHTML =
-        `<span class="capsule-ticket-spark" style="top:5%;left:6%;font-size:${sparkSize}px;color:${col.main}">✦</span>` +
         `<div class="capsule-ticket-label" style="font-size:${(size * 0.105).toFixed(1)}px">ส่วนลด</div>` +
-        `<div class="capsule-ticket-amount" style="font-size:${(size * 0.255).toFixed(1)}px;color:${col.main}">${CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)]}</div>` +
-        `<div class="capsule-ticket-unit" style="font-size:${(size * 0.095).toFixed(1)}px">บาท</div>` +
-        `<span class="capsule-ticket-spark" style="bottom:5%;right:6%;font-size:${sparkSize}px;color:${col.main}">✦</span>`;
+        `<div class="capsule-ticket-amount" style="font-size:${(size * 0.25).toFixed(1)}px;color:${col.main}">${CAPSULE_NUMBERS[Math.floor(Math.random()*CAPSULE_NUMBERS.length)]}</div>` +
+        `<div class="capsule-ticket-unit" style="font-size:${(size * 0.095).toFixed(1)}px">บาท</div>`;
       c.appendChild(ticket);
-
-      // เปลือกทึบสีวางทับตั๋วอีกที (เลเยอร์บนสุด) — ใช้ angle/level เดียวกับพื้นหลังลูกเป๊ะ
-      const shell = document.createElement('div');
-      shell.className = 'capsule-shell-top';
-      shell.style.background = gachaBallShellTop(col.main, col.shine, level, angle);
-      c.appendChild(shell);
 
       // ชั้นแสงสะท้อนกระจกทับหน้าตั๋วอีกที ให้ตั๋วดูเหมือนอยู่ลึกเข้าไปหลังผิวโค้งใส ไม่ใช่แปะลอยอยู่หน้าลูก
       const shine = document.createElement('div');
       shine.className = 'capsule-glass-shine';
       c.appendChild(shine);
-
-      // เงาขอบโค้งทึบของเปลือกแคปซูล ทับบนสุด — ทำให้ตั๋วส่วนที่ชิดขอบดูจางลง/มืดลงเหมือนถูกความหนาของเปลือกบัง
-      const rimShade = document.createElement('div');
-      rimShade.className = 'capsule-rim-shade';
-      c.appendChild(rimShade);
     }
     pile.appendChild(c);
   }
@@ -341,48 +292,6 @@ function dropCapsule(milestone, apiPromise){
 let megaShakeTimers = [];
 let megaDotsTimer = null;
 
-// ============================================================
-//  รอยร้าวเปลือกแคปซูลใบใหญ่แบบ "กำลังจะฟักออกมา" (เส้นเดียว ไม่ใช่ใยแมงมุม)
-//  สั่นครั้งที่ 1 (lvl1): รอยร้าวหลักโผล่แบบธรรมชาติ เส้นหนาไม่เท่ากัน ปลายเรียวแหลม ยังไม่มีแสง
-//  สั่นครั้งที่ 2 (lvl2): รอยร้าวขยายตัว/แตกกิ่งเพิ่ม พร้อมเริ่มมีแสงจ้าเรืองออกมา (glow-1)
-//  สั่นครั้งที่ 3-4: แสงสว่างมากขึ้นเรื่อยๆ (glow-2 → glow-3) ก่อนวาบพุ่งสุดตอนแตกออกจริง
-//  แต่ละท่อนเป็น path แยกกัน stroke-width ต่างกัน + linecap มน ทำให้ต่อกันแล้วดูเรียวธรรมชาติ
-// ============================================================
-const MEGA_CRACK_SEGMENTS = {
-  // รอยร้าวหลัก: ปลายซ้ายเรียวบาง -> หนาขึ้นตรงกลาง -> เรียวบางลงทางขวา พร้อมกิ่งแยกขึ้นบน
-  1: [
-    { d:"M27,58 L35,53", w:0.9 },
-    { d:"M35,53 L31,49", w:1.7 },
-    { d:"M31,49 L41,45", w:2.1 },
-    { d:"M41,45 L49,47", w:1.9 },
-    { d:"M49,47 L57,43", w:1.7 },
-    { d:"M57,43 L64,47", w:1.9 },
-    { d:"M64,47 L71,43", w:1.4 },
-    { d:"M71,43 L78,49", w:0.8 },
-    { d:"M57,43 L53,33", w:1.3 },
-    { d:"M53,33 L56,24", w:0.6 }
-  ],
-  // รอยร้าวขยายตัว: ปลายทั้งสองข้างยืดออกไปอีก + แตกกิ่งใหม่เล็กๆ ตรงกลาง
-  2: [
-    { d:"M78,49 L85,53", w:0.5 },
-    { d:"M56,24 L59,16", w:0.35 },
-    { d:"M41,45 L36,38", w:0.6 }
-  ]
-};
-function createMegaCrack(){
-  const wrap = document.createElement('div');
-  wrap.className = 'mega-crack';
-  let paths = '';
-  for(const lvl of [1,2]){
-    MEGA_CRACK_SEGMENTS[lvl].forEach(seg=>{
-      paths += `<path class="crack-shadow lvl${lvl}" pathLength="100" stroke-width="${seg.w}" d="${seg.d}"/>`;
-      paths += `<path class="crack-glow lvl${lvl}" pathLength="100" stroke-width="${seg.w + 0.3}" d="${seg.d}"/>`;
-    });
-  }
-  wrap.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">${paths}</svg>`;
-  return wrap;
-}
-
 function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, isPaid){
   const rect = fallingEl.getBoundingClientRect();
   fallingEl.remove();
@@ -436,10 +345,6 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
     mega.appendChild(megaSparkles);
   });
 
-  // รอยร้าวแบบเปลือกไข่กำลังฟัก ค่อยๆ ลามทีละระดับตอนเขย่าแต่ละครั้ง
-  const megaCrack = createMegaCrack();
-  mega.appendChild(megaCrack);
-
   instruction.textContent = "ลุ้นๆ...";
   let dots = 0;
   megaDotsTimer = setInterval(()=>{
@@ -448,25 +353,8 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
   }, 350);
 
   const SHAKE_OFFSETS_MS = [950, 1500, 2200, 2900]; // เริ่มสั่นหลังเด้งขึ้นบังจอเต็มที่แล้วเท่านั้น
-  megaShakeTimers = SHAKE_OFFSETS_MS.map((ms, i) => setTimeout(()=>{
+  megaShakeTimers = SHAKE_OFFSETS_MS.map(ms => setTimeout(()=>{
     mega.classList.remove('mega-shake'); void mega.offsetWidth; mega.classList.add('mega-shake');
-    setTimeout(()=>{
-      if(i === 0){
-        // สั่นครั้งที่ 1: รอยร้าวหลักโผล่แบบธรรมชาติ ยังไม่มีแสง
-        megaCrack.querySelectorAll('.crack-shadow.lvl1').forEach(p => p.classList.add('show'));
-      } else if(i === 1){
-        // สั่นครั้งที่ 2: รอยร้าวขยายตัว/แตกกิ่งเพิ่ม พร้อมเริ่มมีแสงจ้าเรืองออกมา
-        megaCrack.querySelectorAll('.crack-shadow.lvl2').forEach(p => p.classList.add('show'));
-        megaCrack.querySelectorAll('.crack-glow').forEach(p => p.classList.add('show'));
-        megaCrack.classList.add('glow-1');
-      } else if(i === 2){
-        // สั่นครั้งที่ 3: แสงสว่างมากขึ้น
-        megaCrack.classList.remove('glow-1'); megaCrack.classList.add('glow-2');
-      } else {
-        // สั่นครั้งที่ 4: แสงสว่างมากที่สุดก่อนแตกออกจริง
-        megaCrack.classList.remove('glow-2'); megaCrack.classList.add('glow-3');
-      }
-    }, 90);
   }, ms));
 
   const MIN_LAUNCH_MS = 950; // กันไว้ให้เห็นจังหวะเด้งบังจอเต็มที่ก่อนเสมอ แม้ backend จะตอบเร็วกว่านี้
@@ -477,7 +365,7 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
     megaShakeTimers.forEach(t => clearTimeout(t));
     megaShakeTimers = [];
 
-    splitCapsuleOpen(mega, dim, megaCrack, ()=>{
+    splitCapsuleOpen(mega, dim, ()=>{
       dropZone.innerHTML = "";
 
       if(!result || !result.success){
@@ -502,63 +390,51 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
   }, MIN_LAUNCH_MS);
 }
 
-function splitCapsuleOpen(mega, dim, megaCrack, onDone){
-  const doSplit = ()=>{
-    const rect = mega.getBoundingClientRect();
+function splitCapsuleOpen(mega, dim, onDone){
+  const rect = mega.getBoundingClientRect();
 
-    const top = document.createElement('div');
-    top.className = 'mega-half mega-top';
-    top.style.background = mega.style.background;
-    top.style.left = rect.left + 'px';
-    top.style.top = rect.top + 'px';
-    top.style.width = rect.width + 'px';
-    top.style.height = rect.height + 'px';
+  const top = document.createElement('div');
+  top.className = 'mega-half mega-top';
+  top.style.background = mega.style.background;
+  top.style.left = rect.left + 'px';
+  top.style.top = rect.top + 'px';
+  top.style.width = rect.width + 'px';
+  top.style.height = rect.height + 'px';
 
-    const bottom = document.createElement('div');
-    bottom.className = 'mega-half mega-bottom';
-    bottom.style.background = mega.style.background;
-    bottom.style.left = rect.left + 'px';
-    bottom.style.top = rect.top + 'px';
-    bottom.style.width = rect.width + 'px';
-    bottom.style.height = rect.height + 'px';
+  const bottom = document.createElement('div');
+  bottom.className = 'mega-half mega-bottom';
+  bottom.style.background = mega.style.background;
+  bottom.style.left = rect.left + 'px';
+  bottom.style.top = rect.top + 'px';
+  bottom.style.width = rect.width + 'px';
+  bottom.style.height = rect.height + 'px';
 
-    document.body.appendChild(top);
-    document.body.appendChild(bottom);
-    mega.remove();
+  document.body.appendChild(top);
+  document.body.appendChild(bottom);
+  mega.remove();
 
-    const flash = document.createElement('div');
-    flash.className = 'mega-flash';
-    document.body.appendChild(flash);
-    requestAnimationFrame(()=> flash.classList.add('go'));
+  const flash = document.createElement('div');
+  flash.className = 'mega-flash';
+  document.body.appendChild(flash);
+  requestAnimationFrame(()=> flash.classList.add('go'));
 
-    requestAnimationFrame(()=>{
-      top.classList.add('mega-split-top');
-      bottom.classList.add('mega-split-bottom');
-    });
+  requestAnimationFrame(()=>{
+    top.classList.add('mega-split-top');
+    bottom.classList.add('mega-split-bottom');
+  });
 
-    dim.classList.remove('on');
+  dim.classList.remove('on');
 
-    // เผยป้ายรางวัลทันทีตอนแสงแฟลชขึ้น ไม่ต้องรอซีกแคปซูลบินสุดก่อน
-    setTimeout(()=> onDone(), 180);
+  // เผยป้ายรางวัลทันทีตอนแสงแฟลชขึ้น ไม่ต้องรอซีกแคปซูลบินสุดก่อน
+  setTimeout(()=> onDone(), 180);
 
-    // เคลียร์ element ซีกแคปซูล/แสง/dim ทิ้งหลังเล่นแอนิเมชันจบจริง
-    setTimeout(()=>{
-      top.remove();
-      bottom.remove();
-      dim.remove();
-      flash.remove();
-    }, 640);
-  };
-
-  if(megaCrack){
-    // ก่อนแยกเปลือกจริง ให้ร้าวลามเต็มลูกแล้วแสงข้างในวาบพุ่งทันที เหมือนกำลังจะฟักออกมา
-    megaCrack.querySelectorAll('.crack-shadow, .crack-glow').forEach(p => p.classList.add('show'));
-    void megaCrack.offsetWidth;
-    megaCrack.classList.add('shatter');
-    setTimeout(doSplit, 130);
-  } else {
-    doSplit();
-  }
+  // เคลียร์ element ซีกแคปซูล/แสง/dim ทิ้งหลังเล่นแอนิเมชันจบจริง
+  setTimeout(()=>{
+    top.remove();
+    bottom.remove();
+    dim.remove();
+    flash.remove();
+  }, 640);
 }
 
 function spawnConfetti(count){
