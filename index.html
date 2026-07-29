@@ -3,34 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>กล่องสุ่มรางวัล</title>
+  <title>ตู้กาชาปอง</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="style.css">
   <style>
     #boot-mask {
       position: fixed; inset: 0; z-index: 9999;
-      background: #020617;
+      background: #0B0709;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 20px;
     }
     #boot-mask .boot-dots { display: flex; gap: 8px; }
     #boot-mask .boot-dot {
-      width: 10px; height: 10px; border-radius: 50%;
+      width: 9px; height: 9px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #F6D888, #9C6D1E);
+      box-shadow: 0 0 10px rgba(221,168,63,.5);
       animation: bootBounce 1s ease-in-out infinite;
     }
-    #boot-mask .boot-dot:nth-child(1) { background: #E7B94A; }
-    #boot-mask .boot-dot:nth-child(2) { background: #DE5245; animation-delay: .15s; }
-    #boot-mask .boot-dot:nth-child(3) { background: #E7B94A; animation-delay: .3s; }
+    #boot-mask .boot-dot:nth-child(2) { animation-delay: .15s; }
+    #boot-mask .boot-dot:nth-child(3) { animation-delay: .3s; }
     #boot-mask .boot-text {
       font-family: 'Orbitron', monospace;
-      font-size: 12px; letter-spacing: 4px;
-      color: #94A3B8;
+      font-size: 11px; letter-spacing: 4px;
+      color: #8a7a63;
       display: flex;
     }
     #boot-mask .boot-loading-dots { display: inline-block; width: 18px; text-align: left; }
     @keyframes bootBounce {
-      0%, 100% { transform: translateY(0); opacity: .5; }
-      50%      { transform: translateY(-10px); opacity: 1; }
+      0%, 100% { transform: translateY(0); opacity: .4; }
+      50%      { transform: translateY(-9px); opacity: 1; }
     }
   </style>
 </head>
@@ -58,7 +59,7 @@
 
 <div class="floor"></div>
 
-<button class="btn-history-icon" id="btn-history" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดกล่อง">
+<button class="btn-history-icon" id="btn-history" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดแคปซูล">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
     <path d="M3 3v5h5"></path>
@@ -81,12 +82,12 @@
       <div class="dome-glass-hi"></div>
       <div class="prize-sticker">
         <div class="grid">
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFC9DE 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#BFF3E1 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFE39A 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#C6E6FF 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#D9C4FF 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,var(--gold) 60%,var(--gold-deep))"></span>
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,#C6577E 60%,#7A1E3D)"></span>
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,#5CC7A3 60%,#1F6B57)"></span>
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,#EFC06C 60%,#B9791C)"></span>
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,#6C9FD9 60%,#1E4C82)"></span>
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,#A97FD1 60%,#5C3486)"></span>
+          <span style="background:radial-gradient(circle at 32% 28%,#fff,var(--gold-300) 60%,var(--gold-700))"></span>
         </div>
         <div class="cap-label">รางวัลรอบนี้</div>
       </div>
@@ -107,7 +108,7 @@
           <div class="crank-glow" id="crankGlow"></div>
           <div class="crank-base"></div>
           <div class="tick-ring" id="tickRing"></div>
-          <div class="crank" id="crank" role="button" tabindex="0" aria-label="หมุนเพื่อเปิดกล่อง">
+          <div class="crank" id="crank" role="button" tabindex="0" aria-label="หมุนเพื่อเปิดแคปซูล">
             <div class="crank-arm"></div>
             <div class="crank-knob"></div>
           </div>
@@ -162,7 +163,7 @@
           <path d="M3 3v5h5"></path>
           <path d="M12 7v5l4 2"></path>
         </svg>
-        ประวัติการเปิดกล่อง
+        ประวัติการเปิดแคปซูล
       </div>
       <button class="history-close" onclick="closeHistoryOverlay()" aria-label="ปิด">✕</button>
     </div>
