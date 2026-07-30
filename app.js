@@ -49,7 +49,7 @@ function showError(msg) {
   plateText.textContent   = 'ไม่พร้อมใช้งาน';
   crank.style.pointerEvents = 'none';
   crankBase.classList.add('hide-breathe');
-  dismissTapHints();
+  updateIdleHints();
 }
 
 // ============================================================
@@ -93,9 +93,12 @@ const crankWrap      = document.getElementById('crankWrap');
 const cabRoomBadge   = document.getElementById('cabRoomBadge');
 const plateText      = document.getElementById('plateText');
 
-function dismissTapHints(){
-  idlePulse.classList.add('hide');
-  crankBase.classList.add('hide-breathe');
+// วงแหวน + จังหวะหายใจที่มือหมุน: โชว์เฉพาะตอนเครื่องว่างและยังมีกล่องให้เปิด
+// เงียบสนิททันทีตอนกำลังหมุน/กำลังลุ้นผล ไม่ใช่หายไปถาวรหลังแตะครั้งแรกอีกต่อไป
+function updateIdleHints(){
+  const shouldShow = !busy && stock.length > 0;
+  idlePulse.classList.toggle('hide', !shouldShow);
+  crankBase.classList.toggle('hide-breathe', !shouldShow);
 }
 
 const DOME_FILL = 15;
@@ -274,6 +277,9 @@ function jigglePile(){
 
 // ============================================================
 //  กันไม่ให้ค้างตลอดไปถ้า backend ไม่ตอบเลย
+//  สำคัญ: 8 วิแรกเป็นแค่ "แจ้งเตือนว่าช้า" ไม่ใช่การยกเลิกจริง — request จริงยังทำงานต่อเบื้องหลัง
+//  แล้วผลจริงจะถูกใช้ทันทีที่ backend ตอบกลับมา (ป้องกัน token เพี้ยนจากการ retry ซ้ำทั้งที่ backend เปิดกล่องไปแล้ว)
+//  จะขึ้น hard-fail (แนะนำให้ปิดแล้วเปิดแอปใหม่) ก็ต่อเมื่อรอนานเกิน HARD_TIMEOUT_MS จริงๆ เท่านั้น
 // ============================================================
 function withTimeout(promise, ms, fallback){
   return Promise.race([
@@ -289,21 +295,32 @@ function playOpen(){
   if(busy) return;
   if(stock.length === 0){ instruction.textContent = "ไม่มีกล่องให้เปิดแล้วตอนนี้"; return; }
   busy = true;
-  dismissTapHints();
+  updateIdleHints();
   crank.classList.add('turn');
   cabinet.classList.remove('rumble'); void cabinet.offsetWidth; cabinet.classList.add('rumble');
   crankWrap.classList.remove('rumble'); void crankWrap.offsetWidth; crankWrap.classList.add('rumble');
   pile.classList.remove('jiggle'); void pile.offsetWidth; pile.classList.add('jiggle');
   spawnRatchetTicks();
   crankGlow.classList.remove('go'); void crankGlow.offsetWidth; crankGlow.classList.add('go');
-  instruction.textContent = "กำลังหมุน...";
+  instruction.textContent = "";
 
   const milestone = stock[0];
   const token = lootTokens[milestone];
+
+  // request จริง — ไม่ถูกยกเลิกแม้ผู้ใช้จะเห็น UI แจ้งว่า "ช้า" แล้วก็ตาม
+  const realPromise = callGAS('openLootBox', { token }).catch(() => ({ success:false, message:'เกิดข้อผิดพลาด' }));
+
+  const SOFT_TIMEOUT_MS = 8000;  // แค่เปลี่ยนข้อความแจ้งเตือน ไม่ตัดการรอผลจริง
+  const HARD_TIMEOUT_MS = 25000; // รอจริงนานสุดก่อนจะยอมแพ้และแนะนำให้รีโหลด
+  const softTimer = setTimeout(()=>{
+    if(busy) instruction.textContent = "เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...";
+  }, SOFT_TIMEOUT_MS);
+  realPromise.finally(()=> clearTimeout(softTimer));
+
   const apiPromise = withTimeout(
-    callGAS('openLootBox', { token }).catch(() => ({ success:false, message:'เกิดข้อผิดพลาด' })),
-    8000,
-    { success:false, message:'เชื่อมต่อช้าเกินไป ลองใหม่อีกครั้งครับ' }
+    realPromise,
+    HARD_TIMEOUT_MS,
+    { success:false, message:'ระบบไม่ตอบสนองนานเกินไป กรุณาปิดแอปแล้วเปิดใหม่อีกครั้งก่อนลองใหม่ครับ', hardFail:true }
   );
 
   setTimeout(()=>{
@@ -318,15 +335,15 @@ function playOpen(){
 function dropCapsule(milestone, apiPromise){
   const isPaid = milestone === 'PAID';
   const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
+  const angle = SPLIT_ANGLES[Math.floor(Math.random()*SPLIT_ANGLES.length)] + (Math.random() * 14 - 7);
   const capsuleBg = isPaid
     ? `radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`
-    : gachaBallBg(col.main, col.shine, 35 + Math.random()*30);
+    : gachaBallBg(col.main, col.shine, 35 + Math.random()*30, angle);
 
   const falling = document.createElement('div');
   falling.className = 'falling-capsule drop';
   falling.style.background = capsuleBg;
   dropZone.appendChild(falling);
-  instruction.textContent = "แคปซูลกำลังหล่นลงราง...";
   jigglePile();
 
   setTimeout(()=>{
@@ -339,7 +356,6 @@ function dropCapsule(milestone, apiPromise){
 //  แล้วแตกออกเป็น 2 ซีก เผยป้ายรางวัล (overlay เดิม)
 // ============================================================
 let megaShakeTimers = [];
-let megaDotsTimer = null;
 
 // ============================================================
 //  รอยร้าวเปลือกแคปซูลใบใหญ่แบบ "กำลังจะฟักออกมา" (เส้นเดียว ไม่ใช่ใยแมงมุม)
@@ -508,13 +524,6 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
   const megaCrack = createMegaCrack();
   mega.appendChild(megaCrack);
 
-  instruction.textContent = "ลุ้นๆ...";
-  let dots = 0;
-  megaDotsTimer = setInterval(()=>{
-    dots = (dots + 1) % 4;
-    instruction.textContent = "ลุ้นๆ" + ".".repeat(dots);
-  }, 350);
-
   const SHAKE_OFFSETS_MS = [950, 1500, 2200, 2900]; // เริ่มสั่นหลังเด้งขึ้นบังจอเต็มที่แล้วเท่านั้น
   megaShakeTimers = SHAKE_OFFSETS_MS.map((ms, i) => setTimeout(()=>{
     // จังหวะพลังพุ่งวาบมืดสลัวลงเสี้ยววินาทีก่อนกระแทก แล้วสว่างกลับ ให้ความรู้สึกทรงพลัง
@@ -552,7 +561,6 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
   setTimeout(async ()=>{
     const result = await apiPromise;
 
-    clearInterval(megaDotsTimer);
     megaShakeTimers.forEach(t => clearTimeout(t));
     megaShakeTimers = [];
 
@@ -563,6 +571,7 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
         showToast('❌ ' + (result && result.message || 'เกิดข้อผิดพลาด'), 'error');
         instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกล่องให้เปิดแล้วตอนนี้";
         busy = false;
+        updateIdleHints();
         return;
       }
 
@@ -577,6 +586,7 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
       showResult(milestone, result, isPaid);
       instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป" : "เปิดครบแล้วตอนนี้";
       busy = false;
+      updateIdleHints();
     });
   }, MIN_LAUNCH_MS);
 }
@@ -753,6 +763,7 @@ function renderCabinet(result){
   updatePlateText();
   crank.style.pointerEvents = '';
   busy = false;
+  updateIdleHints();
   instruction.textContent = stock.length
     ? "👉 แตะที่จับเพื่อลุ้นรางวัล"
     : "ยังไม่มีกล่องให้เปิดในตอนนี้";
