@@ -6,12 +6,12 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbx57fi00n2RKu7b5jHu67vzUVwrez1cx6RhW0lvvM9cIkt6_amJzMoVJOJvrwD7imHBnA/exec';
 const LIFF_ID = '2004478373-aQPYZEpt';
 
-// milestone → ชื่อกล่อง (ใช้แสดงในตู้/ป้าย/ประวัติ) — ลำดับนี้คือลำดับที่ stock queue จะเปิดก่อน-หลัง
+// milestone → ชื่อกาชาปอง (ใช้แสดงในตู้/ป้าย/ประวัติ) — ลำดับนี้คือลำดับที่ stock queue จะเปิดก่อน-หลัง
 const LB_CONFIG = [
-  { milestone: 7,  name: 'กล่องเงิน',      tier: 'silver' },
-  { milestone: 14, name: 'กล่องทอง',        tier: 'gold'   },
-  { milestone: 21, name: 'กล่องแพลตินัม',   tier: 'plat'   },
-  { milestone: 28, name: 'กล่องตำนาน',      tier: 'legend' },
+  { milestone: 7,  name: 'GACHAPON · ORIGIN',  tier: 'silver' },
+  { milestone: 14, name: 'GACHAPON · ASCEND',  tier: 'gold'   },
+  { milestone: 21, name: 'GACHAPON · RESOLVE', tier: 'plat'   },
+  { milestone: 28, name: 'GACHAPON · ZENITH',  tier: 'legend' },
 ];
 const TIER_COLORS = { silver:'#94A3B8', gold:'#F59E0B', plat:'#A78BFA', legend:'#EF4444', paid:'#C084FC' };
 
@@ -236,7 +236,7 @@ function renderPile(){
     }
     pile.appendChild(c);
   }
-  stockCount.textContent = stock.length ? `เปิดได้อีก ${stock.length} กล่อง` : `ไม่มีกล่องให้เปิดตอนนี้`;
+  stockCount.textContent = stock.length ? `เปิดได้อีก ${stock.length} ลูก` : `ไม่มีกาชาปองให้เปิดตอนนี้`;
 }
 
 function rarityOf(amount){
@@ -246,13 +246,13 @@ function rarityOf(amount){
 }
 
 function boxNameFor(milestone){
-  if(milestone === 'PAID') return 'กล่อง PAID';
+  if(milestone === 'PAID') return 'GACHAPON · GRACE';
   const cfg = LB_CONFIG.find(c => c.milestone === Number(milestone));
-  return cfg ? cfg.name : 'กล่องลึกลับ';
+  return cfg ? cfg.name : 'GACHAPON · MYSTERY';
 }
 
 function updatePlateText(){
-  plateText.textContent = stock.length ? `ถัดไป: ${boxNameFor(stock[0])}` : 'เปิดครบแล้วตอนนี้';
+  plateText.textContent = stock.length ? boxNameFor(stock[0]) : 'เปิดครบแล้วตอนนี้';
 }
 
 function spawnRatchetTicks(){
@@ -279,7 +279,7 @@ function jigglePile(){
 //  กันไม่ให้ค้างตลอดไปถ้า backend ไม่ตอบเลย
 //  สำคัญ: 8 วิแรกเป็นแค่ "แจ้งเตือนว่าช้า" ไม่ใช่การยกเลิกจริง — request จริงยังทำงานต่อเบื้องหลัง
 //  แล้วผลจริงจะถูกใช้ทันทีที่ backend ตอบกลับมา (ป้องกัน token เพี้ยนจากการ retry ซ้ำทั้งที่ backend เปิดกล่องไปแล้ว)
-//  จะขึ้น hard-fail (แนะนำให้ปิดแล้วเปิดแอปใหม่) ก็ต่อเมื่อรอนานเกิน HARD_TIMEOUT_MS จริงๆ เท่านั้น
+//  จะขึ้น hard-fail (ซิงค์ข้อมูลใหม่จาก server ให้อัตโนมัติ ไม่ต้องปิดแอปเอง) ก็ต่อเมื่อรอนานเกิน HARD_TIMEOUT_MS จริงๆ เท่านั้น
 // ============================================================
 function withTimeout(promise, ms, fallback){
   return Promise.race([
@@ -293,7 +293,7 @@ function withTimeout(promise, ms, fallback){
 // ============================================================
 function playOpen(){
   if(busy) return;
-  if(stock.length === 0){ instruction.textContent = "ไม่มีกล่องให้เปิดแล้วตอนนี้"; return; }
+  if(stock.length === 0){ instruction.textContent = "ไม่มีกาชาปองให้เปิดแล้วตอนนี้"; return; }
   busy = true;
   updateIdleHints();
   crank.classList.add('turn');
@@ -320,7 +320,7 @@ function playOpen(){
   const apiPromise = withTimeout(
     realPromise,
     HARD_TIMEOUT_MS,
-    { success:false, message:'ระบบไม่ตอบสนองนานเกินไป กรุณาปิดแอปแล้วเปิดใหม่อีกครั้งก่อนลองใหม่ครับ', hardFail:true }
+    { success:false, message:'ระบบช้าผิดปกติ กำลังซิงค์ข้อมูลใหม่ให้อัตโนมัติ', hardFail:true }
   );
 
   setTimeout(()=>{
@@ -568,8 +568,16 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
       dropZone.innerHTML = "";
 
       if(!result || !result.success){
+        if(result && result.hardFail){
+          // ระบบไม่ตอบสนองจริงๆ — ซิงค์สถานะกล่อง/token ใหม่จาก server ให้อัตโนมัติ
+          // แทนที่จะปล่อยให้ผู้ใช้กดซ้ำด้วย token เดิม (ซึ่งอาจถูกใช้ไปแล้วฝั่ง backend) หรือต้องปิดแอปเอง
+          showToast('⏳ ระบบช้าผิดปกติ กำลังซิงค์ข้อมูลให้อัตโนมัติ...', 'error', 4000);
+          instruction.textContent = "🔄 กำลังซิงค์ข้อมูลใหม่...";
+          reloadLootBoxData();
+          return;
+        }
         showToast('❌ ' + (result && result.message || 'เกิดข้อผิดพลาด'), 'error');
-        instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกล่องให้เปิดแล้วตอนนี้";
+        instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกาชาปองให้เปิดแล้วตอนนี้";
         busy = false;
         updateIdleHints();
         return;
@@ -584,7 +592,7 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
       setTimeout(()=> pile.classList.remove('pile-settle'), 400);
 
       showResult(milestone, result, isPaid);
-      instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป" : "เปิดครบแล้วตอนนี้";
+      instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดลูกถัดไป" : "เปิดครบแล้วตอนนี้";
       busy = false;
       updateIdleHints();
     });
@@ -692,10 +700,11 @@ function showResult(milestone, result, isPaid){
   resultTierLabel.textContent = (stockLabels[milestone] || milestone).toUpperCase();
   resultPrize.textContent = `ส่วนลด ${amount} บาท`;
   resultNote.textContent = isPaid
-    ? "กล่องจ่ายตรงเวลา — เปิดได้ 1 ครั้งต่อรอบบิลเท่านั้น"
+    ? "กาชาปองจ่ายตรงเวลา — เปิดได้ 1 ครั้งต่อรอบบิลเท่านั้น"
     : "เพิ่มเข้ายอดส่วนลดรอบบิลถัดไปแล้วครับ";
 
-  rarityRibbon.textContent = rarity === 'legendary' ? '★ พิเศษสุด' : rarity === 'rare' ? '✦ หายาก' : '✓ ธรรมดา';
+  // ป้ายเดียวกันทุกระดับ — ไม่บอกว่าได้ของ "ดี/ธรรมดา" แค่ไหน ให้ความรู้สึกดีเท่ากันทุกรางวัล
+  rarityRibbon.textContent = '🎉 ยินดีด้วย!';
   rarityRibbon.classList.remove('shine');
   if(rarity !== 'common'){ void rarityRibbon.offsetWidth; rarityRibbon.classList.add('shine'); }
 
@@ -766,7 +775,7 @@ function renderCabinet(result){
   updateIdleHints();
   instruction.textContent = stock.length
     ? "👉 แตะที่จับเพื่อลุ้นรางวัล"
-    : "ยังไม่มีกล่องให้เปิดในตอนนี้";
+    : "ยังไม่มีกาชาปองให้เปิดในตอนนี้";
 }
 
 async function loadLootBoxForRoom(roomNo) {
@@ -852,7 +861,7 @@ function renderHistory(history) {
   const body = document.getElementById('history-body');
 
   if (!history.length) {
-    body.innerHTML = '<div class="loading">ยังไม่มีประวัติการเปิดกล่องครับ</div>';
+    body.innerHTML = '<div class="loading">ยังไม่มีประวัติการเปิดกาชาปองครับ</div>';
     return;
   }
 
@@ -900,6 +909,9 @@ function renderHistory(history) {
 // ============================================================
 //  INIT
 // ============================================================
+let bootMode  = null; // 'room' | 'token' | 'userId' — จำวิธีโหลดข้อมูลตอนเปิดแอปไว้ ใช้ซิงค์ใหม่ทีหลังได้โดยไม่ต้องปิดแอป
+let bootParam = null;
+
 async function init() {
   const params = new URLSearchParams(window.location.search);
   const room   = params.get('room');
@@ -911,10 +923,13 @@ async function init() {
   await initLiff();
 
   if (room) {
+    bootMode = 'room'; bootParam = room;
     await loadLootBoxForRoom(room);
   } else if (token) {
+    bootMode = 'token'; bootParam = token;
     await loadLootBoxByToken(token);
   } else if (liffReady && liff.isLoggedIn() && liffProfile) {
+    bootMode = 'userId'; bootParam = liffProfile.userId;
     await loadLootBoxByUserId(liffProfile.userId);
   } else {
     showError('❌ ไม่พบข้อมูลห้อง');
@@ -925,6 +940,17 @@ async function init() {
   }
 
   document.getElementById('boot-mask')?.remove();
+}
+
+// ซิงค์ข้อมูลกล่อง/token ใหม่จาก server ด้วยวิธีเดียวกับตอนบูตแอป
+// ใช้ตอน request เปิดกล่องช้าผิดปกติจนหมดเวลา เพื่อดึงสถานะจริงมาแทนที่จะให้ผู้ใช้ปิดแอปเอง
+async function reloadLootBoxData(){
+  busy = true;
+  updateIdleHints();
+  if(bootMode === 'room') await loadLootBoxForRoom(bootParam);
+  else if(bootMode === 'token') await loadLootBoxByToken(bootParam);
+  else if(bootMode === 'userId') await loadLootBoxByUserId(bootParam);
+  else showError('❌ ไม่พบข้อมูลห้อง');
 }
 
 init();
