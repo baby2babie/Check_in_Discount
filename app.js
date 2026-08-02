@@ -308,7 +308,12 @@ function playOpen(){
   const token = lootTokens[milestone];
 
   // request จริง — ไม่ถูกยกเลิกแม้ผู้ใช้จะเห็น UI แจ้งว่า "ช้า" แล้วก็ตาม
-  const realPromise = callGAS('openLootBox', { token }).catch(() => ({ success:false, message:'เกิดข้อผิดพลาด' }));
+  const realPromise = callGAS('openLootBox', { token }).catch((err) => {
+    // เก็บ error จริงไว้ดูใน console เพื่อวินิจฉัยสาเหตุ (network ล่ม / CORS / parse JSON ไม่ได้ ฯลฯ)
+    // ส่วนข้อความที่โชว์ผู้ใช้เอาไว้แค่บอกว่าต่อไม่ติด ไม่ต้องมีรายละเอียดทางเทคนิค
+    console.error('openLootBox failed:', err);
+    return { success:false, message:'เชื่อมต่อกับระบบไม่สำเร็จ' };
+  });
 
   const SOFT_TIMEOUT_MS = 8000;  // แค่เปลี่ยนข้อความแจ้งเตือน ไม่ตัดการรอผลจริง
   const HARD_TIMEOUT_MS = 25000; // รอจริงนานสุดก่อนจะยอมแพ้และแนะนำให้รีโหลด
@@ -576,7 +581,7 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
           reloadLootBoxData();
           return;
         }
-        showToast('❌ ' + (result && result.message || 'เกิดข้อผิดพลาด'), 'error');
+        showErrorCard(result && result.message);
         instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกาชาปองให้เปิดแล้วตอนนี้";
         busy = false;
         updateIdleHints();
@@ -693,7 +698,26 @@ function spawnConfetti(count){
   }
 }
 
+// เปิดไม่สำเร็จ — โชว์การ์ดตรงกลางจอแบบเดียวกับรางวัล (จุดที่ผู้ใช้กำลังมองอยู่พอดีตอนจบแอนิเมชัน)
+// แทนที่จะให้เห็นแค่ toast เล็กๆ บนสุดจอซึ่งพลาดง่ายมาก หลังแอนิเมชันเต็มจอจบลง
+function showErrorCard(message){
+  prizeCard.classList.add('error-state');
+  rarityRibbon.classList.remove('shine');
+  rarityRibbon.textContent = '⚠️ ลองใหม่อีกครั้ง';
+  resultTierLabel.textContent = '';
+  resultPrize.textContent = 'เปิดไม่สำเร็จ';
+  resultNote.textContent = message || 'เกิดข้อผิดพลาด ลองแตะที่จับอีกครั้งได้เลยครับ';
+  closeBtn.textContent = 'ลองใหม่อีกครั้ง';
+
+  document.querySelectorAll('.burst').forEach(el=>el.remove());
+  screenFlash.classList.remove('go','big');
+
+  overlay.classList.remove('show'); void overlay.offsetWidth; overlay.classList.add('show');
+}
+
 function showResult(milestone, result, isPaid){
+  prizeCard.classList.remove('error-state');
+  closeBtn.textContent = 'เก็บรางวัล 🎉';
   const amount = Number(result.discount_amount) || 0;
   const rarity = rarityOf(amount);
 

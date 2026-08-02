@@ -568,6 +568,10 @@ h1{
 .ribbon.shine::after{ animation: ribbon-shine 1s ease .55s; }
 @keyframes ribbon-shine{ 0%{ left:-60%; opacity:0; } 15%{ opacity:1; } 100%{ left:130%; opacity:0; } }
 
+/* สถานะเปิดไม่สำเร็จ — โทนเป็นกลาง ไม่ใช่สีทอง/ฉลอง ให้อ่านออกทันทีว่าไม่ใช่รางวัลจริง */
+.prize-card.error-state .ribbon{ background:linear-gradient(90deg, #94A3B8, #64748B); box-shadow:0 4px 8px rgba(71,85,105,.4); }
+.prize-card.error-state .prize-name{ color:var(--ink-soft); }
+
 .prize-tier{ font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; font-weight:600; color:var(--ink-soft); margin:6px 0 4px; }
 .prize-name{ font-family:'Mali', sans-serif; font-weight:700; font-size:24px; color:var(--ink); margin-bottom:8px; }
 .prize-note{ font-size:11.5px; color:var(--ink-soft); margin-bottom:18px; line-height:1.5; }
