@@ -88,16 +88,18 @@ const crankGlow      = document.getElementById('crankGlow');
 const screenFlash    = document.getElementById('screenFlash');
 const confettiLayer  = document.getElementById('confettiLayer');
 const idlePulse      = document.getElementById('idlePulse');
+const crankArrow     = document.getElementById('crankArrow');
 const crankBase      = document.querySelector('.crank-base');
 const crankWrap      = document.getElementById('crankWrap');
 const cabRoomBadge   = document.getElementById('cabRoomBadge');
 const plateText      = document.getElementById('plateText');
 
-// วงแหวน + จังหวะหายใจที่มือหมุน: โชว์เฉพาะตอนเครื่องว่างและยังมีกล่องให้เปิด
+// วงแหวน + จังหวะหายใจ + ลูกศรชี้ที่มือหมุน: โชว์เฉพาะตอนเครื่องว่างและยังมีกล่องให้เปิด
 // เงียบสนิททันทีตอนกำลังหมุน/กำลังลุ้นผล ไม่ใช่หายไปถาวรหลังแตะครั้งแรกอีกต่อไป
 function updateIdleHints(){
   const shouldShow = !busy && stock.length > 0;
   idlePulse.classList.toggle('hide', !shouldShow);
+  crankArrow.classList.toggle('hide', !shouldShow);
   crankBase.classList.toggle('hide-breathe', !shouldShow);
 }
 
@@ -582,7 +584,7 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
           return;
         }
         showErrorCard(result && result.message);
-        instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกาชาปองให้เปิดแล้วตอนนี้";
+        instruction.textContent = stock.length ? "แตะที่จับเพื่อลองใหม่" : "ไม่มีกาชาปองให้เปิดแล้วตอนนี้";
         busy = false;
         updateIdleHints();
         return;
@@ -597,7 +599,7 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
       setTimeout(()=> pile.classList.remove('pile-settle'), 400);
 
       showResult(milestone, result, isPaid);
-      instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดลูกถัดไป" : "เปิดครบแล้วตอนนี้";
+      instruction.textContent = stock.length ? "แตะที่จับอีกครั้งเพื่อเปิดลูกถัดไป" : "เปิดครบแล้วตอนนี้";
       busy = false;
       updateIdleHints();
     });
@@ -798,7 +800,7 @@ function renderCabinet(result){
   busy = false;
   updateIdleHints();
   instruction.textContent = stock.length
-    ? "👉 แตะที่จับเพื่อลุ้นรางวัล"
+    ? "แตะที่จับเพื่อลุ้นรางวัล"
     : "ยังไม่มีกาชาปองให้เปิดในตอนนี้";
 }
 

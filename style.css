@@ -494,6 +494,23 @@ h1{
 }
 .idle-pulse.hide{ animation:none; opacity:0; }
 
+/* ลูกศรเล็กๆ ชี้ตรงลงมาที่ที่จับโดยเฉพาะ แยกจากข้อความสถานะ เต้นเบาๆ ดึงความสนใจ */
+.crank-arrow{
+  position:absolute; left:50%; top:-24px; transform:translateX(-50%);
+  width:0; height:0;
+  border-left:7px solid transparent;
+  border-right:7px solid transparent;
+  border-top:11px solid var(--gold);
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.3));
+  pointer-events:none; z-index:5;
+  animation:crank-arrow-bounce 1.1s ease-in-out infinite;
+}
+@keyframes crank-arrow-bounce{
+  0%,100%{ transform:translateX(-50%) translateY(0); opacity:.55; }
+  50%{ transform:translateX(-50%) translateY(7px); opacity:1; }
+}
+.crank-arrow.hide{ opacity:0; animation:none; }
+
 
 .screen-flash{ position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:15; }
 .screen-flash.go{ animation: flash-pop .4s ease; }
@@ -916,5 +933,5 @@ body.mega-camera-shake{ animation:camera-shake-kf .35s ease-in-out; }
   .falling-capsule.drop, .crank.turn, .cabinet.rumble, .crank-wrap.rumble, .burst.go, .prize-card,
   .capsule-pile.jiggle .capsule, .ratchet-tick.go, .crank-glow.go, .screen-flash.go, .confetti-piece, .flap-lid, .dome-glass-hi,
   .mega-capsule.mega-shake, .mega-half, .mega-flash, .mega-sparkle, .crack-shadow, .crack-glow, .crack-core, .crack-hairline, .crack-spark,
-  .mega-rays, .mega-ring, body.mega-camera-shake{ animation:none !important; transition:none !important; }
+  .mega-rays, .mega-ring, body.mega-camera-shake, .idle-pulse, .crank-arrow{ animation:none !important; transition:none !important; }
 }
