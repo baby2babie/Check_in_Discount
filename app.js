@@ -8,10 +8,10 @@ const LIFF_ID = '2004478373-aQPYZEpt';
 
 // milestone → ชื่อกาชาปอง (ใช้แสดงในตู้/ป้าย/ประวัติ) — ลำดับนี้คือลำดับที่ stock queue จะเปิดก่อน-หลัง
 const LB_CONFIG = [
-  { milestone: 7,  name: 'GACHAPON · ORIGIN',  tier: 'silver' },
-  { milestone: 14, name: 'GACHAPON · ASCEND',  tier: 'gold'   },
-  { milestone: 21, name: 'GACHAPON · RESOLVE', tier: 'plat'   },
-  { milestone: 28, name: 'GACHAPON · ZENITH',  tier: 'legend' },
+  { milestone: 7,  name: 'GACHAPON · SILVER',   tier: 'silver' },
+  { milestone: 14, name: 'GACHAPON · GOLD',     tier: 'gold'   },
+  { milestone: 21, name: 'GACHAPON · PLATINUM', tier: 'plat'   },
+  { milestone: 28, name: 'GACHAPON · LEGEND',   tier: 'legend' },
 ];
 const TIER_COLORS = { silver:'#94A3B8', gold:'#F59E0B', plat:'#A78BFA', legend:'#EF4444', paid:'#C084FC' };
 
@@ -43,13 +43,14 @@ function showToast(msg, type = 'success', duration = 3000) {
   setTimeout(() => t.className = 'toast', duration);
 }
 
-function showError(msg) {
+function showError(msg, retryable = false) {
   instruction.textContent = msg;
   stockCount.textContent  = '';
   plateText.textContent   = 'ไม่พร้อมใช้งาน';
   crank.style.pointerEvents = 'none';
   crankBase.classList.add('hide-breathe');
   updateIdleHints();
+  retryBtn.style.display = retryable ? 'block' : 'none';
 }
 
 // ============================================================
@@ -90,6 +91,7 @@ const confettiLayer  = document.getElementById('confettiLayer');
 const idlePulse      = document.getElementById('idlePulse');
 const crankArrow     = document.getElementById('crankArrow');
 const crankBase      = document.querySelector('.crank-base');
+const retryBtn       = document.getElementById('retryBtn');
 const crankWrap      = document.getElementById('crankWrap');
 const cabRoomBadge   = document.getElementById('cabRoomBadge');
 const plateText      = document.getElementById('plateText');
@@ -248,7 +250,7 @@ function rarityOf(amount){
 }
 
 function boxNameFor(milestone){
-  if(milestone === 'PAID') return 'GACHAPON · GRACE';
+  if(milestone === 'PAID') return 'GACHAPON · BONUS';
   const cfg = LB_CONFIG.find(c => c.milestone === Number(milestone));
   return cfg ? cfg.name : 'GACHAPON · MYSTERY';
 }
@@ -344,7 +346,7 @@ function dropCapsule(milestone, apiPromise){
   const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
   const angle = SPLIT_ANGLES[Math.floor(Math.random()*SPLIT_ANGLES.length)] + (Math.random() * 14 - 7);
   const capsuleBg = isPaid
-    ? `radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`
+    ? gachaBallBg('#B4822A', '#F5DFA0', 35 + Math.random()*30, angle)
     : gachaBallBg(col.main, col.shine, 35 + Math.random()*30, angle);
 
   const falling = document.createElement('div');
@@ -531,38 +533,51 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
   const megaCrack = createMegaCrack();
   mega.appendChild(megaCrack);
 
-  const SHAKE_OFFSETS_MS = [950, 1500, 2200, 2900]; // เริ่มสั่นหลังเด้งขึ้นบังจอเต็มที่แล้วเท่านั้น
-  megaShakeTimers = SHAKE_OFFSETS_MS.map((ms, i) => setTimeout(()=>{
-    // จังหวะพลังพุ่งวาบมืดสลัวลงเสี้ยววินาทีก่อนกระแทก แล้วสว่างกลับ ให้ความรู้สึกทรงพลัง
-    dim.classList.add('surge');
-    setTimeout(()=> dim.classList.remove('surge'), 110);
+  // สั่นตามจังหวะเดิม 4 ครั้งแรก (950/1500/2200/2900ms) แล้ว "วนต่อ" ที่ระดับแสงจ้าสุดทุกๆ 700ms
+  // ไปเรื่อยๆ จนกว่าผลจริงจาก backend จะมาถึง — กันไม่ให้ลูกนิ่งค้างเงียบถ้า backend ตอบช้ากว่า 2.9 วิ
+  // (เดิมมีแค่ 4 จังหวะตายตัว พอ backend ช้ากว่านั้นลูกจะหยุดสั่นเฉยๆ แล้วเหมือนค้างจนกว่าผลจะมา)
+  const SHAKE_GAPS_MS = [950, 550, 700, 700]; // ดีเลย์เริ่มต้น แล้วช่วงห่างระหว่างครั้งที่ 1→2, 2→3, 3→4
+  const SHAKE_LOOP_GAP_MS = 700; // ช่วงห่างของทุกครั้งถัดจากนั้น วนไปเรื่อยๆ
+  let shakeIndex = 0;
+  function scheduleNextShake(delay){
+    const t = setTimeout(()=>{
+      const i = shakeIndex++;
+      // จังหวะพลังพุ่งวาบมืดสลัวลงเสี้ยววินาทีก่อนกระแทก แล้วสว่างกลับ ให้ความรู้สึกทรงพลัง
+      dim.classList.add('surge');
+      setTimeout(()=> dim.classList.remove('surge'), 110);
 
-    mega.classList.remove('mega-shake'); void mega.offsetWidth; mega.classList.add('mega-shake');
-    spawnCrackSparks(mega, 3 + i);
-    spawnShockwaveRing(mega, false);
-    setTimeout(()=>{
-      if(i === 0){
-        // สั่นครั้งที่ 1: รอยร้าวหลักโผล่แบบธรรมชาติ ยังไม่มีแสง
-        megaCrack.querySelectorAll('.crack-shadow.lvl1').forEach(p => p.classList.add('show'));
-      } else if(i === 1){
-        // สั่นครั้งที่ 2: รอยร้าวขยายตัว/แตกฝอยเพิ่ม พร้อมเริ่มมีแสงจ้าเรืองออกมา
-        megaCrack.querySelectorAll('.crack-shadow.lvl2, .crack-hairline').forEach(p => p.classList.add('show'));
-        megaCrack.classList.add('glow-1');
-        mega.classList.add('glow-1');
-        megaRays.classList.add('glow-1');
-      } else if(i === 2){
-        // สั่นครั้งที่ 3: แสงสว่างมากขึ้น
-        megaCrack.classList.remove('glow-1'); megaCrack.classList.add('glow-2');
-        mega.classList.remove('glow-1'); mega.classList.add('glow-2');
-        megaRays.classList.remove('glow-1'); megaRays.classList.add('glow-2');
-      } else {
-        // สั่นครั้งที่ 4: แสงสว่างมากที่สุดก่อนแตกออกจริง
-        megaCrack.classList.remove('glow-2'); megaCrack.classList.add('glow-3');
-        mega.classList.remove('glow-2'); mega.classList.add('glow-3');
-        megaRays.classList.remove('glow-2'); megaRays.classList.add('glow-3');
-      }
-    }, 90);
-  }, ms));
+      mega.classList.remove('mega-shake'); void mega.offsetWidth; mega.classList.add('mega-shake');
+      spawnCrackSparks(mega, Math.min(3 + i, 10));
+      spawnShockwaveRing(mega, false);
+      setTimeout(()=>{
+        if(i === 0){
+          // สั่นครั้งที่ 1: รอยร้าวหลักโผล่แบบธรรมชาติ ยังไม่มีแสง
+          megaCrack.querySelectorAll('.crack-shadow.lvl1').forEach(p => p.classList.add('show'));
+        } else if(i === 1){
+          // สั่นครั้งที่ 2: รอยร้าวขยายตัว/แตกฝอยเพิ่ม พร้อมเริ่มมีแสงจ้าเรืองออกมา
+          megaCrack.querySelectorAll('.crack-shadow.lvl2, .crack-hairline').forEach(p => p.classList.add('show'));
+          megaCrack.classList.add('glow-1');
+          mega.classList.add('glow-1');
+          megaRays.classList.add('glow-1');
+        } else if(i === 2){
+          // สั่นครั้งที่ 3: แสงสว่างมากขึ้น
+          megaCrack.classList.remove('glow-1'); megaCrack.classList.add('glow-2');
+          mega.classList.remove('glow-1'); mega.classList.add('glow-2');
+          megaRays.classList.remove('glow-1'); megaRays.classList.add('glow-2');
+        } else {
+          // สั่นครั้งที่ 4 เป็นต้นไป: ค้างที่แสงจ้าสุด (glow-3) แล้วสั่นวนซ้ำไปเรื่อยๆ จนกว่าผลจะมาถึงจริง
+          megaCrack.classList.remove('glow-2'); megaCrack.classList.add('glow-3');
+          mega.classList.remove('glow-2'); mega.classList.add('glow-3');
+          megaRays.classList.remove('glow-2'); megaRays.classList.add('glow-3');
+        }
+      }, 90);
+
+      const nextDelay = i + 1 < SHAKE_GAPS_MS.length ? SHAKE_GAPS_MS[i + 1] : SHAKE_LOOP_GAP_MS;
+      scheduleNextShake(nextDelay);
+    }, delay);
+    megaShakeTimers.push(t);
+  }
+  scheduleNextShake(SHAKE_GAPS_MS[0]);
 
   const MIN_LAUNCH_MS = 950; // กันไว้ให้เห็นจังหวะเด้งบังจอเต็มที่ก่อนเสมอ แม้ backend จะตอบเร็วกว่านี้
   setTimeout(async ()=>{
@@ -726,7 +741,7 @@ function showResult(milestone, result, isPaid){
   resultTierLabel.textContent = (stockLabels[milestone] || milestone).toUpperCase();
   resultPrize.textContent = `ส่วนลด ${amount} บาท`;
   resultNote.textContent = isPaid
-    ? "กาชาปองจ่ายตรงเวลา — เปิดได้ 1 ครั้งต่อรอบบิลเท่านั้น"
+    ? "กาชาปองจ่ายตรงเวลา"
     : "เพิ่มเข้ายอดส่วนลดรอบบิลถัดไปแล้วครับ";
 
   // ป้ายเดียวกันทุกระดับ — ไม่บอกว่าได้ของ "ดี/ธรรมดา" แค่ไหน ให้ความรู้สึกดีเท่ากันทุกรางวัล
@@ -768,6 +783,11 @@ function showResult(milestone, result, isPaid){
 closeBtn.addEventListener('click', ()=> overlay.classList.remove('show'));
 crank.addEventListener('click', playOpen);
 crank.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); playOpen(); } });
+retryBtn.addEventListener('click', ()=>{
+  retryBtn.classList.add('loading');
+  instruction.textContent = 'กำลังลองเชื่อมต่อใหม่...';
+  reloadLootBoxData().finally(()=> retryBtn.classList.remove('loading'));
+});
 
 // ============================================================
 //  RENDER CABINET จากข้อมูลจริง (getLootBoxDataByRoom / getLootBoxData)
@@ -779,6 +799,7 @@ function updateRoomLabel(room){
 }
 
 function renderCabinet(result){
+  retryBtn.style.display = 'none';
   if(result.roomNo) updateRoomLabel(result.roomNo);
 
   stock = [];
@@ -804,28 +825,51 @@ function renderCabinet(result){
     : "ยังไม่มีกาชาปองให้เปิดในตอนนี้";
 }
 
+// เรียก callGAS พร้อม retry อัตโนมัติ 1 ครั้งถ้า fetch ล้มเหลวจริง (เน็ตหลุด/parse พัง ฯลฯ)
+// ไม่ retry ถ้า backend ตอบกลับมาแบบ success:false ชัดเจน (เช่น token ผิด) เพราะลองใหม่ก็ไม่ช่วย
+async function callGASWithRetry(action, params, retries = 1, delayMs = 1200){
+  try {
+    return await callGAS(action, params);
+  } catch (e) {
+    if (retries > 0) {
+      await new Promise(r => setTimeout(r, delayMs));
+      return callGASWithRetry(action, params, retries - 1, delayMs);
+    }
+    throw e;
+  }
+}
+
 async function loadLootBoxForRoom(roomNo) {
   try {
-    const result = await callGAS('getLootBoxDataByRoom', { roomNo });
-    if (!result.success) { showError('❌ ' + (result.message || 'โหลดไม่ได้')); return; }
+    const result = await callGASWithRetry('getLootBoxDataByRoom', { roomNo });
+    if (!result.success) { showError('❌ ' + (result.message || 'โหลดไม่ได้'), true); return; }
     renderCabinet(result);
-  } catch (e) { showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ'); }
+  } catch (e) {
+    console.error('loadLootBoxForRoom failed:', e);
+    showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ', true);
+  }
 }
 
 async function loadLootBoxByToken(token) {
   try {
-    const result = await callGAS('getLootBoxData', { token });
-    if (!result.success) { showError('❌ ' + (result.message || 'Token ไม่ถูกต้อง')); return; }
+    const result = await callGASWithRetry('getLootBoxData', { token });
+    if (!result.success) { showError('❌ ' + (result.message || 'Token ไม่ถูกต้อง'), true); return; }
     renderCabinet(result);
-  } catch (e) { showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ'); }
+  } catch (e) {
+    console.error('loadLootBoxByToken failed:', e);
+    showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ', true);
+  }
 }
 
 async function loadLootBoxByUserId(userId) {
   try {
-    const result = await callGAS('getLootBoxData', { userId });
-    if (!result.success) { showError('❌ ' + (result.message || 'โหลดไม่ได้')); return; }
+    const result = await callGASWithRetry('getLootBoxData', { userId });
+    if (!result.success) { showError('❌ ' + (result.message || 'โหลดไม่ได้'), true); return; }
     renderCabinet(result);
-  } catch (e) { showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ'); }
+  } catch (e) {
+    console.error('loadLootBoxByUserId failed:', e);
+    showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ', true);
+  }
 }
 
 // ============================================================

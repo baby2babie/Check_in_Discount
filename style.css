@@ -306,6 +306,15 @@ h1{
   padding:0 4px;
 }
 
+.retry-btn{
+  display:block; margin:0 auto 10px; border:none; border-radius:999px;
+  padding:8px 18px; font-family:'Prompt',sans-serif; font-weight:600; font-size:12px;
+  background:linear-gradient(90deg,var(--red),var(--red-light)); color:#fff;
+  cursor:pointer; box-shadow:0 4px 10px rgba(193,55,44,.35);
+}
+.retry-btn:active{ transform:scale(.97); }
+.retry-btn.loading{ opacity:.6; pointer-events:none; }
+
 .coin-crank-row{
   display:flex; align-items:center; justify-content:space-between;
   padding:0 4px;
