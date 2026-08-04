@@ -57,11 +57,28 @@ function showError(msg, retryable = false) {
 //  LIFF
 // ============================================================
 async function initLiff() {
+  const LIFF_INIT_TIMEOUT_MS = 8000; // กันไม่ให้ค้างที่หน้า LOADING... ตลอดไปถ้าเซิร์ฟเวอร์ LINE ไม่ตอบ
   try {
-    await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
+    const initOutcome = await withTimeout(
+      liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true }).then(() => 'ok'),
+      LIFF_INIT_TIMEOUT_MS,
+      'timeout'
+    );
+    if (initOutcome === 'timeout') {
+      console.warn('LIFF init timed out');
+      liffReady = false;
+      return;
+    }
     liffReady = true;
     if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
-    liffProfile = await liff.getProfile();
+
+    const profile = await withTimeout(liff.getProfile(), LIFF_INIT_TIMEOUT_MS, null);
+    if (!profile) {
+      console.warn('LIFF getProfile timed out');
+      liffReady = false;
+      return;
+    }
+    liffProfile = profile;
   } catch (e) {
     console.warn('LIFF init failed:', e);
     liffReady = false;
@@ -418,8 +435,16 @@ function createMegaCrack(){
 }
 
 // วงคลื่นกระแทกขยายออกจากลูกแคปซูล ให้ความรู้สึกอลังการตอนกระแทกแต่ละจังหวะ
-function spawnShockwaveRing(mega, big){
-  const rect = mega.getBoundingClientRect();
+function spawnShockwaveRing(mega, big, cache){
+  // ลูกอยู่นิ่งกับที่กลางจอตลอดช่วงสั่น (ไม่ขยับหลังเด้งเข้าที่แล้ว) จึงคำนวณตำแหน่งครั้งเดียวพอ
+  // ไม่ต้องบังคับ browser reflow ซ้ำทุกจังหวะ โดยเฉพาะตอนสั่นวนยาวๆ ถ้า backend ตอบช้า
+  let rect;
+  if (cache && cache.rect) {
+    rect = cache.rect;
+  } else {
+    rect = mega.getBoundingClientRect();
+    if (cache) cache.rect = rect;
+  }
   const cx = rect.left + rect.width / 2;
   const cy = rect.top + rect.height / 2;
   const ring = document.createElement('div');
@@ -474,6 +499,8 @@ function spawnBurstSparks(mega, count){
 function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, isPaid){
   const rect = fallingEl.getBoundingClientRect();
   fallingEl.remove();
+
+  const ringCache = {}; // แคชตำแหน่งลูกไว้ครั้งเดียวต่อรอบเปิดหนึ่งครั้ง ไม่คำนวณ reflow ซ้ำทุกจังหวะสั่น
 
   const dim = document.createElement('div');
   dim.className = 'mega-dim';
@@ -548,7 +575,7 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
 
       mega.classList.remove('mega-shake'); void mega.offsetWidth; mega.classList.add('mega-shake');
       spawnCrackSparks(mega, Math.min(3 + i, 10));
-      spawnShockwaveRing(mega, false);
+      spawnShockwaveRing(mega, false, ringCache);
       setTimeout(()=>{
         if(i === 0){
           // สั่นครั้งที่ 1: รอยร้าวหลักโผล่แบบธรรมชาติ ยังไม่มีแสง
@@ -689,7 +716,8 @@ function splitCapsuleOpen(mega, dim, megaCrack, megaRays, onDone){
       spawnShockwaveRing(mega, true);
       spawnBurstSparks(mega, 16);
       document.body.classList.add('mega-camera-shake');
-      setTimeout(()=> document.body.classList.remove('mega-camera-shake'), 360);
+      // สั้นกว่าเดิม (250ms) ให้จบก่อนป้ายรางวัลโผล่ที่ ~420ms เสมอ กันไม่ให้การ์ดสั่นตามไปด้วย
+      setTimeout(()=> document.body.classList.remove('mega-camera-shake'), 250);
       setTimeout(doSplit, 90);
     }, 150);
   } else {
