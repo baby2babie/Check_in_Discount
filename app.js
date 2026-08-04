@@ -56,12 +56,13 @@ function showError(msg, retryable = false) {
 // ============================================================
 //  LIFF
 // ============================================================
-async function initLiff() {
+async function initLiff(skipProfile = false) {
   try {
     await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
     liffReady = true;
     if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
-    liffProfile = await liff.getProfile();
+    // ✅ ข้าม getProfile() ถ้ามาจาก room/token อยู่แล้ว — ไม่ต้องรู้ว่าใครเปิด
+    if (!skipProfile) liffProfile = await liff.getProfile();
   } catch (e) {
     console.warn('LIFF init failed:', e);
     liffReady = false;
@@ -988,19 +989,22 @@ async function init() {
 
   crank.style.pointerEvents = 'none'; // ปิดจนกว่าจะโหลดข้อมูลจริงเสร็จ
 
-  await initLiff();
-
   if (room) {
     bootMode = 'room'; bootParam = room;
-    await loadLootBoxForRoom(room);
+    // ✅ ยิง LIFF init + ดึงข้อมูลกล่องพร้อมกัน ไม่ต้องรอ LIFF เสร็จก่อน (ไม่ใช้ liffProfile ในเส้นทางนี้)
+    await Promise.all([ initLiff(true), loadLootBoxForRoom(room) ]);
   } else if (token) {
     bootMode = 'token'; bootParam = token;
-    await loadLootBoxByToken(token);
-  } else if (liffReady && liff.isLoggedIn() && liffProfile) {
-    bootMode = 'userId'; bootParam = liffProfile.userId;
-    await loadLootBoxByUserId(liffProfile.userId);
+    await Promise.all([ initLiff(true), loadLootBoxByToken(token) ]);
   } else {
-    showError('❌ ไม่พบข้อมูลห้อง');
+    // ✅ ทางนี้จำเป็นต้องรู้ userId ก่อนถึงจะดึงข้อมูลได้ ยังต้อง sequential เหมือนเดิม
+    await initLiff();
+    if (liffReady && liff.isLoggedIn() && liffProfile) {
+      bootMode = 'userId'; bootParam = liffProfile.userId;
+      await loadLootBoxByUserId(liffProfile.userId);
+    } else {
+      showError('❌ ไม่พบข้อมูลห้อง');
+    }
   }
 
   if (view === 'history' && currentRoomNo) {
