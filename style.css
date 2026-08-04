@@ -2,8 +2,6 @@
    กล่องสุ่มรางวัล — style.css (Gachapon Edition)
    ธีมตู้กาชาปองสไตล์ญี่ปุ่น — แทนที่ solar-system/stardust เดิม
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Mali:wght@600;700&family=Prompt:wght@400;500;600;700&family=Kosugi+Maru&family=Orbitron:wght@800&display=swap');
-
 :root{
   --red:#C1372C;
   --red-deep:#8F2620;
