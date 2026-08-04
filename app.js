@@ -740,9 +740,7 @@ function showResult(milestone, result, isPaid){
 
   resultTierLabel.textContent = (stockLabels[milestone] || milestone).toUpperCase();
   resultPrize.textContent = `ส่วนลด ${amount} บาท`;
-  resultNote.textContent = isPaid
-    ? "กาชาปองจ่ายตรงเวลา"
-    : "เพิ่มเข้ายอดส่วนลดรอบบิลถัดไปแล้วครับ";
+  resultNote.textContent = "เพิ่มเข้ายอดส่วนลดรอบบิลถัดไปแล้วครับ";
 
   // ป้ายเดียวกันทุกระดับ — ไม่บอกว่าได้ของ "ดี/ธรรมดา" แค่ไหน ให้ความรู้สึกดีเท่ากันทุกรางวัล
   rarityRibbon.textContent = '🎉 ยินดีด้วย!';
