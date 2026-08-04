@@ -761,7 +761,7 @@ h1{
 .mega-dim.surge{ background:rgba(20,13,8,.72); transition:background .1s ease-out; }
 
 /* กล้องสั่นทั้งจอ ให้ความรู้สึกแรงกระแทกตอนแตกออกจริง */
-body.mega-camera-shake{ animation:camera-shake-kf .25s ease-in-out; }
+body.mega-camera-shake{ animation:camera-shake-kf .35s ease-in-out; }
 @keyframes camera-shake-kf{
   0%{ transform:translate(0,0); }
   20%{ transform:translate(-7px,5px); }
