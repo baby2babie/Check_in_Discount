@@ -2,6 +2,8 @@
    กล่องสุ่มรางวัล — style.css (Gachapon Edition)
    ธีมตู้กาชาปองสไตล์ญี่ปุ่น — แทนที่ solar-system/stardust เดิม
    ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Mali:wght@600;700&family=Prompt:wght@400;500;600;700&family=Kosugi+Maru&family=Orbitron:wght@800&display=swap');
+
 :root{
   --red:#C1372C;
   --red-deep:#8F2620;
@@ -185,86 +187,33 @@ h1{
   position:absolute;
   border-radius:50%;
   overflow:hidden;
-  background:#DCEEF5;
-  box-shadow:
-    0 3px 6px rgba(46,38,32,.2),
-    inset 0 0 0 1px rgba(255,255,255,.6),
-    inset -2px -3px 5px rgba(0,0,0,.08);
+  box-shadow: inset -4px -5px 6px rgba(0,0,0,.1), inset 3px 4px 6px rgba(255,255,255,.8);
 }
-/* ป้ายรางวัลกระดาษเล็กๆ ลอยกลางลูกแคปซูล เลียนแบบตั๋ว/บัตรส่วนลดในภาพตัวอย่าง */
-.capsule-ticket{
-  position:absolute;
-  left:50%; top:50%;
-  background:#FFFAF0;
-  border-radius:15%;
-  box-shadow:0 3px 7px rgba(46,38,32,.4);
-  text-align:center;
-  z-index:2;
-  pointer-events:none;
-  overflow:hidden;
-  box-sizing:border-box;
-}
-.capsule-ticket-spark{
-  position:absolute;
-  line-height:1;
-  opacity:.7;
-}
-.capsule-ticket-label,
-.capsule-ticket-amount,
-.capsule-ticket-unit{ position:relative; }
-.capsule-ticket-label{
-  font-family:'Prompt', sans-serif; font-weight:600;
-  color:var(--ink-soft);
-  line-height:1.15;
-}
-.capsule-ticket-amount{
+.capsule-number{
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
   font-family:'Mali', sans-serif; font-weight:700;
-  line-height:1;
-}
-.capsule-ticket-unit{
-  font-family:'Prompt', sans-serif; font-weight:600;
-  color:var(--ink-soft);
-  line-height:1.15;
-}
-/* เปลือกทึบสีของแคปซูล วางทับตั๋วอีกที (บนสุดเหนือตั๋ว) — ใช้ angle/level เดียวกับพื้นหลังลูกเป๊ะ
-   ต่อเนื้อสีให้เนียนสนิทไปกับพื้นหลัง ผลคือส่วนตั๋วที่จมอยู่ใต้เส้นระดับน้ำถูกบังไว้จริง เห็นตั๋วแค่ผ่านฝาใสเท่านั้น */
-.capsule-shell-top{
-  position:absolute; inset:0;
-  border-radius:50%;
+  color:rgba(255,255,255,.92);
+  text-shadow:0 1px 2px rgba(46,38,32,.35);
   pointer-events:none;
-  z-index:3;
+  z-index:1;
 }
-/* แสงสะท้อนกระจกผิวลูกแคปซูล ทับอยู่บนสุดอีกที — ให้ความรู้สึกลึกเป็นทรงกลมโค้งใสจริง */
-.capsule-glass-shine{
-  position:absolute; inset:0;
+.capsule::after{
+  content:"";
+  position:absolute;
+  top:16%; left:20%;
+  width:32%; height:22%;
+  background:rgba(255,255,255,.85);
   border-radius:50%;
-  pointer-events:none;
-  z-index:4;
-  background:
-    radial-gradient(circle at 26% 18%, rgba(255,255,255,.92), rgba(255,255,255,0) 44%),
-    linear-gradient(115deg, rgba(255,255,255,0) 26%, rgba(255,255,255,.42) 44%, rgba(255,255,255,0) 60%);
-}
-/* ขอบโค้งทึบของเปลือกแคปซูล — บังส่วนตั๋วที่อยู่ใกล้ขอบวงกลมให้จางลง/มืดลงตามธรรมชาติ
-   (ตั๋วเองมีขนาดเล็กกว่าลูกเสมอ แค่มุมที่ชิดขอบจะถูกความหนา/ความโค้งของเปลือกบังบางส่วนไว้ เหมือนของจริง) */
-.capsule-rim-shade{
-  position:absolute; inset:0;
-  border-radius:50%;
-  pointer-events:none;
-  z-index:5;
-  background: radial-gradient(circle at 50% 50%,
-    rgba(20,20,30,0) 60%,
-    rgba(20,20,30,.12) 78%,
-    rgba(15,15,25,.32) 90%,
-    rgba(10,10,20,.55) 100%);
 }
 .capsule.shimmer{
   background: radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep)) !important;
-  box-shadow: 0 0 10px rgba(180,130,42,.6), 0 3px 6px rgba(46,38,32,.18);
+  box-shadow: inset -4px -5px 6px rgba(0,0,0,.1), inset 3px 4px 6px rgba(255,255,255,.8), 0 0 10px rgba(180,130,42,.6);
   animation: shimmer-pulse 1.9s ease-in-out infinite;
 }
 @keyframes shimmer-pulse{
-  0%,100%{ box-shadow: 0 0 6px rgba(180,130,42,.4), 0 3px 6px rgba(46,38,32,.18); }
-  50%{ box-shadow: 0 0 16px rgba(180,130,42,.9), 0 3px 6px rgba(46,38,32,.18); }
+  0%,100%{ box-shadow: inset -4px -5px 6px rgba(0,0,0,.1), inset 3px 4px 6px rgba(255,255,255,.8), 0 0 6px rgba(180,130,42,.4); }
+  50%{ box-shadow: inset -4px -5px 6px rgba(0,0,0,.1), inset 3px 4px 6px rgba(255,255,255,.8), 0 0 16px rgba(180,130,42,.9); }
 }
 .pile-settle{ animation: settle .4s ease; }
 @keyframes settle{ 0%{ transform:translateY(-5px); } 60%{ transform:translateY(2px); } 100%{ transform:translateY(0); } }
@@ -303,15 +252,6 @@ h1{
   margin-bottom:8px;
   padding:0 4px;
 }
-
-.retry-btn{
-  display:block; margin:0 auto 10px; border:none; border-radius:999px;
-  padding:8px 18px; font-family:'Prompt',sans-serif; font-weight:600; font-size:12px;
-  background:linear-gradient(90deg,var(--red),var(--red-light)); color:#fff;
-  cursor:pointer; box-shadow:0 4px 10px rgba(193,55,44,.35);
-}
-.retry-btn:active{ transform:scale(.97); }
-.retry-btn.loading{ opacity:.6; pointer-events:none; }
 
 .coin-crank-row{
   display:flex; align-items:center; justify-content:space-between;
@@ -417,16 +357,18 @@ h1{
   background:linear-gradient(180deg, var(--metal), var(--metal-deep));
   border-radius:6px;
   box-shadow:inset 0 2px 4px rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.25);
-  overflow:visible;
+  overflow:hidden;
 }
 .falling-capsule{
-  width:28px; height:28px;
+  width:26px; height:26px;
   border-radius:50%;
   position:absolute;
-  left:50%; margin-left:-14px;
+  left:50%; margin-left:-13px;
   top:-4px;
   box-shadow:
     0 0 0 2px rgba(255,255,255,.95),
+    inset -4px -5px 6px rgba(0,0,0,.1),
+    inset 3px 4px 6px rgba(255,255,255,.9),
     0 6px 12px rgba(0,0,0,.35);
   opacity:0;
 }
@@ -434,12 +376,44 @@ h1{
 @keyframes fall{ 0%{ top:-4px; opacity:1; } 85%{ top:12px; opacity:1; } 100%{ top:9px; opacity:1; } }
 @keyframes spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
 
+.impact-ring{
+  position:absolute; top:16px; left:50%;
+  width:10px; height:10px; border-radius:50%;
+  border:2px solid var(--gold);
+  transform:translate(-50%,-50%) scale(0); opacity:0;
+  pointer-events:none;
+}
+.impact-ring.go{ animation: ring-out .5s ease-out forwards; }
+@keyframes ring-out{ 0%{ transform:translate(-50%,-50%) scale(0); opacity:.9; } 100%{ transform:translate(-50%,-50%) scale(5); opacity:0; } }
+
+.cabinet.shake{ animation: shake-it .35s ease; }
+@keyframes shake-it{
+  0%,100%{ transform:translate(0,0); }
+  25%{ transform:translate(-2px,1px); }
+  50%{ transform:translate(2px,-1px); }
+  75%{ transform:translate(-1px,1px); }
+}
+.stage.shake-big{ animation: shake-big .5s ease; }
+@keyframes shake-big{
+  0%,100%{ transform:translate(0,0) rotate(0deg); }
+  15%{ transform:translate(-5px,3px) rotate(-1.2deg); }
+  35%{ transform:translate(5px,-3px) rotate(1.2deg); }
+  55%{ transform:translate(-4px,3px) rotate(-.8deg); }
+  75%{ transform:translate(4px,-2px) rotate(.8deg); }
+  90%{ transform:translate(-2px,1px) rotate(-.3deg); }
+}
+
 .flap-wrap{ position:relative; height:28px; margin:0 6px; }
 .flap-tray{
   position:absolute; inset:0;
   background:linear-gradient(180deg, #EFE6D2, var(--cream-deep));
   border-radius:0 0 12px 12px;
   box-shadow:inset 0 4px 6px rgba(0,0,0,.12);
+}
+.flap-tray.waiting{ animation: tray-glow 1s ease-in-out infinite; }
+@keyframes tray-glow{
+  0%,100%{ box-shadow:inset 0 4px 6px rgba(0,0,0,.12); }
+  50%{ box-shadow:inset 0 4px 6px rgba(0,0,0,.12), 0 0 14px 2px rgba(231,185,74,.55); }
 }
 .flap-lid{
   position:absolute; top:0; left:6px; right:6px; height:16px;
@@ -501,23 +475,6 @@ h1{
 }
 .idle-pulse.hide{ animation:none; opacity:0; }
 
-/* ลูกศรเล็กๆ ชี้ตรงลงมาที่ที่จับโดยเฉพาะ แยกจากข้อความสถานะ เต้นเบาๆ ดึงความสนใจ */
-.crank-arrow{
-  position:absolute; left:50%; top:-24px; transform:translateX(-50%);
-  width:0; height:0;
-  border-left:7px solid transparent;
-  border-right:7px solid transparent;
-  border-top:11px solid var(--gold);
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.3));
-  pointer-events:none; z-index:5;
-  animation:crank-arrow-bounce 1.1s ease-in-out infinite;
-}
-@keyframes crank-arrow-bounce{
-  0%,100%{ transform:translateX(-50%) translateY(0); opacity:.55; }
-  50%{ transform:translateX(-50%) translateY(7px); opacity:1; }
-}
-.crank-arrow.hide{ opacity:0; animation:none; }
-
 
 .screen-flash{ position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:15; }
 .screen-flash.go{ animation: flash-pop .4s ease; }
@@ -569,8 +526,20 @@ h1{
 }
 .overlay.show{ opacity:1; pointer-events:auto; }
 .reveal-stage{ width:min(270px,100%); display:flex; flex-direction:column; align-items:center; }
+.crack-wrap{ position:relative; width:90px; height:90px; margin-bottom:-16px; }
+.crack-half{
+  position:absolute; width:90px; height:45px; left:0;
+  border-radius:90px 90px 0 0 / 90px 90px 0 0;
+  box-shadow: inset -6px -6px 10px rgba(0,0,0,.1), inset 5px 5px 8px rgba(255,255,255,.8);
+}
+.crack-half.top{ top:0; transform-origin:bottom center; }
+.crack-half.bottom{ bottom:0; border-radius:0 0 90px 90px / 0 0 90px 90px; transform-origin:top center; }
+.overlay.show .crack-half.top{ animation: crack-open-top .5s cubic-bezier(.3,1.4,.5,1) .1s both; }
+.overlay.show .crack-half.bottom{ animation: crack-open-bottom .5s cubic-bezier(.3,1.4,.5,1) .1s both; }
+@keyframes crack-open-top{ 0%{ transform:translateY(24px) rotate(0deg); opacity:0; } 40%{ opacity:1; } 100%{ transform:translateY(-14px) rotate(-16deg); opacity:1; } }
+@keyframes crack-open-bottom{ 0%{ transform:translateY(-24px) rotate(0deg); opacity:0; } 40%{ opacity:1; } 100%{ transform:translateY(14px) rotate(16deg); opacity:1; } }
 
-.burst{ position:absolute; left:50%; top:-6px; width:6px; height:6px; border-radius:50%; background:var(--gold); pointer-events:none; opacity:0; }
+.burst{ position:absolute; left:50%; top:45px; width:6px; height:6px; border-radius:50%; background:var(--gold); pointer-events:none; opacity:0; }
 .burst.go{ animation: burst-fly .6s ease-out .15s forwards; }
 @keyframes burst-fly{ 0%{ opacity:1; transform:translate(-50%,-50%) translate(0,0) scale(1); } 100%{ opacity:0; transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(.2); } }
 
@@ -579,7 +548,7 @@ h1{
   box-shadow: 0 20px 40px -14px rgba(46,38,32,.45);
   position:relative; transform:translateY(14px) scale(.92); opacity:0;
 }
-.overlay.show .prize-card{ animation: card-rise .35s cubic-bezier(.3,1.4,.5,1) both; }
+.overlay.show .prize-card{ animation: card-rise .45s cubic-bezier(.3,1.4,.5,1) .35s both; }
 @keyframes card-rise{ 0%{ transform:translateY(14px) scale(.9); opacity:0; } 100%{ transform:translateY(0) scale(1); opacity:1; } }
 
 .ribbon{
@@ -591,10 +560,6 @@ h1{
 .ribbon::after{ content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(115deg, transparent, rgba(255,255,255,.85), transparent); opacity:0; }
 .ribbon.shine::after{ animation: ribbon-shine 1s ease .55s; }
 @keyframes ribbon-shine{ 0%{ left:-60%; opacity:0; } 15%{ opacity:1; } 100%{ left:130%; opacity:0; } }
-
-/* สถานะเปิดไม่สำเร็จ — โทนเป็นกลาง ไม่ใช่สีทอง/ฉลอง ให้อ่านออกทันทีว่าไม่ใช่รางวัลจริง */
-.prize-card.error-state .ribbon{ background:linear-gradient(90deg, #94A3B8, #64748B); box-shadow:0 4px 8px rgba(71,85,105,.4); }
-.prize-card.error-state .prize-name{ color:var(--ink-soft); }
 
 .prize-tier{ font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; font-weight:600; color:var(--ink-soft); margin:6px 0 4px; }
 .prize-name{ font-family:'Mali', sans-serif; font-weight:700; font-size:24px; color:var(--ink); margin-bottom:8px; }
@@ -748,197 +713,7 @@ h1{
 
 .loading{ text-align:center; color:var(--muted); padding:40px 20px; font-size:14px; }
 
-/* ===================================================================
-   NEW — mega capsule (falls, launches, bounces to cover screen, splits open)
-   =================================================================== */
-.mega-dim{
-  position:fixed; inset:0; z-index:70; pointer-events:none;
-  background:rgba(46,38,32,0); transition:background .4s ease;
-}
-.mega-dim.on{ background:rgba(46,38,32,.55); }
-.mega-dim.surge{ background:rgba(20,13,8,.72); transition:background .1s ease-out; }
-
-/* กล้องสั่นทั้งจอ ให้ความรู้สึกแรงกระแทกตอนแตกออกจริง */
-body.mega-camera-shake{ animation:camera-shake-kf .35s ease-in-out; }
-@keyframes camera-shake-kf{
-  0%{ transform:translate(0,0); }
-  20%{ transform:translate(-7px,5px); }
-  40%{ transform:translate(6px,-6px); }
-  60%{ transform:translate(-5px,4px); }
-  80%{ transform:translate(3px,-2px); }
-  100%{ transform:translate(0,0); }
-}
-
-.mega-capsule{
-  position:fixed; border-radius:50%; z-index:71; overflow:hidden;
-  box-shadow:0 0 0 2px rgba(255,255,255,.95), 0 30px 60px -12px rgba(0,0,0,.5);
-  transition:box-shadow .45s ease-out;
-}
-.mega-capsule.glow-1{ box-shadow:0 0 0 2px rgba(255,255,255,.95), 0 0 20px 3px rgba(255,183,32,.4), 0 30px 60px -12px rgba(0,0,0,.5); }
-.mega-capsule.glow-2{ box-shadow:0 0 0 2px rgba(255,255,255,.95), 0 0 32px 7px rgba(255,183,32,.58), 0 30px 60px -12px rgba(0,0,0,.5); }
-.mega-capsule.glow-3{ box-shadow:0 0 0 2px rgba(255,255,255,.95), 0 0 46px 12px rgba(255,183,32,.78), 0 30px 60px -12px rgba(0,0,0,.5); }
-.mega-capsule.mega-shake{ animation: mega-shake-kf .34s cubic-bezier(.32,.04,.35,1); }
-@keyframes mega-shake-kf{
-  0%{ transform:translate(0,0) scale(1) rotate(0deg); }
-  10%{ transform:translate(-8px,5px) scale(1.015) rotate(-2.6deg); }
-  28%{ transform:translate(7px,-6px) scale(.985) rotate(2deg); }
-  48%{ transform:translate(-6px,5px) scale(1.01) rotate(-1.3deg); }
-  68%{ transform:translate(4px,-3px) scale(.995) rotate(.8deg); }
-  85%{ transform:translate(-2px,1px) scale(1.005) rotate(-.3deg); }
-  100%{ transform:translate(0,0) scale(1) rotate(0deg); }
-}
-
-/* แสงระยิบระยับลอยรอบแคปซูลใบใหญ่ตอนลุ้น แทนป้ายตั๋ว — ไม่มีข้อความ/ตัวเลขใดๆ */
-.mega-sparkles{ position:absolute; inset:0; pointer-events:none; z-index:2; }
-.mega-sparkle{
-  position:absolute;
-  transform:translate(-50%,-50%) scale(.4);
-  color:#fff;
-  text-shadow:0 0 6px var(--gold), 0 0 14px rgba(231,185,74,.85);
-  opacity:0;
-  animation-name: mega-sparkle-twinkle;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-}
-@keyframes mega-sparkle-twinkle{
-  0%,100%{ opacity:0; transform:translate(-50%,-50%) scale(.35) rotate(0deg); }
-  50%{ opacity:1; transform:translate(-50%,-50%) scale(1.15) rotate(25deg); }
-}
-
-/* รอยร้าวเปลือกแคปซูลแบบ "กำลังจะฟักออกมา" — เรนเดอร์ 3 ชั้นซ้อนกันให้ดูมีมิติสมจริง
-   1) crack-shadow  = ตัวรอยร้าวจริง เป็นทรงเรียวธรรมชาติ (filled shape ไม่ใช่เส้น stroke แบน)
-   2) crack-glow    = แสงอุ่นฟุ้งเบลอออกจากรอยร้าว ค่อยๆจ้าขึ้นทีละขั้นตามจังหวะเขย่า
-   3) crack-core    = เส้นแสงร้อนสีขาวตรงกลางรอยร้าว ให้ความรู้สึกมีพลังงานอยู่ข้างใน
-   สั่นครั้งที่ 1: รอยร้าวหลักโผล่ (ยังไม่มีแสง) — สั่นครั้งที่ 2: ขยายตัว+เริ่มมีแสง — 3-4: แสงจ้าขึ้นเรื่อยๆ */
-.mega-crack{ position:absolute; inset:0; z-index:4; pointer-events:none; border-radius:50%; overflow:hidden; }
-.mega-crack svg{ width:100%; height:100%; display:block; }
-
-.crack-shadow{
-  fill:rgba(22,15,10,.64); stroke:none;
-  opacity:0; transition:opacity .32s ease-out;
-}
-.crack-shadow.show{ opacity:1; }
-
-/* รอยแตกฝอยบางๆ แซมรอบรอยร้าวหลัก ให้ดูเป็นธรรมชาติเหมือนเปลือกไข่จริง */
-.crack-hairline{
-  fill:none; stroke:rgba(22,15,10,.32); stroke-width:.28;
-  stroke-linecap:round;
-  stroke-dasharray:100; stroke-dashoffset:100; opacity:0;
-  transition:stroke-dashoffset .3s ease-out, opacity .18s ease-out;
-}
-.crack-hairline.show{ stroke-dashoffset:0; opacity:1; }
-
-.crack-glow{
-  fill:#FFB93D; stroke:none; opacity:0;
-  filter:blur(.9px) drop-shadow(0 0 3px #FFC65C) drop-shadow(0 0 8px #FF9C1F);
-  transition:opacity .4s ease-out, filter .4s ease-out;
-}
-.mega-crack.glow-1 .crack-glow{ opacity:.5; filter:blur(.8px) drop-shadow(0 0 4px #FFC65C) drop-shadow(0 0 10px #FF9C1F); }
-.mega-crack.glow-2 .crack-glow{ opacity:.78; filter:blur(1px) drop-shadow(0 0 6px #FFC65C) drop-shadow(0 0 16px #FF9C1F); animation:crack-breathe 1.05s ease-in-out infinite; }
-.mega-crack.glow-3 .crack-glow{ opacity:.95; filter:blur(1.2px) drop-shadow(0 0 8px #FFC65C) drop-shadow(0 0 22px #FF9C1F); animation:crack-breathe .7s ease-in-out infinite; }
-@keyframes crack-breathe{
-  0%,100%{ filter:blur(.9px) drop-shadow(0 0 5px #FFC65C) drop-shadow(0 0 14px #FF9C1F); }
-  50%{ filter:blur(1.3px) drop-shadow(0 0 9px #FFC65C) drop-shadow(0 0 22px #FF9C1F); }
-}
-
-/* เส้นแสงร้อนสีขาวกลางรอยร้าว ให้ความลึก + ใช้เป็น "ชนวน" วิ่งพุ่งก่อนแตกจริง */
-.crack-core{
-  fill:none; stroke:#FFF3D6; stroke-width:.45; stroke-linecap:round;
-  opacity:0; filter:drop-shadow(0 0 2px #fff);
-  stroke-dasharray:100; stroke-dashoffset:100;
-  transition:opacity .3s ease-out;
-}
-.mega-crack.glow-1 .crack-core{ opacity:.55; }
-.mega-crack.glow-2 .crack-core{ opacity:.8; }
-.mega-crack.glow-3 .crack-core{ opacity:1; }
-.mega-crack.fuse .crack-core{ stroke-dashoffset:0; transition:stroke-dashoffset .22s linear; }
-
-/* วาบสว่างพุ่งสุดตอนแตกจริง เหมือนแสงข้างในทะลักออกมา */
-.mega-crack.shatter .crack-glow{
-  opacity:1; fill:#fff; animation:none;
-  filter:blur(1.4px) drop-shadow(0 0 10px #fff) drop-shadow(0 0 26px #FFD97A);
-  transition:fill .08s ease-out, filter .08s ease-out;
-}
-.mega-crack.shatter .crack-core{ stroke:#fff; opacity:1; filter:drop-shadow(0 0 6px #fff); }
-
-/* สะเก็ดแสงกระเด็นออกจากรอยร้าวตอนกระแทกแต่ละจังหวะ */
-.crack-spark{
-  position:absolute; width:3px; height:3px; margin:-1.5px 0 0 -1.5px;
-  border-radius:50%; background:#FFE9B0;
-  box-shadow:0 0 4px #fff, 0 0 8px #FFB020;
-  pointer-events:none; opacity:0;
-  animation:spark-pop .55s ease-out forwards;
-}
-@keyframes spark-pop{
-  0%{ opacity:0; transform:translate(0,0) scale(.4); }
-  18%{ opacity:1; }
-  100%{ opacity:0; transform:translate(var(--dx),var(--dy)) scale(1.1); }
-}
-
-.mega-half{ position:fixed; border-radius:50%; z-index:72; box-shadow:0 30px 60px -12px rgba(0,0,0,.5); }
-.mega-half.mega-top{ clip-path:inset(0 0 50% 0); }
-.mega-half.mega-bottom{ clip-path:inset(50% 0 0 0); }
-.mega-half.mega-split-top{ animation: mega-fly-up .62s ease-in forwards; }
-.mega-half.mega-split-bottom{ animation: mega-fly-down .62s ease-in forwards; }
-@keyframes mega-fly-up{ 0%{ transform:translateY(0) rotate(0deg); opacity:1; } 100%{ transform:translateY(-72vh) rotate(-28deg); opacity:0; } }
-@keyframes mega-fly-down{ 0%{ transform:translateY(0) rotate(0deg); opacity:1; } 100%{ transform:translateY(72vh) rotate(28deg); opacity:0; } }
-
-/* แสงรัศมีหมุนรอบจอ เพิ่มความอลังการตอนพลังสะสมก่อนแตก */
-.mega-rays{
-  position:fixed; left:50%; top:50%; width:140vmax; height:140vmax;
-  margin:-70vmax 0 0 -70vmax; z-index:69; pointer-events:none; border-radius:50%;
-  background:conic-gradient(from 0deg,
-    rgba(255,201,92,0) 0deg, rgba(255,201,92,.35) 8deg, rgba(255,201,92,0) 18deg,
-    rgba(255,201,92,0) 42deg, rgba(255,201,92,.3) 50deg, rgba(255,201,92,0) 60deg,
-    rgba(255,201,92,0) 84deg, rgba(255,201,92,.32) 92deg, rgba(255,201,92,0) 102deg,
-    rgba(255,201,92,0) 126deg, rgba(255,201,92,.3) 134deg, rgba(255,201,92,0) 144deg,
-    rgba(255,201,92,0) 168deg, rgba(255,201,92,.3) 176deg, rgba(255,201,92,0) 186deg,
-    rgba(255,201,92,0) 210deg, rgba(255,201,92,.3) 218deg, rgba(255,201,92,0) 228deg,
-    rgba(255,201,92,0) 252deg, rgba(255,201,92,.32) 260deg, rgba(255,201,92,0) 270deg,
-    rgba(255,201,92,0) 294deg, rgba(255,201,92,.3) 302deg, rgba(255,201,92,0) 312deg,
-    rgba(255,201,92,0) 336deg, rgba(255,201,92,.3) 344deg, rgba(255,201,92,0) 354deg);
-  -webkit-mask-image:radial-gradient(circle, rgba(0,0,0,.9) 0%, rgba(0,0,0,.5) 28%, transparent 58%);
-  mask-image:radial-gradient(circle, rgba(0,0,0,.9) 0%, rgba(0,0,0,.5) 28%, transparent 58%);
-  opacity:0; animation:rays-spin 16s linear infinite; transition:opacity .5s ease-out;
-}
-@keyframes rays-spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
-.mega-rays.glow-1{ opacity:.3; }
-.mega-rays.glow-2{ opacity:.5; animation-duration:10s; }
-.mega-rays.glow-3{ opacity:.7; animation-duration:5.5s; }
-.mega-rays.shatter{ opacity:1; animation-duration:1.1s; }
-
-/* วงคลื่นกระแทกขยายออกจากจุดกระทบทุกครั้งที่เขย่า/แตก */
-.mega-ring{
-  position:fixed; border-radius:50%; pointer-events:none; z-index:70;
-  border:2px solid rgba(255,217,122,.85);
-  box-shadow:0 0 12px 2px rgba(255,183,32,.6);
-  transform:translate(-50%,-50%) scale(.3); opacity:.9;
-  animation:ring-expand .6s cubic-bezier(.2,.7,.3,1) forwards;
-}
-.mega-ring.big{ border-width:3px; border-color:rgba(255,243,214,.95); box-shadow:0 0 22px 6px rgba(255,183,32,.7); animation-duration:.9s; }
-@keyframes ring-expand{
-  0%{ transform:translate(-50%,-50%) scale(.3); opacity:.9; }
-  100%{ transform:translate(-50%,-50%) scale(2.8); opacity:0; }
-}
-
-.mega-flash{
-  position:fixed; left:50%; top:50%; width:30px; height:30px; margin:-15px 0 0 -15px;
-  border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,.95), rgba(255,255,255,0) 70%);
-  z-index:73; opacity:0; pointer-events:none;
-}
-.mega-flash.go{ animation: mega-flash-grow .7s ease-out forwards; }
-@keyframes mega-flash-grow{
-  0%{ width:30px; height:30px; margin:-15px 0 0 -15px; opacity:0; }
-  30%{ opacity:1; }
-  100%{ width:160vw; height:160vw; margin-left:-80vw; margin-top:-80vw; opacity:0; }
-}
-.mega-flash.core{
-  background:radial-gradient(circle, #fff 0%, #FFE9B0 35%, rgba(255,183,32,.5) 60%, rgba(255,183,32,0) 75%);
-}
-
 @media (prefers-reduced-motion: reduce){
-  .falling-capsule.drop, .crank.turn, .cabinet.rumble, .crank-wrap.rumble, .burst.go, .prize-card,
-  .capsule-pile.jiggle .capsule, .ratchet-tick.go, .crank-glow.go, .screen-flash.go, .confetti-piece, .flap-lid, .dome-glass-hi,
-  .mega-capsule.mega-shake, .mega-half, .mega-flash, .mega-sparkle, .crack-shadow, .crack-glow, .crack-core, .crack-hairline, .crack-spark,
-  .mega-rays, .mega-ring, body.mega-camera-shake, .idle-pulse, .crank-arrow{ animation:none !important; transition:none !important; }
+  .falling-capsule.drop, .crank.turn, .cabinet.shake, .cabinet.rumble, .crank-wrap.rumble, .stage.shake-big, .impact-ring.go, .crack-half, .burst.go, .prize-card,
+  .capsule-pile.jiggle .capsule, .ratchet-tick.go, .crank-glow.go, .screen-flash.go, .confetti-piece, .flap-lid, .dome-glass-hi, .flap-tray.waiting{ animation:none !important; transition:none !important; }
 }
