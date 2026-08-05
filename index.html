@@ -3,9 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>กล่องสุ่มรางวัล</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <title>ตู้กาชาปอง</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@600;700&family=Prompt:wght@400;500;600;700&family=Kosugi+Maru&family=Orbitron:wght@800&display=swap">
   <link rel="stylesheet" href="style.css">
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" defer></script>
   <style>
     #boot-mask {
       position: fixed; inset: 0; z-index: 9999;
@@ -58,7 +63,7 @@
 
 <div class="floor"></div>
 
-<button class="btn-history-icon" id="btn-history" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดกล่อง">
+<button class="btn-history-icon" id="btn-history" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดกาชาปอง">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
     <path d="M3 3v5h5"></path>
@@ -96,6 +101,7 @@
     <div class="body-panel">
       <div class="plate" id="plateText">กำลังโหลดข้อมูลห้อง...</div>
       <div class="cab-instruction" id="instruction">กำลังโหลดข้อมูล...</div>
+      <button class="retry-btn" id="retryBtn" style="display:none;">🔄 ลองเชื่อมต่อใหม่</button>
 
       <div class="coin-crank-row">
         <div class="coin-slot">
@@ -103,11 +109,12 @@
           <div class="slot-label">ช่องหยอด</div>
         </div>
         <div class="crank-wrap" id="crankWrap">
+          <div class="crank-arrow" id="crankArrow"></div>
           <div class="idle-pulse" id="idlePulse"></div>
           <div class="crank-glow" id="crankGlow"></div>
           <div class="crank-base"></div>
           <div class="tick-ring" id="tickRing"></div>
-          <div class="crank" id="crank" role="button" tabindex="0" aria-label="หมุนเพื่อเปิดกล่อง">
+          <div class="crank" id="crank" role="button" tabindex="0" aria-label="หมุนเพื่อเปิดกาชาปอง">
             <div class="crank-arm"></div>
             <div class="crank-knob"></div>
           </div>
@@ -162,7 +169,7 @@
           <path d="M3 3v5h5"></path>
           <path d="M12 7v5l4 2"></path>
         </svg>
-        ประวัติการเปิดกล่อง
+        ประวัติการเปิดกาชาปอง
       </div>
       <button class="history-close" onclick="closeHistoryOverlay()" aria-label="ปิด">✕</button>
     </div>
@@ -174,6 +181,6 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="app.js"></script>
+<script src="app.js" defer></script>
 </body>
 </html>

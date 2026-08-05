@@ -6,12 +6,12 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbx57fi00n2RKu7b5jHu67vzUVwrez1cx6RhW0lvvM9cIkt6_amJzMoVJOJvrwD7imHBnA/exec';
 const LIFF_ID = '2004478373-aQPYZEpt';
 
-// milestone → ชื่อกล่อง (ใช้แสดงในตู้/ป้าย/ประวัติ) — ลำดับนี้คือลำดับที่ stock queue จะเปิดก่อน-หลัง
+// milestone → ชื่อกาชาปอง (ใช้แสดงในตู้/ป้าย/ประวัติ) — ลำดับนี้คือลำดับที่ stock queue จะเปิดก่อน-หลัง
 const LB_CONFIG = [
-  { milestone: 7,  name: 'กล่องเงิน',      tier: 'silver' },
-  { milestone: 14, name: 'กล่องทอง',        tier: 'gold'   },
-  { milestone: 21, name: 'กล่องแพลตินัม',   tier: 'plat'   },
-  { milestone: 28, name: 'กล่องตำนาน',      tier: 'legend' },
+  { milestone: 7,  name: 'GACHAPON · SILVER',   tier: 'silver' },
+  { milestone: 14, name: 'GACHAPON · GOLD',     tier: 'gold'   },
+  { milestone: 21, name: 'GACHAPON · PLATINUM', tier: 'plat'   },
+  { milestone: 28, name: 'GACHAPON · LEGEND',   tier: 'legend' },
 ];
 const TIER_COLORS = { silver:'#94A3B8', gold:'#F59E0B', plat:'#A78BFA', legend:'#EF4444', paid:'#C084FC' };
 
@@ -43,13 +43,14 @@ function showToast(msg, type = 'success', duration = 3000) {
   setTimeout(() => t.className = 'toast', duration);
 }
 
-function showError(msg) {
+function showError(msg, retryable = false) {
   instruction.textContent = msg;
   stockCount.textContent  = '';
   plateText.textContent   = 'ไม่พร้อมใช้งาน';
   crank.style.pointerEvents = 'none';
   crankBase.classList.add('hide-breathe');
-  dismissTapHints();
+  updateIdleHints();
+  retryBtn.style.display = retryable ? 'block' : 'none';
 }
 
 // ============================================================
@@ -88,14 +89,20 @@ const crankGlow      = document.getElementById('crankGlow');
 const screenFlash    = document.getElementById('screenFlash');
 const confettiLayer  = document.getElementById('confettiLayer');
 const idlePulse      = document.getElementById('idlePulse');
+const crankArrow     = document.getElementById('crankArrow');
 const crankBase      = document.querySelector('.crank-base');
+const retryBtn       = document.getElementById('retryBtn');
 const crankWrap      = document.getElementById('crankWrap');
 const cabRoomBadge   = document.getElementById('cabRoomBadge');
 const plateText      = document.getElementById('plateText');
 
-function dismissTapHints(){
-  idlePulse.classList.add('hide');
-  crankBase.classList.add('hide-breathe');
+// วงแหวน + จังหวะหายใจ + ลูกศรชี้ที่มือหมุน: โชว์เฉพาะตอนเครื่องว่างและยังมีกล่องให้เปิด
+// เงียบสนิททันทีตอนกำลังหมุน/กำลังลุ้นผล ไม่ใช่หายไปถาวรหลังแตะครั้งแรกอีกต่อไป
+function updateIdleHints(){
+  const shouldShow = !busy && stock.length > 0;
+  idlePulse.classList.toggle('hide', !shouldShow);
+  crankArrow.classList.toggle('hide', !shouldShow);
+  crankBase.classList.toggle('hide-breathe', !shouldShow);
 }
 
 const DOME_FILL = 15;
@@ -233,7 +240,7 @@ function renderPile(){
     }
     pile.appendChild(c);
   }
-  stockCount.textContent = stock.length ? `เปิดได้อีก ${stock.length} กล่อง` : `ไม่มีกล่องให้เปิดตอนนี้`;
+  stockCount.textContent = stock.length ? `เปิดได้อีก ${stock.length} ลูก` : `ไม่มีกาชาปองให้เปิดตอนนี้`;
 }
 
 function rarityOf(amount){
@@ -243,13 +250,13 @@ function rarityOf(amount){
 }
 
 function boxNameFor(milestone){
-  if(milestone === 'PAID') return 'กล่อง PAID';
+  if(milestone === 'PAID') return 'GACHAPON · BONUS';
   const cfg = LB_CONFIG.find(c => c.milestone === Number(milestone));
-  return cfg ? cfg.name : 'กล่องลึกลับ';
+  return cfg ? cfg.name : 'GACHAPON · MYSTERY';
 }
 
 function updatePlateText(){
-  plateText.textContent = stock.length ? `ถัดไป: ${boxNameFor(stock[0])}` : 'เปิดครบแล้วตอนนี้';
+  plateText.textContent = stock.length ? boxNameFor(stock[0]) : 'เปิดครบแล้วตอนนี้';
 }
 
 function spawnRatchetTicks(){
@@ -274,6 +281,9 @@ function jigglePile(){
 
 // ============================================================
 //  กันไม่ให้ค้างตลอดไปถ้า backend ไม่ตอบเลย
+//  สำคัญ: 8 วิแรกเป็นแค่ "แจ้งเตือนว่าช้า" ไม่ใช่การยกเลิกจริง — request จริงยังทำงานต่อเบื้องหลัง
+//  แล้วผลจริงจะถูกใช้ทันทีที่ backend ตอบกลับมา (ป้องกัน token เพี้ยนจากการ retry ซ้ำทั้งที่ backend เปิดกล่องไปแล้ว)
+//  จะขึ้น hard-fail (ซิงค์ข้อมูลใหม่จาก server ให้อัตโนมัติ ไม่ต้องปิดแอปเอง) ก็ต่อเมื่อรอนานเกิน HARD_TIMEOUT_MS จริงๆ เท่านั้น
 // ============================================================
 function withTimeout(promise, ms, fallback){
   return Promise.race([
@@ -287,23 +297,39 @@ function withTimeout(promise, ms, fallback){
 // ============================================================
 function playOpen(){
   if(busy) return;
-  if(stock.length === 0){ instruction.textContent = "ไม่มีกล่องให้เปิดแล้วตอนนี้"; return; }
+  if(stock.length === 0){ instruction.textContent = "ไม่มีกาชาปองให้เปิดแล้วตอนนี้"; return; }
   busy = true;
-  dismissTapHints();
+  updateIdleHints();
   crank.classList.add('turn');
   cabinet.classList.remove('rumble'); void cabinet.offsetWidth; cabinet.classList.add('rumble');
   crankWrap.classList.remove('rumble'); void crankWrap.offsetWidth; crankWrap.classList.add('rumble');
   pile.classList.remove('jiggle'); void pile.offsetWidth; pile.classList.add('jiggle');
   spawnRatchetTicks();
   crankGlow.classList.remove('go'); void crankGlow.offsetWidth; crankGlow.classList.add('go');
-  instruction.textContent = "กำลังหมุน...";
+  instruction.textContent = "";
 
   const milestone = stock[0];
   const token = lootTokens[milestone];
+
+  // request จริง — ไม่ถูกยกเลิกแม้ผู้ใช้จะเห็น UI แจ้งว่า "ช้า" แล้วก็ตาม
+  const realPromise = callGAS('openLootBox', { token }).catch((err) => {
+    // เก็บ error จริงไว้ดูใน console เพื่อวินิจฉัยสาเหตุ (network ล่ม / CORS / parse JSON ไม่ได้ ฯลฯ)
+    // ส่วนข้อความที่โชว์ผู้ใช้เอาไว้แค่บอกว่าต่อไม่ติด ไม่ต้องมีรายละเอียดทางเทคนิค
+    console.error('openLootBox failed:', err);
+    return { success:false, message:'เชื่อมต่อกับระบบไม่สำเร็จ' };
+  });
+
+  const SOFT_TIMEOUT_MS = 8000;  // แค่เปลี่ยนข้อความแจ้งเตือน ไม่ตัดการรอผลจริง
+  const HARD_TIMEOUT_MS = 25000; // รอจริงนานสุดก่อนจะยอมแพ้และแนะนำให้รีโหลด
+  const softTimer = setTimeout(()=>{
+    if(busy) instruction.textContent = "เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...";
+  }, SOFT_TIMEOUT_MS);
+  realPromise.finally(()=> clearTimeout(softTimer));
+
   const apiPromise = withTimeout(
-    callGAS('openLootBox', { token }).catch(() => ({ success:false, message:'เกิดข้อผิดพลาด' })),
-    8000,
-    { success:false, message:'เชื่อมต่อช้าเกินไป ลองใหม่อีกครั้งครับ' }
+    realPromise,
+    HARD_TIMEOUT_MS,
+    { success:false, message:'ระบบช้าผิดปกติ กำลังซิงค์ข้อมูลใหม่ให้อัตโนมัติ', hardFail:true }
   );
 
   setTimeout(()=>{
@@ -318,15 +344,15 @@ function playOpen(){
 function dropCapsule(milestone, apiPromise){
   const isPaid = milestone === 'PAID';
   const col = NEW_PALETTE[Math.floor(Math.random()*NEW_PALETTE.length)];
+  const angle = SPLIT_ANGLES[Math.floor(Math.random()*SPLIT_ANGLES.length)] + (Math.random() * 14 - 7);
   const capsuleBg = isPaid
-    ? `radial-gradient(circle at 32% 28%, #fff, var(--gold) 55%, var(--gold-deep))`
-    : gachaBallBg(col.main, col.shine, 35 + Math.random()*30);
+    ? gachaBallBg('#B4822A', '#F5DFA0', 35 + Math.random()*30, angle)
+    : gachaBallBg(col.main, col.shine, 35 + Math.random()*30, angle);
 
   const falling = document.createElement('div');
   falling.className = 'falling-capsule drop';
   falling.style.background = capsuleBg;
   dropZone.appendChild(falling);
-  instruction.textContent = "แคปซูลกำลังหล่นลงราง...";
   jigglePile();
 
   setTimeout(()=>{
@@ -339,7 +365,6 @@ function dropCapsule(milestone, apiPromise){
 //  แล้วแตกออกเป็น 2 ซีก เผยป้ายรางวัล (overlay เดิม)
 // ============================================================
 let megaShakeTimers = [];
-let megaDotsTimer = null;
 
 // ============================================================
 //  รอยร้าวเปลือกแคปซูลใบใหญ่แบบ "กำลังจะฟักออกมา" (เส้นเดียว ไม่ใช่ใยแมงมุม)
@@ -508,51 +533,56 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
   const megaCrack = createMegaCrack();
   mega.appendChild(megaCrack);
 
-  instruction.textContent = "ลุ้นๆ...";
-  let dots = 0;
-  megaDotsTimer = setInterval(()=>{
-    dots = (dots + 1) % 4;
-    instruction.textContent = "ลุ้นๆ" + ".".repeat(dots);
-  }, 350);
+  // สั่นตามจังหวะเดิม 4 ครั้งแรก (950/1500/2200/2900ms) แล้ว "วนต่อ" ที่ระดับแสงจ้าสุดทุกๆ 700ms
+  // ไปเรื่อยๆ จนกว่าผลจริงจาก backend จะมาถึง — กันไม่ให้ลูกนิ่งค้างเงียบถ้า backend ตอบช้ากว่า 2.9 วิ
+  // (เดิมมีแค่ 4 จังหวะตายตัว พอ backend ช้ากว่านั้นลูกจะหยุดสั่นเฉยๆ แล้วเหมือนค้างจนกว่าผลจะมา)
+  const SHAKE_GAPS_MS = [950, 550, 700, 700]; // ดีเลย์เริ่มต้น แล้วช่วงห่างระหว่างครั้งที่ 1→2, 2→3, 3→4
+  const SHAKE_LOOP_GAP_MS = 700; // ช่วงห่างของทุกครั้งถัดจากนั้น วนไปเรื่อยๆ
+  let shakeIndex = 0;
+  function scheduleNextShake(delay){
+    const t = setTimeout(()=>{
+      const i = shakeIndex++;
+      // จังหวะพลังพุ่งวาบมืดสลัวลงเสี้ยววินาทีก่อนกระแทก แล้วสว่างกลับ ให้ความรู้สึกทรงพลัง
+      dim.classList.add('surge');
+      setTimeout(()=> dim.classList.remove('surge'), 110);
 
-  const SHAKE_OFFSETS_MS = [950, 1500, 2200, 2900]; // เริ่มสั่นหลังเด้งขึ้นบังจอเต็มที่แล้วเท่านั้น
-  megaShakeTimers = SHAKE_OFFSETS_MS.map((ms, i) => setTimeout(()=>{
-    // จังหวะพลังพุ่งวาบมืดสลัวลงเสี้ยววินาทีก่อนกระแทก แล้วสว่างกลับ ให้ความรู้สึกทรงพลัง
-    dim.classList.add('surge');
-    setTimeout(()=> dim.classList.remove('surge'), 110);
+      mega.classList.remove('mega-shake'); void mega.offsetWidth; mega.classList.add('mega-shake');
+      spawnCrackSparks(mega, Math.min(3 + i, 10));
+      spawnShockwaveRing(mega, false);
+      setTimeout(()=>{
+        if(i === 0){
+          // สั่นครั้งที่ 1: รอยร้าวหลักโผล่แบบธรรมชาติ ยังไม่มีแสง
+          megaCrack.querySelectorAll('.crack-shadow.lvl1').forEach(p => p.classList.add('show'));
+        } else if(i === 1){
+          // สั่นครั้งที่ 2: รอยร้าวขยายตัว/แตกฝอยเพิ่ม พร้อมเริ่มมีแสงจ้าเรืองออกมา
+          megaCrack.querySelectorAll('.crack-shadow.lvl2, .crack-hairline').forEach(p => p.classList.add('show'));
+          megaCrack.classList.add('glow-1');
+          mega.classList.add('glow-1');
+          megaRays.classList.add('glow-1');
+        } else if(i === 2){
+          // สั่นครั้งที่ 3: แสงสว่างมากขึ้น
+          megaCrack.classList.remove('glow-1'); megaCrack.classList.add('glow-2');
+          mega.classList.remove('glow-1'); mega.classList.add('glow-2');
+          megaRays.classList.remove('glow-1'); megaRays.classList.add('glow-2');
+        } else {
+          // สั่นครั้งที่ 4 เป็นต้นไป: ค้างที่แสงจ้าสุด (glow-3) แล้วสั่นวนซ้ำไปเรื่อยๆ จนกว่าผลจะมาถึงจริง
+          megaCrack.classList.remove('glow-2'); megaCrack.classList.add('glow-3');
+          mega.classList.remove('glow-2'); mega.classList.add('glow-3');
+          megaRays.classList.remove('glow-2'); megaRays.classList.add('glow-3');
+        }
+      }, 90);
 
-    mega.classList.remove('mega-shake'); void mega.offsetWidth; mega.classList.add('mega-shake');
-    spawnCrackSparks(mega, 3 + i);
-    spawnShockwaveRing(mega, false);
-    setTimeout(()=>{
-      if(i === 0){
-        // สั่นครั้งที่ 1: รอยร้าวหลักโผล่แบบธรรมชาติ ยังไม่มีแสง
-        megaCrack.querySelectorAll('.crack-shadow.lvl1').forEach(p => p.classList.add('show'));
-      } else if(i === 1){
-        // สั่นครั้งที่ 2: รอยร้าวขยายตัว/แตกฝอยเพิ่ม พร้อมเริ่มมีแสงจ้าเรืองออกมา
-        megaCrack.querySelectorAll('.crack-shadow.lvl2, .crack-hairline').forEach(p => p.classList.add('show'));
-        megaCrack.classList.add('glow-1');
-        mega.classList.add('glow-1');
-        megaRays.classList.add('glow-1');
-      } else if(i === 2){
-        // สั่นครั้งที่ 3: แสงสว่างมากขึ้น
-        megaCrack.classList.remove('glow-1'); megaCrack.classList.add('glow-2');
-        mega.classList.remove('glow-1'); mega.classList.add('glow-2');
-        megaRays.classList.remove('glow-1'); megaRays.classList.add('glow-2');
-      } else {
-        // สั่นครั้งที่ 4: แสงสว่างมากที่สุดก่อนแตกออกจริง
-        megaCrack.classList.remove('glow-2'); megaCrack.classList.add('glow-3');
-        mega.classList.remove('glow-2'); mega.classList.add('glow-3');
-        megaRays.classList.remove('glow-2'); megaRays.classList.add('glow-3');
-      }
-    }, 90);
-  }, ms));
+      const nextDelay = i + 1 < SHAKE_GAPS_MS.length ? SHAKE_GAPS_MS[i + 1] : SHAKE_LOOP_GAP_MS;
+      scheduleNextShake(nextDelay);
+    }, delay);
+    megaShakeTimers.push(t);
+  }
+  scheduleNextShake(SHAKE_GAPS_MS[0]);
 
   const MIN_LAUNCH_MS = 950; // กันไว้ให้เห็นจังหวะเด้งบังจอเต็มที่ก่อนเสมอ แม้ backend จะตอบเร็วกว่านี้
   setTimeout(async ()=>{
     const result = await apiPromise;
 
-    clearInterval(megaDotsTimer);
     megaShakeTimers.forEach(t => clearTimeout(t));
     megaShakeTimers = [];
 
@@ -560,9 +590,18 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
       dropZone.innerHTML = "";
 
       if(!result || !result.success){
-        showToast('❌ ' + (result && result.message || 'เกิดข้อผิดพลาด'), 'error');
-        instruction.textContent = stock.length ? "👉 แตะที่จับเพื่อลองใหม่" : "ไม่มีกล่องให้เปิดแล้วตอนนี้";
+        if(result && result.hardFail){
+          // ระบบไม่ตอบสนองจริงๆ — ซิงค์สถานะกล่อง/token ใหม่จาก server ให้อัตโนมัติ
+          // แทนที่จะปล่อยให้ผู้ใช้กดซ้ำด้วย token เดิม (ซึ่งอาจถูกใช้ไปแล้วฝั่ง backend) หรือต้องปิดแอปเอง
+          showToast('⏳ ระบบช้าผิดปกติ กำลังซิงค์ข้อมูลให้อัตโนมัติ...', 'error', 4000);
+          instruction.textContent = "🔄 กำลังซิงค์ข้อมูลใหม่...";
+          reloadLootBoxData();
+          return;
+        }
+        showErrorCard(result && result.message);
+        instruction.textContent = stock.length ? "แตะที่จับเพื่อลองใหม่" : "ไม่มีกาชาปองให้เปิดแล้วตอนนี้";
         busy = false;
+        updateIdleHints();
         return;
       }
 
@@ -575,8 +614,9 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
       setTimeout(()=> pile.classList.remove('pile-settle'), 400);
 
       showResult(milestone, result, isPaid);
-      instruction.textContent = stock.length ? "👉 แตะที่จับอีกครั้งเพื่อเปิดกล่องถัดไป" : "เปิดครบแล้วตอนนี้";
+      instruction.textContent = stock.length ? "แตะที่จับอีกครั้งเพื่อเปิดลูกถัดไป" : "เปิดครบแล้วตอนนี้";
       busy = false;
+      updateIdleHints();
     });
   }, MIN_LAUNCH_MS);
 }
@@ -675,17 +715,35 @@ function spawnConfetti(count){
   }
 }
 
+// เปิดไม่สำเร็จ — โชว์การ์ดตรงกลางจอแบบเดียวกับรางวัล (จุดที่ผู้ใช้กำลังมองอยู่พอดีตอนจบแอนิเมชัน)
+// แทนที่จะให้เห็นแค่ toast เล็กๆ บนสุดจอซึ่งพลาดง่ายมาก หลังแอนิเมชันเต็มจอจบลง
+function showErrorCard(message){
+  prizeCard.classList.add('error-state');
+  rarityRibbon.classList.remove('shine');
+  rarityRibbon.textContent = '⚠️ ลองใหม่อีกครั้ง';
+  resultTierLabel.textContent = '';
+  resultPrize.textContent = 'เปิดไม่สำเร็จ';
+  resultNote.textContent = message || 'เกิดข้อผิดพลาด ลองแตะที่จับอีกครั้งได้เลยครับ';
+  closeBtn.textContent = 'ลองใหม่อีกครั้ง';
+
+  document.querySelectorAll('.burst').forEach(el=>el.remove());
+  screenFlash.classList.remove('go','big');
+
+  overlay.classList.remove('show'); void overlay.offsetWidth; overlay.classList.add('show');
+}
+
 function showResult(milestone, result, isPaid){
+  prizeCard.classList.remove('error-state');
+  closeBtn.textContent = 'เก็บรางวัล 🎉';
   const amount = Number(result.discount_amount) || 0;
   const rarity = rarityOf(amount);
 
   resultTierLabel.textContent = (stockLabels[milestone] || milestone).toUpperCase();
   resultPrize.textContent = `ส่วนลด ${amount} บาท`;
-  resultNote.textContent = isPaid
-    ? "กล่องจ่ายตรงเวลา — เปิดได้ 1 ครั้งต่อรอบบิลเท่านั้น"
-    : "เพิ่มเข้ายอดส่วนลดรอบบิลถัดไปแล้วครับ";
+  resultNote.textContent = "ส่วนลดเข้ารอบบิลถัดไปอัตโนมัติ";
 
-  rarityRibbon.textContent = rarity === 'legendary' ? '★ พิเศษสุด' : rarity === 'rare' ? '✦ หายาก' : '✓ ธรรมดา';
+  // ป้ายเดียวกันทุกระดับ — ไม่บอกว่าได้ของ "ดี/ธรรมดา" แค่ไหน ให้ความรู้สึกดีเท่ากันทุกรางวัล
+  rarityRibbon.textContent = '🎉 ยินดีด้วย!';
   rarityRibbon.classList.remove('shine');
   if(rarity !== 'common'){ void rarityRibbon.offsetWidth; rarityRibbon.classList.add('shine'); }
 
@@ -723,6 +781,11 @@ function showResult(milestone, result, isPaid){
 closeBtn.addEventListener('click', ()=> overlay.classList.remove('show'));
 crank.addEventListener('click', playOpen);
 crank.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); playOpen(); } });
+retryBtn.addEventListener('click', ()=>{
+  retryBtn.classList.add('loading');
+  instruction.textContent = 'กำลังลองเชื่อมต่อใหม่...';
+  reloadLootBoxData().finally(()=> retryBtn.classList.remove('loading'));
+});
 
 // ============================================================
 //  RENDER CABINET จากข้อมูลจริง (getLootBoxDataByRoom / getLootBoxData)
@@ -734,6 +797,7 @@ function updateRoomLabel(room){
 }
 
 function renderCabinet(result){
+  retryBtn.style.display = 'none';
   if(result.roomNo) updateRoomLabel(result.roomNo);
 
   stock = [];
@@ -753,33 +817,57 @@ function renderCabinet(result){
   updatePlateText();
   crank.style.pointerEvents = '';
   busy = false;
+  updateIdleHints();
   instruction.textContent = stock.length
-    ? "👉 แตะที่จับเพื่อลุ้นรางวัล"
-    : "ยังไม่มีกล่องให้เปิดในตอนนี้";
+    ? "แตะที่จับเพื่อลุ้นรางวัล"
+    : "ยังไม่มีกาชาปองให้เปิดในตอนนี้";
+}
+
+// เรียก callGAS พร้อม retry อัตโนมัติ 1 ครั้งถ้า fetch ล้มเหลวจริง (เน็ตหลุด/parse พัง ฯลฯ)
+// ไม่ retry ถ้า backend ตอบกลับมาแบบ success:false ชัดเจน (เช่น token ผิด) เพราะลองใหม่ก็ไม่ช่วย
+async function callGASWithRetry(action, params, retries = 1, delayMs = 1200){
+  try {
+    return await callGAS(action, params);
+  } catch (e) {
+    if (retries > 0) {
+      await new Promise(r => setTimeout(r, delayMs));
+      return callGASWithRetry(action, params, retries - 1, delayMs);
+    }
+    throw e;
+  }
 }
 
 async function loadLootBoxForRoom(roomNo) {
   try {
-    const result = await callGAS('getLootBoxDataByRoom', { roomNo });
-    if (!result.success) { showError('❌ ' + (result.message || 'โหลดไม่ได้')); return; }
+    const result = await callGASWithRetry('getLootBoxDataByRoom', { roomNo });
+    if (!result.success) { showError('❌ ' + (result.message || 'โหลดไม่ได้'), true); return; }
     renderCabinet(result);
-  } catch (e) { showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ'); }
+  } catch (e) {
+    console.error('loadLootBoxForRoom failed:', e);
+    showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ', true);
+  }
 }
 
 async function loadLootBoxByToken(token) {
   try {
-    const result = await callGAS('getLootBoxData', { token });
-    if (!result.success) { showError('❌ ' + (result.message || 'Token ไม่ถูกต้อง')); return; }
+    const result = await callGASWithRetry('getLootBoxData', { token });
+    if (!result.success) { showError('❌ ' + (result.message || 'Token ไม่ถูกต้อง'), true); return; }
     renderCabinet(result);
-  } catch (e) { showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ'); }
+  } catch (e) {
+    console.error('loadLootBoxByToken failed:', e);
+    showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ', true);
+  }
 }
 
 async function loadLootBoxByUserId(userId) {
   try {
-    const result = await callGAS('getLootBoxData', { userId });
-    if (!result.success) { showError('❌ ' + (result.message || 'โหลดไม่ได้')); return; }
+    const result = await callGASWithRetry('getLootBoxData', { userId });
+    if (!result.success) { showError('❌ ' + (result.message || 'โหลดไม่ได้'), true); return; }
     renderCabinet(result);
-  } catch (e) { showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ'); }
+  } catch (e) {
+    console.error('loadLootBoxByUserId failed:', e);
+    showError('❌ โหลดข้อมูลไม่ได้ กรุณาลองใหม่ครับ', true);
+  }
 }
 
 // ============================================================
@@ -841,7 +929,7 @@ function renderHistory(history) {
   const body = document.getElementById('history-body');
 
   if (!history.length) {
-    body.innerHTML = '<div class="loading">ยังไม่มีประวัติการเปิดกล่องครับ</div>';
+    body.innerHTML = '<div class="loading">ยังไม่มีประวัติการเปิดกาชาปองครับ</div>';
     return;
   }
 
@@ -889,6 +977,9 @@ function renderHistory(history) {
 // ============================================================
 //  INIT
 // ============================================================
+let bootMode  = null; // 'room' | 'token' | 'userId' — จำวิธีโหลดข้อมูลตอนเปิดแอปไว้ ใช้ซิงค์ใหม่ทีหลังได้โดยไม่ต้องปิดแอป
+let bootParam = null;
+
 async function init() {
   const params = new URLSearchParams(window.location.search);
   const room   = params.get('room');
@@ -900,10 +991,13 @@ async function init() {
   await initLiff();
 
   if (room) {
+    bootMode = 'room'; bootParam = room;
     await loadLootBoxForRoom(room);
   } else if (token) {
+    bootMode = 'token'; bootParam = token;
     await loadLootBoxByToken(token);
   } else if (liffReady && liff.isLoggedIn() && liffProfile) {
+    bootMode = 'userId'; bootParam = liffProfile.userId;
     await loadLootBoxByUserId(liffProfile.userId);
   } else {
     showError('❌ ไม่พบข้อมูลห้อง');
@@ -914,6 +1008,17 @@ async function init() {
   }
 
   document.getElementById('boot-mask')?.remove();
+}
+
+// ซิงค์ข้อมูลกล่อง/token ใหม่จาก server ด้วยวิธีเดียวกับตอนบูตแอป
+// ใช้ตอน request เปิดกล่องช้าผิดปกติจนหมดเวลา เพื่อดึงสถานะจริงมาแทนที่จะให้ผู้ใช้ปิดแอปเอง
+async function reloadLootBoxData(){
+  busy = true;
+  updateIdleHints();
+  if(bootMode === 'room') await loadLootBoxForRoom(bootParam);
+  else if(bootMode === 'token') await loadLootBoxByToken(bootParam);
+  else if(bootMode === 'userId') await loadLootBoxByUserId(bootParam);
+  else showError('❌ ไม่พบข้อมูลห้อง');
 }
 
 init();
