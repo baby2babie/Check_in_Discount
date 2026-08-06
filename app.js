@@ -27,13 +27,20 @@ let currentRoomNo = null;
 // ============================================================
 //  UTILS
 // ============================================================
-async function callGAS(action, params = {}) {
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action, ...params })
-  });
-  return res.json();
+async function callGAS(action, params = {}, timeoutMs = 10000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action, ...params }),
+      signal: ctrl.signal
+    });
+    return await res.json();
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 function showToast(msg, type = 'success', duration = 3000) {
@@ -988,19 +995,22 @@ async function init() {
 
   crank.style.pointerEvents = 'none'; // ปิดจนกว่าจะโหลดข้อมูลจริงเสร็จ
 
-  await initLiff();
-
+  // มี room/token → ยิง data fetch ทันที ไม่ต้องรอ LIFF handshake ก่อน (ไม่จำเป็นต้องใช้ LIFF profile ใน 2 path นี้)
   if (room) {
     bootMode = 'room'; bootParam = room;
     await loadLootBoxForRoom(room);
   } else if (token) {
     bootMode = 'token'; bootParam = token;
     await loadLootBoxByToken(token);
-  } else if (liffReady && liff.isLoggedIn() && liffProfile) {
-    bootMode = 'userId'; bootParam = liffProfile.userId;
-    await loadLootBoxByUserId(liffProfile.userId);
   } else {
-    showError('❌ ไม่พบข้อมูลห้อง');
+    // ไม่มี room/token → ต้องพึ่ง LIFF profile จริงๆ ค่อย await ตรงนี้
+    await initLiff();
+    if (liffReady && liff.isLoggedIn() && liffProfile) {
+      bootMode = 'userId'; bootParam = liffProfile.userId;
+      await loadLootBoxByUserId(liffProfile.userId);
+    } else {
+      showError('❌ ไม่พบข้อมูลห้อง');
+    }
   }
 
   if (view === 'history' && currentRoomNo) {
