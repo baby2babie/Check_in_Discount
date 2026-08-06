@@ -27,6 +27,42 @@ let currentRoomNo = null;
 // ============================================================
 //  UTILS
 // ============================================================
+// ============================================================
+//  CACHE (sessionStorage) — เก็บผล render ล่าสุดไว้โชว์ทันทีตอนเปิดแอปรอบถัดไป
+//  (stale-while-revalidate: โชว์ของเก่าก่อนเงียบๆ แล้วค่อยทับด้วยของจริงจาก backend)
+// ============================================================
+const CACHE_MAX_AGE_MS = 30 * 60 * 1000; // เก่าเกิน 30 นาทีไม่ใช้ ป้องกันข้อมูลเพี้ยนนานเกินไป
+
+function cacheKey(mode, param) {
+  return `gacha_cache_${mode}_${param}`;
+}
+
+function saveCacheSnapshot(result) {
+  try {
+    if (!bootMode || !bootParam) return;
+    sessionStorage.setItem(
+      cacheKey(bootMode, bootParam),
+      JSON.stringify({ result, ts: Date.now() })
+    );
+  } catch (e) {
+    // sessionStorage อาจเต็ม/ถูกบล็อก (private mode ฯลฯ) — ไม่ critical ต่อการทำงาน ข้ามไปเฉยๆ
+  }
+}
+
+function tryRenderFromCache(mode, param) {
+  try {
+    const raw = sessionStorage.getItem(cacheKey(mode, param));
+    if (!raw) return false;
+    const { result, ts } = JSON.parse(raw);
+    if (!result || Date.now() - ts > CACHE_MAX_AGE_MS) return false;
+    renderCabinetPreview(result);
+    removeBootMask();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 async function callGAS(action, params = {}, timeoutMs = 10000) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -56,6 +92,7 @@ function showError(msg, retryable = false) {
   plateText.textContent   = 'ไม่พร้อมใช้งาน';
   crank.style.pointerEvents = 'none';
   crankBase.classList.add('hide-breathe');
+  cabinet.classList.add('cabinet-error'); // หรี่/ลดสีตู้เล็กน้อย ให้รู้สึกว่า "แจ้งเตือน" ไม่ใช่ "ค้าง"
   updateIdleHints();
   retryBtn.style.display = retryable ? 'block' : 'none';
 }
@@ -812,8 +849,9 @@ function updateRoomLabel(room){
   showHistoryButton();
 }
 
-function renderCabinet(result){
-  retryBtn.style.display = 'none';
+// ดึง logic ที่ใช้ร่วมกันระหว่าง "โชว์จาก cache ทันที" กับ "โชว์จากผลจริง" ออกมาเป็นก้อนเดียว
+function applyCabinetData(result){
+  cabinet.classList.remove('cabinet-error');
   if(result.roomNo) updateRoomLabel(result.roomNo);
 
   stock = [];
@@ -831,23 +869,40 @@ function renderCabinet(result){
 
   renderPile();
   updatePlateText();
+}
+
+// โชว์ตู้จาก cache ทันทีระหว่างรอ backend ตอบจริง — ยังไม่เปิด crank ให้หมุน
+// (token ใน cache อาจเก่ากว่าความจริงแล้ว เช่น เพิ่งเปิดไปจากเครื่องอื่น จึงต้องรอผลจริงก่อนอนุญาตให้กด)
+function renderCabinetPreview(result){
+  applyCabinetData(result);
+  instruction.textContent = "กำลังซิงค์ข้อมูลล่าสุด...";
+}
+
+function renderCabinet(result){
+  retryBtn.style.display = 'none';
+  applyCabinetData(result);
   crank.style.pointerEvents = '';
   busy = false;
   updateIdleHints();
   instruction.textContent = stock.length
     ? "แตะที่จับเพื่อลุ้นรางวัล"
     : "ยังไม่มีกาชาปองให้เปิดในตอนนี้";
+  saveCacheSnapshot(result);
 }
 
 // เรียก callGAS พร้อม retry อัตโนมัติ 1 ครั้งถ้า fetch ล้มเหลวจริง (เน็ตหลุด/parse พัง ฯลฯ)
 // ไม่ retry ถ้า backend ตอบกลับมาแบบ success:false ชัดเจน (เช่น token ผิด) เพราะลองใหม่ก็ไม่ช่วย
-async function callGASWithRetry(action, params, retries = 1, delayMs = 1200){
+// timeoutMs สั้นกว่า default (10s) เพราะการ "โหลดข้อมูลตู้ตอนเปิดแอป" ควรรู้ผล/ขึ้น error เร็ว
+// ต่างจาก openLootBox ที่ยอมรอนานกว่าได้เพราะเป็น action ที่แก้ไขข้อมูลจริงฝั่ง backend
+const DATA_FETCH_TIMEOUT_MS = 6000;
+
+async function callGASWithRetry(action, params, retries = 1, delayMs = 1200, timeoutMs = 10000){
   try {
-    return await callGAS(action, params);
+    return await callGAS(action, params, timeoutMs);
   } catch (e) {
     if (retries > 0) {
       await new Promise(r => setTimeout(r, delayMs));
-      return callGASWithRetry(action, params, retries - 1, delayMs);
+      return callGASWithRetry(action, params, retries - 1, delayMs, timeoutMs);
     }
     throw e;
   }
@@ -855,7 +910,7 @@ async function callGASWithRetry(action, params, retries = 1, delayMs = 1200){
 
 async function loadLootBoxForRoom(roomNo) {
   try {
-    const result = await callGASWithRetry('getLootBoxDataByRoom', { roomNo });
+    const result = await callGASWithRetry('getLootBoxDataByRoom', { roomNo }, 1, 1200, DATA_FETCH_TIMEOUT_MS);
     if (!result.success) { showError('❌ ' + (result.message || 'โหลดไม่ได้'), true); return; }
     renderCabinet(result);
   } catch (e) {
@@ -866,7 +921,7 @@ async function loadLootBoxForRoom(roomNo) {
 
 async function loadLootBoxByToken(token) {
   try {
-    const result = await callGASWithRetry('getLootBoxData', { token });
+    const result = await callGASWithRetry('getLootBoxData', { token }, 1, 1200, DATA_FETCH_TIMEOUT_MS);
     if (!result.success) { showError('❌ ' + (result.message || 'Token ไม่ถูกต้อง'), true); return; }
     renderCabinet(result);
   } catch (e) {
@@ -877,7 +932,7 @@ async function loadLootBoxByToken(token) {
 
 async function loadLootBoxByUserId(userId) {
   try {
-    const result = await callGASWithRetry('getLootBoxData', { userId });
+    const result = await callGASWithRetry('getLootBoxData', { userId }, 1, 1200, DATA_FETCH_TIMEOUT_MS);
     if (!result.success) { showError('❌ ' + (result.message || 'โหลดไม่ได้'), true); return; }
     renderCabinet(result);
   } catch (e) {
@@ -996,6 +1051,14 @@ function renderHistory(history) {
 let bootMode  = null; // 'room' | 'token' | 'userId' — จำวิธีโหลดข้อมูลตอนเปิดแอปไว้ ใช้ซิงค์ใหม่ทีหลังได้โดยไม่ต้องปิดแอป
 let bootParam = null;
 
+// ค่อยๆ จางจอ loading ออกแทนหายวับทันที (กันภาพกระตุก) — ปลอดภัยเรียกซ้ำได้ เช็ค element เองก่อน
+function removeBootMask(){
+  const boot = document.getElementById('boot-mask');
+  if (!boot || boot.classList.contains('fade-out')) return;
+  boot.classList.add('fade-out');
+  setTimeout(() => boot.remove(), 350);
+}
+
 async function init() {
   const params = new URLSearchParams(window.location.search);
   const room   = params.get('room');
@@ -1007,15 +1070,18 @@ async function init() {
   // มี room/token → ยิง data fetch ทันที ไม่ต้องรอ LIFF handshake ก่อน (ไม่จำเป็นต้องใช้ LIFF profile ใน 2 path นี้)
   if (room) {
     bootMode = 'room'; bootParam = room;
+    tryRenderFromCache('room', room); // โชว์ของรอบก่อนทันทีระหว่างรอ backend ตอบจริง (ถ้ามี cache)
     await loadLootBoxForRoom(room);
   } else if (token) {
     bootMode = 'token'; bootParam = token;
+    tryRenderFromCache('token', token);
     await loadLootBoxByToken(token);
   } else {
-    // ไม่มี room/token → ต้องพึ่ง LIFF profile จริงๆ ค่อย await ตรงนี้
+    // ไม่มี room/token → ต้องพึ่ง LIFF profile จริงๆ ค่อย await ตรงนี้ (cache ยังใช้ไม่ได้เพราะยังไม่รู้ userId)
     await initLiff();
     if (liffReady && liff.isLoggedIn() && liffProfile) {
       bootMode = 'userId'; bootParam = liffProfile.userId;
+      tryRenderFromCache('userId', liffProfile.userId);
       await loadLootBoxByUserId(liffProfile.userId);
     } else {
       showError('❌ ไม่พบข้อมูลห้อง');
@@ -1026,7 +1092,7 @@ async function init() {
     openHistoryOverlay();
   }
 
-  document.getElementById('boot-mask')?.remove();
+  removeBootMask();
 }
 
 // ซิงค์ข้อมูลกล่อง/token ใหม่จาก server ด้วยวิธีเดียวกับตอนบูตแอป
