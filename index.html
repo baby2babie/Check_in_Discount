@@ -182,24 +182,5 @@
 <div class="toast" id="toast"></div>
 
 <script src="app.js" defer></script>
-<script defer>
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    if (typeof stock !== 'undefined' && stock.length === 0) {
-      stock = ['PAID', '7', '14'];
-      lootTokens = { PAID: 'demo', '7': 'demo', '14': 'demo' };
-      updateRoomLabel('101');
-      renderPile();
-      updatePlateText();
-      crank.style.pointerEvents = '';
-      busy = false;
-      retryBtn.style.display = 'none';
-      instruction.textContent = 'หมุนที่จับเพื่อเปิดกาชาปอง';
-      updateIdleHints();
-    }
-    document.getElementById('boot-mask')?.remove();
-  }, 600);
-});
-</script>
 </body>
 </html>

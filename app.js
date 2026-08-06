@@ -27,13 +27,20 @@ let currentRoomNo = null;
 // ============================================================
 //  UTILS
 // ============================================================
-async function callGAS(action, params = {}) {
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action, ...params })
-  });
-  return res.json();
+async function callGAS(action, params = {}, timeoutMs = 10000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action, ...params }),
+      signal: ctrl.signal
+    });
+    return await res.json();
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 function showToast(msg, type = 'success', duration = 3000) {
@@ -312,7 +319,9 @@ function playOpen(){
   const token = lootTokens[milestone];
 
   // request จริง — ไม่ถูกยกเลิกแม้ผู้ใช้จะเห็น UI แจ้งว่า "ช้า" แล้วก็ตาม
-  const realPromise = callGAS('openLootBox', { token }).catch((err) => {
+  // timeout ยาวกว่า HARD_TIMEOUT_MS ด้านล่าง เพราะที่นี่ตั้งใจปล่อยให้ request จริงทำงานต่อเบื้องหลัง
+  // ไม่อยากให้ callGAS ไป abort ตัด request ทิ้งก่อนที่ logic soft/hard timeout ด้านล่างจะได้ทำงานตามที่ออกแบบไว้
+  const realPromise = callGAS('openLootBox', { token }, 30000).catch((err) => {
     // เก็บ error จริงไว้ดูใน console เพื่อวินิจฉัยสาเหตุ (network ล่ม / CORS / parse JSON ไม่ได้ ฯลฯ)
     // ส่วนข้อความที่โชว์ผู้ใช้เอาไว้แค่บอกว่าต่อไม่ติด ไม่ต้องมีรายละเอียดทางเทคนิค
     console.error('openLootBox failed:', err);
@@ -590,18 +599,25 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
       dropZone.innerHTML = "";
 
       if(!result || !result.success){
+        // ทุกกรณี fail ที่นี่ (ไม่ว่า hardFail หรือ network error ทั่วไป) มีความเสี่ยงเหมือนกัน:
+        // backend อาจเปิดกล่องสำเร็จไปแล้วจริง แค่ client ไม่ได้รับผลตอบกลับทัน
+        // ถ้าปล่อยให้กดซ้ำด้วย token เดิมจะวนลูป fail ตลอด (token ถูกใช้ไปแล้วฝั่ง backend)
+        // ต้อง resync สถานะจริงจาก server ทุกครั้งที่ fail แทนที่จะเชื่อ stock/token เดิมในเครื่อง
         if(result && result.hardFail){
-          // ระบบไม่ตอบสนองจริงๆ — ซิงค์สถานะกล่อง/token ใหม่จาก server ให้อัตโนมัติ
-          // แทนที่จะปล่อยให้ผู้ใช้กดซ้ำด้วย token เดิม (ซึ่งอาจถูกใช้ไปแล้วฝั่ง backend) หรือต้องปิดแอปเอง
           showToast('⏳ ระบบช้าผิดปกติ กำลังซิงค์ข้อมูลให้อัตโนมัติ...', 'error', 4000);
-          instruction.textContent = "🔄 กำลังซิงค์ข้อมูลใหม่...";
-          reloadLootBoxData();
-          return;
+        } else {
+          showErrorCard(result && result.message);
         }
-        showErrorCard(result && result.message);
-        instruction.textContent = stock.length ? "แตะที่จับเพื่อลองใหม่" : "ไม่มีกาชาปองให้เปิดแล้วตอนนี้";
-        busy = false;
-        updateIdleHints();
+        instruction.textContent = "🔄 กำลังซิงค์ข้อมูลใหม่...";
+        const attemptedMilestone = milestone;
+        reloadLootBoxData().then(()=>{
+          // ถ้ากล่องนี้หายไปจาก stock หลัง resync แปลว่า backend เปิดสำเร็จไปแล้วจริง
+          // (แค่ client ไม่ได้รับผลตอบกลับ) ต้องบอกผู้ใช้ ไม่งั้นจะไม่รู้เลยว่าได้รางวัลไปแล้ว
+          if(!stock.includes(attemptedMilestone)){
+            showToast('🎁 กล่องนี้เปิดสำเร็จไปแล้ว กำลังเปิดหน้าประวัติให้ดูรางวัลที่ได้รับ', 'success', 6000);
+            openHistoryOverlay();
+          }
+        });
         return;
       }
 
@@ -802,7 +818,7 @@ function renderCabinet(result){
 
   stock = [];
   lootTokens = {};
-  const order = [7, 14, 21, 28, 'PAID'];
+  const order = ['PAID', 7, 14, 21, 28]; // PAID ได้จากจ่ายบิล มักได้เร็วกว่าเช็คอินครบ 7 วันเสมอ เลยเปิดก่อน
   const boxes = result.boxes || {};
   order.forEach(m => {
     const info = boxes[m] || {};
@@ -988,19 +1004,22 @@ async function init() {
 
   crank.style.pointerEvents = 'none'; // ปิดจนกว่าจะโหลดข้อมูลจริงเสร็จ
 
-  await initLiff();
-
+  // มี room/token → ยิง data fetch ทันที ไม่ต้องรอ LIFF handshake ก่อน (ไม่จำเป็นต้องใช้ LIFF profile ใน 2 path นี้)
   if (room) {
     bootMode = 'room'; bootParam = room;
     await loadLootBoxForRoom(room);
   } else if (token) {
     bootMode = 'token'; bootParam = token;
     await loadLootBoxByToken(token);
-  } else if (liffReady && liff.isLoggedIn() && liffProfile) {
-    bootMode = 'userId'; bootParam = liffProfile.userId;
-    await loadLootBoxByUserId(liffProfile.userId);
   } else {
-    showError('❌ ไม่พบข้อมูลห้อง');
+    // ไม่มี room/token → ต้องพึ่ง LIFF profile จริงๆ ค่อย await ตรงนี้
+    await initLiff();
+    if (liffReady && liff.isLoggedIn() && liffProfile) {
+      bootMode = 'userId'; bootParam = liffProfile.userId;
+      await loadLootBoxByUserId(liffProfile.userId);
+    } else {
+      showError('❌ ไม่พบข้อมูลห้อง');
+    }
   }
 
   if (view === 'history' && currentRoomNo) {
