@@ -67,7 +67,11 @@ async function initLiff() {
   try {
     await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
     liffReady = true;
-    if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+    if (!liff.isLoggedIn()) {
+      instruction.textContent = 'กำลังเข้าสู่ระบบ LINE...';
+      liff.login({ redirectUri: location.href });
+      return 'redirecting'; // กำลังจะโดน redirect ออกจากหน้านี้ ไม่ใช่ error จริง
+    }
     liffProfile = await liff.getProfile();
   } catch (e) {
     console.warn('LIFF init failed:', e);
@@ -841,13 +845,16 @@ function renderCabinet(result){
 
 // เรียก callGAS พร้อม retry อัตโนมัติ 1 ครั้งถ้า fetch ล้มเหลวจริง (เน็ตหลุด/parse พัง ฯลฯ)
 // ไม่ retry ถ้า backend ตอบกลับมาแบบ success:false ชัดเจน (เช่น token ผิด) เพราะลองใหม่ก็ไม่ช่วย
-async function callGASWithRetry(action, params, retries = 1, delayMs = 1200){
+// timeout ยาวกว่า default ของ callGAS (10s) และ retry มากกว่าเดิม 1 ครั้ง
+// เพราะ 3 จุดนี้คือทางเข้าแรกสุดตอนเปิดลิงก์ใหม่ ซึ่งเสี่ยงเจอ GAS cold start
+// (container ยังไม่ถูกวอร์มมาก่อน เปิด Spreadsheet + cache ว่างเปล่า อาจช้ากว่าปกติมาก)
+async function callGASWithRetry(action, params, retries = 2, delayMs = 1000, timeoutMs = 20000){
   try {
-    return await callGAS(action, params);
+    return await callGAS(action, params, timeoutMs);
   } catch (e) {
     if (retries > 0) {
       await new Promise(r => setTimeout(r, delayMs));
-      return callGASWithRetry(action, params, retries - 1, delayMs);
+      return callGASWithRetry(action, params, retries - 1, delayMs, timeoutMs);
     }
     throw e;
   }
@@ -1013,7 +1020,12 @@ async function init() {
     await loadLootBoxByToken(token);
   } else {
     // ไม่มี room/token → ต้องพึ่ง LIFF profile จริงๆ ค่อย await ตรงนี้
-    await initLiff();
+    const liffResult = await initLiff();
+    if (liffResult === 'redirecting') {
+      // กำลังจะโดน redirect ไปหน้า login ของ LINE — อย่าโชว์ error หรือทำอะไรต่อ
+      // (boot-mask จะยังค้างไว้ระหว่างรอ browser เปลี่ยนหน้า ซึ่งถูกต้องแล้ว)
+      return;
+    }
     if (liffReady && liff.isLoggedIn() && liffProfile) {
       bootMode = 'userId'; bootParam = liffProfile.userId;
       await loadLootBoxByUserId(liffProfile.userId);
