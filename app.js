@@ -27,20 +27,13 @@ let currentRoomNo = null;
 // ============================================================
 //  UTILS
 // ============================================================
-async function callGAS(action, params = {}, timeoutMs = 10000) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action, ...params }),
-      signal: ctrl.signal
-    });
-    return await res.json();
-  } finally {
-    clearTimeout(t);
-  }
+async function callGAS(action, params = {}) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action, ...params })
+  });
+  return res.json();
 }
 
 function showToast(msg, type = 'success', duration = 3000) {
@@ -319,9 +312,7 @@ function playOpen(){
   const token = lootTokens[milestone];
 
   // request จริง — ไม่ถูกยกเลิกแม้ผู้ใช้จะเห็น UI แจ้งว่า "ช้า" แล้วก็ตาม
-  // timeout ยาวกว่า HARD_TIMEOUT_MS ด้านล่าง เพราะที่นี่ตั้งใจปล่อยให้ request จริงทำงานต่อเบื้องหลัง
-  // ไม่อยากให้ callGAS ไป abort ตัด request ทิ้งก่อนที่ logic soft/hard timeout ด้านล่างจะได้ทำงานตามที่ออกแบบไว้
-  const realPromise = callGAS('openLootBox', { token }, 30000).catch((err) => {
+  const realPromise = callGAS('openLootBox', { token }).catch((err) => {
     // เก็บ error จริงไว้ดูใน console เพื่อวินิจฉัยสาเหตุ (network ล่ม / CORS / parse JSON ไม่ได้ ฯลฯ)
     // ส่วนข้อความที่โชว์ผู้ใช้เอาไว้แค่บอกว่าต่อไม่ติด ไม่ต้องมีรายละเอียดทางเทคนิค
     console.error('openLootBox failed:', err);
@@ -811,7 +802,7 @@ function renderCabinet(result){
 
   stock = [];
   lootTokens = {};
-  const order = ['PAID', 7, 14, 21, 28]; // PAID ได้จากจ่ายบิล มักได้เร็วกว่าเช็คอินครบ 7 วันเสมอ เลยเปิดก่อน
+  const order = [7, 14, 21, 28, 'PAID'];
   const boxes = result.boxes || {};
   order.forEach(m => {
     const info = boxes[m] || {};
@@ -997,22 +988,19 @@ async function init() {
 
   crank.style.pointerEvents = 'none'; // ปิดจนกว่าจะโหลดข้อมูลจริงเสร็จ
 
-  // มี room/token → ยิง data fetch ทันที ไม่ต้องรอ LIFF handshake ก่อน (ไม่จำเป็นต้องใช้ LIFF profile ใน 2 path นี้)
+  await initLiff();
+
   if (room) {
     bootMode = 'room'; bootParam = room;
     await loadLootBoxForRoom(room);
   } else if (token) {
     bootMode = 'token'; bootParam = token;
     await loadLootBoxByToken(token);
+  } else if (liffReady && liff.isLoggedIn() && liffProfile) {
+    bootMode = 'userId'; bootParam = liffProfile.userId;
+    await loadLootBoxByUserId(liffProfile.userId);
   } else {
-    // ไม่มี room/token → ต้องพึ่ง LIFF profile จริงๆ ค่อย await ตรงนี้
-    await initLiff();
-    if (liffReady && liff.isLoggedIn() && liffProfile) {
-      bootMode = 'userId'; bootParam = liffProfile.userId;
-      await loadLootBoxByUserId(liffProfile.userId);
-    } else {
-      showError('❌ ไม่พบข้อมูลห้อง');
-    }
+    showError('❌ ไม่พบข้อมูลห้อง');
   }
 
   if (view === 'history' && currentRoomNo) {

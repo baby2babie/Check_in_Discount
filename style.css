@@ -30,8 +30,9 @@
 html, body{
   min-height:100vh;
   background:
-    radial-gradient(circle at 18% 0%, rgba(255,255,255,.55), transparent 46%),
-    linear-gradient(180deg, #DCE6EA 0%, #C9D6DE 42%, #B9C8D2 78%, #AEBFC9 100%);
+    radial-gradient(ellipse 60% 45% at 50% 26%, rgba(255,255,255,.09), transparent 70%),
+    radial-gradient(circle at 50% 100%, rgba(0,0,0,.4), transparent 60%),
+    linear-gradient(180deg, #1B2027 0%, #12151B 55%, #0B0D11 100%);
   font-family:'Prompt', sans-serif;
   color:var(--ink);
 }
@@ -53,7 +54,7 @@ body{
     linear-gradient(180deg, transparent, rgba(0,0,0,.05));
   transform:perspective(220px) rotateX(28deg);
   transform-origin:bottom;
-  opacity:.55;
+  opacity:.12;
   z-index:0;
   pointer-events:none;
 }
@@ -64,12 +65,12 @@ h1{
   font-size:clamp(22px,5.5vw,28px);
   margin:0 0 4px;
   text-align:center;
-  color:var(--ink);
+  color:#F2E9D6;
   z-index:1;
 }
 
 .sub{
-  color:var(--ink-soft);
+  color:rgba(242,233,214,.62);
   font-size:12.5px;
   margin-bottom:12px;
   text-align:center;
@@ -78,7 +79,24 @@ h1{
   z-index:1;
 }
 
-.stage{ width:min(300px, 88vw); position:relative; z-index:1; }
+.stage{
+  width:min(300px, 88vw);
+  position:relative;
+  z-index:1;
+  opacity:0;
+  transform:translateY(14px);
+  animation: stage-enter .7s cubic-bezier(.16,1,.3,1) .2s forwards;
+}
+@keyframes stage-enter{ to{ opacity:1; transform:translateY(0); } }
+.stage::after{
+  content:"";
+  position:absolute; left:50%; bottom:-10px;
+  width:80%; height:22px;
+  transform:translateX(-50%);
+  background:radial-gradient(ellipse, rgba(0,0,0,.55), transparent 72%);
+  z-index:0;
+  pointer-events:none;
+}
 
 /* ============ CABINET ============ */
 .cabinet{
@@ -548,14 +566,14 @@ h1{
 .footnote{
   margin:10px auto 0;
   font-size:10.5px;
-  color:var(--ink-soft);
+  color:rgba(242,233,214,.4);
   text-align:center;
   max-width:250px;
   line-height:1.55;
   text-wrap:balance;
   position:relative; z-index:1;
 }
-.footnote b{ color:var(--red); }
+.footnote b{ color:var(--gold); }
 
 /* ==== reveal ==== */
 .overlay{
