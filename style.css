@@ -116,6 +116,11 @@ h1{
   border-radius:18px;
   pointer-events:none;
 }
+/* สถานะ error: ตู้หรี่/จางสีลงเล็กน้อย สื่อว่า "แจ้งเตือน" ไม่ใช่ "ค้าง" — ไม่ทำอะไรรุนแรงจนดูเหมือนพัง */
+.cabinet.cabinet-error{
+  filter: saturate(.72) brightness(.9);
+  transition: filter .3s ease;
+}
 
 .sign-board{
   display:flex; align-items:center; justify-content:space-between;
