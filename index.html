@@ -2,187 +2,712 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+
   <title>ตู้กาชาปอง</title>
 
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://static.line-scdn.net">
-<link rel="preconnect" href="https://script.google.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@600;700&family=Prompt:wght@400;500;600;700&family=Kosugi+Maru&family=Orbitron:wght@800&display=swap">
+
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Mali:wght@600;700&family=Prompt:wght@400;500;600;700&family=Kosugi+Maru&family=Orbitron:wght@800&display=swap"
+  >
+
+  <!-- Main CSS -->
   <link rel="stylesheet" href="style.css">
 
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" defer></script>
+  <!-- LINE LIFF SDK -->
+  <script
+    src="https://static.line-scdn.net/liff/edge/2/sdk.js"
+    defer
+  ></script>
+
   <style>
     #boot-mask {
-      position: fixed; inset: 0; z-index: 9999;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
       background: #020617;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
       gap: 20px;
     }
-    #boot-mask .boot-dots { display: flex; gap: 8px; }
-    #boot-mask .boot-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      animation: bootBounce 1s ease-in-out infinite;
+
+    #boot-mask .boot-dots {
+      display: flex;
+      gap: 8px;
     }
-    #boot-mask .boot-dot:nth-child(1) { background: #E7B94A; }
-    #boot-mask .boot-dot:nth-child(2) { background: #DE5245; animation-delay: .15s; }
-    #boot-mask .boot-dot:nth-child(3) { background: #E7B94A; animation-delay: .3s; }
+
+    #boot-mask .boot-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+
+      animation:
+        bootBounce
+        1s
+        ease-in-out
+        infinite;
+    }
+
+    #boot-mask .boot-dot:nth-child(1) {
+      background: #E7B94A;
+    }
+
+    #boot-mask .boot-dot:nth-child(2) {
+      background: #DE5245;
+      animation-delay: .15s;
+    }
+
+    #boot-mask .boot-dot:nth-child(3) {
+      background: #E7B94A;
+      animation-delay: .3s;
+    }
+
     #boot-mask .boot-text {
       font-family: 'Orbitron', monospace;
-      font-size: 12px; letter-spacing: 4px;
+      font-size: 12px;
+      letter-spacing: 4px;
       color: #94A3B8;
+
       display: flex;
     }
-    #boot-mask .boot-loading-dots { display: inline-block; width: 18px; text-align: left; }
+
+    #boot-mask .boot-loading-dots {
+      display: inline-block;
+      width: 18px;
+      text-align: left;
+    }
+
     @keyframes bootBounce {
-      0%, 100% { transform: translateY(0); opacity: .5; }
-      50%      { transform: translateY(-10px); opacity: 1; }
+      0%,
+      100% {
+        transform: translateY(0);
+        opacity: .5;
+      }
+
+      50% {
+        transform: translateY(-10px);
+        opacity: 1;
+      }
     }
   </style>
 </head>
+
 <body>
 
-<div id="boot-mask">
-  <div class="boot-dots">
-    <div class="boot-dot"></div>
-    <div class="boot-dot"></div>
-    <div class="boot-dot"></div>
+  <!-- ======================================================
+       BOOT SCREEN
+  ======================================================= -->
+
+  <div id="boot-mask">
+
+    <div class="boot-dots">
+      <div class="boot-dot"></div>
+      <div class="boot-dot"></div>
+      <div class="boot-dot"></div>
+    </div>
+
+    <div class="boot-text">
+      LOADING
+      <span
+        class="boot-loading-dots"
+        id="boot-loading-dots"
+      ></span>
+    </div>
+
   </div>
-  <div class="boot-text">LOADING<span class="boot-loading-dots" id="boot-loading-dots"></span></div>
-</div>
-<script>
-(function(){
-  var n = 0;
-  var el = document.getElementById('boot-loading-dots');
-  var iv = setInterval(function(){
-    if (!el || !document.body.contains(el)) { clearInterval(iv); return; }
-    n = (n + 1) % 4;
-    el.textContent = '.'.repeat(n);
-  }, 400);
-})();
-</script>
 
-<div class="floor"></div>
+  <script>
+    (function () {
 
-<button class="btn-history-icon" id="btn-history" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดกาชาปอง">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-    <path d="M3 3v5h5"></path>
-    <path d="M12 7v5l4 2"></path>
-  </svg>
-</button>
+      let n = 0;
 
-<h1>ตู้กาชาปอง</h1>
-<div class="sub">รางวัลจากเช็คอิน &amp; จ่ายบิลตรงเวลา</div>
+      const el =
+        document.getElementById(
+          'boot-loading-dots'
+        );
 
-<div class="stage">
-  <div class="cabinet">
-    <div class="sign-board">
-      <div class="sign-jp">ガシャポン</div>
-      <div class="sign-th" id="cabRoomBadge">—</div>
-    </div>
-    <div class="rivets"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      const iv =
+        setInterval(() => {
 
-    <div class="dome-window">
-      <div class="dome-glass-hi"></div>
-      <div class="prize-sticker">
-        <div class="grid">
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFC9DE 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#BFF3E1 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFE39A 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#C6E6FF 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#D9C4FF 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,var(--gold) 60%,var(--gold-deep))"></span>
+          if (
+            !el ||
+            !document.body.contains(el)
+          ) {
+            clearInterval(iv);
+            return;
+          }
+
+          n = (n + 1) % 4;
+
+          el.textContent =
+            '.'.repeat(n);
+
+        }, 400);
+
+    })();
+  </script>
+
+
+  <!-- ======================================================
+       FLOOR
+  ======================================================= -->
+
+  <div class="floor"></div>
+
+
+  <!-- ======================================================
+       HISTORY BUTTON
+  ======================================================= -->
+
+  <button
+    class="btn-history-icon"
+    id="btn-history"
+    onclick="openHistoryOverlay()"
+    aria-label="ดูประวัติการเปิดกาชาปอง"
+  >
+
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+
+      <path
+        d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+      ></path>
+
+      <path
+        d="M3 3v5h5"
+      ></path>
+
+      <path
+        d="M12 7v5l4 2"
+      ></path>
+
+    </svg>
+
+  </button>
+
+
+  <!-- ======================================================
+       PAGE TITLE
+  ======================================================= -->
+
+  <h1>ตู้กาชาปอง</h1>
+
+  <div class="sub">
+    รางวัลจากเช็คอิน &amp; จ่ายบิลตรงเวลา
+  </div>
+
+
+  <!-- ======================================================
+       STAGE
+  ======================================================= -->
+
+  <div class="stage">
+
+    <div class="cabinet">
+
+      <!-- SIGN -->
+
+      <div class="sign-board">
+
+        <div class="sign-jp">
+          ガシャポン
         </div>
-        <div class="cap-label">รางวัลรอบนี้</div>
+
+        <div
+          class="sign-th"
+          id="cabRoomBadge"
+        >
+          —
+        </div>
+
       </div>
-      <div class="capsule-pile" id="pile"></div>
-    </div>
 
-    <div class="body-panel">
-      <div class="plate" id="plateText">กำลังโหลดข้อมูลห้อง...</div>
-      <div class="cab-instruction" id="instruction">กำลังโหลดข้อมูล...</div>
-      <button class="retry-btn" id="retryBtn" style="display:none;">🔄 ลองเชื่อมต่อใหม่</button>
 
-      <div class="coin-crank-row">
-        <div class="coin-slot">
-          <div class="slot"></div>
-          <div class="slot-label">ช่องหยอด</div>
-        </div>
-        <div class="crank-wrap" id="crankWrap">
-          <div class="crank-arrow" id="crankArrow"></div>
-          <div class="idle-pulse" id="idlePulse"></div>
-          <div class="crank-glow" id="crankGlow"></div>
-          <div class="crank-base"></div>
-          <div class="tick-ring" id="tickRing"></div>
-          <div class="crank" id="crank" role="button" tabindex="0" aria-label="หมุนเพื่อเปิดกาชาปอง">
-            <div class="crank-arm"></div>
-            <div class="crank-knob"></div>
+      <!-- RIVETS -->
+
+      <div class="rivets">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+
+      <!-- ==================================================
+           DOME
+      =================================================== -->
+
+      <div class="dome-window">
+
+        <div class="dome-glass-hi"></div>
+
+
+        <!-- PRIZE STICKER -->
+
+        <div class="prize-sticker">
+
+          <div class="grid">
+
+            <span
+              style="
+                background:
+                radial-gradient(
+                  circle at 32% 28%,
+                  #fff,
+                  #FFC9DE 60%
+                )
+              "
+            ></span>
+
+            <span
+              style="
+                background:
+                radial-gradient(
+                  circle at 32% 28%,
+                  #fff,
+                  #BFF3E1 60%
+                )
+              "
+            ></span>
+
+            <span
+              style="
+                background:
+                radial-gradient(
+                  circle at 32% 28%,
+                  #fff,
+                  #FFE39A 60%
+                )
+              "
+            ></span>
+
+            <span
+              style="
+                background:
+                radial-gradient(
+                  circle at 32% 28%,
+                  #fff,
+                  #C6E6FF 60%
+                )
+              "
+            ></span>
+
+            <span
+              style="
+                background:
+                radial-gradient(
+                  circle at 32% 28%,
+                  #fff,
+                  #D9C4FF 60%
+                )
+              "
+            ></span>
+
+            <span
+              style="
+                background:
+                radial-gradient(
+                  circle at 32% 28%,
+                  #fff,
+                  var(--gold) 60%,
+                  var(--gold-deep)
+                )
+              "
+            ></span>
+
           </div>
-          <div class="crank-pin"></div>
+
+          <div class="cap-label">
+            รางวัลรอบนี้
+          </div>
+
         </div>
+
+
+        <!-- CAPSULE PILE -->
+
+        <div
+          class="capsule-pile"
+          id="pile"
+        ></div>
+
       </div>
 
-      <div class="chute-track" id="chuteTrack">
-        <div id="dropZone"></div>
+
+      <!-- ==================================================
+           BODY PANEL
+      =================================================== -->
+
+      <div class="body-panel">
+
+
+        <!-- CURRENT BOX -->
+
+        <div
+          class="plate"
+          id="plateText"
+        >
+          กำลังโหลดข้อมูลห้อง...
+        </div>
+
+
+        <!-- INSTRUCTION -->
+
+        <div
+          class="cab-instruction"
+          id="instruction"
+        >
+          กำลังโหลดข้อมูล...
+        </div>
+
+
+        <!-- RETRY -->
+
+        <button
+          class="retry-btn"
+          id="retryBtn"
+          style="display:none;"
+        >
+          🔄 ลองเชื่อมต่อใหม่
+        </button>
+
+
+        <!-- =================================================
+             CRANK
+        ================================================== -->
+
+        <div class="coin-crank-row">
+
+          <!-- COIN SLOT -->
+
+          <div class="coin-slot">
+
+            <div class="slot"></div>
+
+            <div class="slot-label">
+              ช่องหยอด
+            </div>
+
+          </div>
+
+
+          <!-- CRANK -->
+
+          <div
+            class="crank-wrap"
+            id="crankWrap"
+          >
+
+            <div
+              class="crank-arrow"
+              id="crankArrow"
+            ></div>
+
+            <div
+              class="idle-pulse"
+              id="idlePulse"
+            ></div>
+
+            <div
+              class="crank-glow"
+              id="crankGlow"
+            ></div>
+
+            <div class="crank-base"></div>
+
+            <div
+              class="tick-ring"
+              id="tickRing"
+            ></div>
+
+            <div
+              class="crank"
+              id="crank"
+              role="button"
+              tabindex="0"
+              aria-label="หมุนเพื่อเปิดกาชาปอง"
+            >
+
+              <div class="crank-arm"></div>
+
+              <div class="crank-knob"></div>
+
+            </div>
+
+            <div class="crank-pin"></div>
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================================
+             CHUTE
+        ================================================== -->
+
+        <div
+          class="chute-track"
+          id="chuteTrack"
+        >
+
+          <div id="dropZone"></div>
+
+        </div>
+
+
+        <!-- =================================================
+             FLAP
+        ================================================== -->
+
+        <div class="flap-wrap">
+
+          <div class="flap-tray"></div>
+
+          <div
+            class="flap-lid"
+            id="flapLid"
+          >
+
+            <div class="flap-handle"></div>
+
+          </div>
+
+        </div>
+
       </div>
 
-      <div class="flap-wrap">
-        <div class="flap-tray"></div>
-        <div class="flap-lid" id="flapLid"><div class="flap-handle"></div></div>
+
+      <!-- LEGS -->
+
+      <div class="legs">
+        <span></span>
+        <span></span>
       </div>
+
     </div>
 
-    <div class="legs"><span></span><span></span></div>
-  </div>
 
-  <div class="knob-panel">
-    <div class="stock-row">
-      <span class="stock-pill" id="stockCount">—</span>
-    </div>
-  </div>
-</div>
+    <!-- ====================================================
+         STOCK
+    ===================================================== -->
 
-<div class="screen-flash" id="screenFlash"></div>
-<div class="confetti-layer" id="confettiLayer"></div>
+    <div class="knob-panel">
 
-<div class="footnote">สิทธิ์ส่วนลดสำหรับห้องที่มีสถานะเช่าอยู่ปกติเท่านั้น เงื่อนไขเป็นไปตามที่หอพักกำหนดและสงวนสิทธิ์เปลี่ยนแปลงโดยไม่ต้องแจ้งล่วงหน้า</div>
+      <div class="stock-row">
 
-<div class="overlay" id="overlay">
-  <div class="reveal-stage">
-    <div class="prize-card" id="prizeCard">
-      <div class="ribbon" id="rarityRibbon">ธรรมดา</div>
-      <div class="prize-tier" id="resultTierLabel">TIER</div>
-      <div class="prize-name" id="resultPrize">ส่วนลด 0 บาท</div>
-      <div class="prize-note" id="resultNote"></div>
-      <button class="close-btn" id="closeBtn">เก็บรางวัล 🎉</button>
-    </div>
-  </div>
-</div>
+        <span
+          class="stock-pill"
+          id="stockCount"
+        >
+          —
+        </span>
 
-<!-- HISTORY OVERLAY -->
-<div class="history-overlay" id="history-overlay">
-  <div class="history-panel">
-    <div class="history-header">
-      <div class="history-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-          <path d="M3 3v5h5"></path>
-          <path d="M12 7v5l4 2"></path>
-        </svg>
-        ประวัติการเปิดกาชาปอง
       </div>
-      <button class="history-close" onclick="closeHistoryOverlay()" aria-label="ปิด">✕</button>
+
     </div>
-    <div class="history-body" id="history-body">
-      <div class="loading">กำลังโหลด...</div>
-    </div>
+
   </div>
-</div>
 
-<div class="toast" id="toast"></div>
 
-<script src="app.js" defer></script>
+  <!-- ======================================================
+       EFFECT LAYERS
+  ======================================================= -->
+
+  <div
+    class="screen-flash"
+    id="screenFlash"
+  ></div>
+
+  <div
+    class="confetti-layer"
+    id="confettiLayer"
+  ></div>
+
+
+  <!-- ======================================================
+       FOOTNOTE
+  ======================================================= -->
+
+  <div class="footnote">
+    สิทธิ์ส่วนลดสำหรับห้องที่มีสถานะเช่าอยู่ปกติเท่านั้น
+    เงื่อนไขเป็นไปตามที่หอพักกำหนดและสงวนสิทธิ์เปลี่ยนแปลง
+    โดยไม่ต้องแจ้งล่วงหน้า
+  </div>
+
+
+  <!-- ======================================================
+       RESULT OVERLAY
+  ======================================================= -->
+
+  <div
+    class="overlay"
+    id="overlay"
+  >
+
+    <div class="reveal-stage">
+
+      <div
+        class="prize-card"
+        id="prizeCard"
+      >
+
+        <div
+          class="ribbon"
+          id="rarityRibbon"
+        >
+          ธรรมดา
+        </div>
+
+        <div
+          class="prize-tier"
+          id="resultTierLabel"
+        >
+          TIER
+        </div>
+
+        <div
+          class="prize-name"
+          id="resultPrize"
+        >
+          ส่วนลด 0 บาท
+        </div>
+
+        <div
+          class="prize-note"
+          id="resultNote"
+        ></div>
+
+        <button
+          class="close-btn"
+          id="closeBtn"
+        >
+          เก็บรางวัล 🎉
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ======================================================
+       HISTORY OVERLAY
+  ======================================================= -->
+
+  <div
+    class="history-overlay"
+    id="history-overlay"
+  >
+
+    <div class="history-panel">
+
+
+      <!-- HEADER -->
+
+      <div class="history-header">
+
+        <div class="history-title">
+
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <path
+              d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+            ></path>
+
+            <path
+              d="M3 3v5h5"
+            ></path>
+
+            <path
+              d="M12 7v5l4 2"
+            ></path>
+
+          </svg>
+
+          ประวัติการเปิดกาชาปอง
+
+        </div>
+
+
+        <button
+          class="history-close"
+          onclick="closeHistoryOverlay()"
+          aria-label="ปิด"
+        >
+          ✕
+        </button>
+
+      </div>
+
+
+      <!-- HISTORY BODY -->
+
+      <div
+        class="history-body"
+        id="history-body"
+      >
+
+        <div class="loading">
+          กำลังโหลด...
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ======================================================
+       TOAST
+  ======================================================= -->
+
+  <div
+    class="toast"
+    id="toast"
+  ></div>
+
+
+  <!-- ======================================================
+       APPLICATION
+  ======================================================= -->
+
+  <script
+    src="app.js"
+    defer
+  ></script>
+
 </body>
 </html>
