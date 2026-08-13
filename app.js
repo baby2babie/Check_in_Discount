@@ -1113,32 +1113,35 @@ function playOpen() {
   //  Client ส่ง token + line_user_id เท่านั้น
   // ========================================================
 
-  const realPromise =
-    callSupabase(
-      'openLootBox',
-      {
-        token,
-        line_user_id:
-          liffProfile.userId
-      },
-      20000
-    )
-    .catch(error => {
+  if (!liffProfile || !liffProfile.userId) {
+  console.error('LIFF profile not ready:', liffProfile);
 
-      console.error(
-        'openLootBox failed:',
-        error
-      );
+  showError('ไม่พบ LINE User ID กรุณาเปิดผ่าน LINE ใหม่อีกครั้ง');
 
-      return {
-        success: false,
-        message:
-          error.name === 'AbortError'
-            ? 'ระบบใช้เวลานานเกินไป'
-            : 'เชื่อมต่อกับระบบไม่สำเร็จ'
-      };
-    });
+  busy = false;
+  updateIdleHints();
+  return;
+}
 
+const realPromise = callSupabase(
+  'openLootBox',
+  {
+    token: token,
+    line_user_id: liffProfile.userId
+  },
+  20000
+).catch(error => {
+
+  console.error('openLootBox failed:', error);
+
+  return {
+    success: false,
+    message:
+      error.name === 'AbortError'
+        ? 'ระบบใช้เวลานานเกินไป'
+        : 'เชื่อมต่อกับระบบไม่สำเร็จ'
+  };
+});
 
   const SOFT_TIMEOUT_MS =
     8000;
