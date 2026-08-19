@@ -23,6 +23,7 @@ const stockLabels = {
 let liffReady   = false;
 let liffProfile = null;
 let currentRoomNo = null;
+let currentTierLabel = null;
 
 // ============================================================
 //  UTILS
@@ -358,7 +359,7 @@ function playOpen(){
   // request จริง — ไม่ถูกยกเลิกแม้ผู้ใช้จะเห็น UI แจ้งว่า "ช้า" แล้วก็ตาม
   // timeout ยาวกว่า HARD_TIMEOUT_MS ด้านล่าง เพราะที่นี่ตั้งใจปล่อยให้ request จริงทำงานต่อเบื้องหลัง
   // ไม่อยากให้ callGAS ไป abort ตัด request ทิ้งก่อนที่ logic soft/hard timeout ด้านล่างจะได้ทำงานตามที่ออกแบบไว้
-  const realPromise = callGAS('openLootBox', { token }, 30000).catch((err) => {
+    const realPromise = callGAS('openLootBox', { token, tierLabel: currentTierLabel }, 30000).catch((err) => {
     // เก็บ error จริงไว้ดูใน console เพื่อวินิจฉัยสาเหตุ (network ล่ม / CORS / parse JSON ไม่ได้ ฯลฯ)
     // ส่วนข้อความที่โชว์ผู้ใช้เอาไว้แค่บอกว่าต่อไม่ติด ไม่ต้องมีรายละเอียดทางเทคนิค
     console.error('openLootBox failed:', err);
@@ -853,6 +854,7 @@ function updateRoomLabel(room){
 function applyCabinetData(result){
   cabinet.classList.remove('cabinet-error');
   if(result.roomNo) updateRoomLabel(result.roomNo);
+  if(result.tierLabel) currentTierLabel = result.tierLabel; // ✅ เก็บไว้ใช้ตอนเปิดกล่อง
 
   stock = [];
   lootTokens = {};
