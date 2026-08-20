@@ -366,8 +366,8 @@ function playOpen(){
     return { success:false, message:'เชื่อมต่อกับระบบไม่สำเร็จ' };
   });
 
-  const SOFT_TIMEOUT_MS = 8000;  // แค่เปลี่ยนข้อความแจ้งเตือน ไม่ตัดการรอผลจริง
-  const HARD_TIMEOUT_MS = 25000; // รอจริงนานสุดก่อนจะยอมแพ้และแนะนำให้รีโหลด
+  const SOFT_TIMEOUT_MS = 4000;
+  const HARD_TIMEOUT_MS = 12000;
   const softTimer = setTimeout(()=>{
     if(busy) instruction.textContent = "เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...";
   }, SOFT_TIMEOUT_MS);
