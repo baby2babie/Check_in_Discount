@@ -914,7 +914,7 @@ function renderCabinet(result){
 // ไม่ retry ถ้า backend ตอบกลับมาแบบ success:false ชัดเจน (เช่น token ผิด) เพราะลองใหม่ก็ไม่ช่วย
 // timeoutMs สั้นกว่า default (10s) เพราะการ "โหลดข้อมูลตู้ตอนเปิดแอป" ควรรู้ผล/ขึ้น error เร็ว
 // ต่างจาก openLootBox ที่ยอมรอนานกว่าได้เพราะเป็น action ที่แก้ไขข้อมูลจริงฝั่ง backend
-const DATA_FETCH_TIMEOUT_MS = 6000;
+const DATA_FETCH_TIMEOUT_MS = 10000;
 
 async function callGASWithRetry(action, params, retries = 1, delayMs = 1200, timeoutMs = 10000){
   try {
