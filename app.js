@@ -637,27 +637,45 @@ function launchCapsuleFullscreen(fallingEl, capsuleBg, milestone, apiPromise, is
       dropZone.innerHTML = "";
 
       if(!result || !result.success){
-        // ทุกกรณี fail ที่นี่ (ไม่ว่า hardFail หรือ network error ทั่วไป) มีความเสี่ยงเหมือนกัน:
-        // backend อาจเปิดกล่องสำเร็จไปแล้วจริง แค่ client ไม่ได้รับผลตอบกลับทัน
-        // ถ้าปล่อยให้กดซ้ำด้วย token เดิมจะวนลูป fail ตลอด (token ถูกใช้ไปแล้วฝั่ง backend)
-        // ต้อง resync สถานะจริงจาก server ทุกครั้งที่ fail แทนที่จะเชื่อ stock/token เดิมในเครื่อง
-        if(result && result.hardFail){
-          showToast('⏳ ระบบช้าผิดปกติ กำลังซิงค์ข้อมูลให้อัตโนมัติ...', 'error', 4000);
+  if(result && result.hardFail){
+    showToast('⏳ ระบบช้าผิดปกติ กำลังซิงค์ข้อมูลให้อัตโนมัติ...', 'error', 4000);
+  } else {
+    showErrorCard(result && result.message);
+  }
+  instruction.textContent = "🔄 กำลังซิงค์ข้อมูลใหม่...";
+  const attemptedMilestone = milestone;
+  const attemptedIsPaid = isPaid;
+
+  reloadLootBoxData().then(async ()=>{
+    if(!stock.includes(attemptedMilestone)){
+      // กล่องนี้หายจาก stock แล้ว = เปิดสำเร็จไปแล้วจริง — ดึงผลจริงมาโชว์แทน redirect ไปหน้าประวัติ
+      try {
+        const historyResult = await callGAS('getLootHistory', { roomNo: currentRoomNo });
+        const thisMonth = historyResult.history?.find(h =>
+          h.items.some(it => String(it.tier) === String(attemptedMilestone) && it.opened)
+        );
+        const matchedItem = thisMonth?.items.find(it => String(it.tier) === String(attemptedMilestone) && it.opened);
+
+        if (matchedItem) {
+          // เจอผลจริง — โชว์ผ่านแอนิเมชันเดิมเหมือนเปิดสำเร็จปกติ
+          showResult(attemptedMilestone, { discount_amount: matchedItem.amount }, attemptedIsPaid);
+          instruction.textContent = stock.length ? "แตะที่จับอีกครั้งเพื่อเปิดลูกถัดไป" : "เปิดครบแล้วตอนนี้";
+          busy = false;
+          updateIdleHints();
         } else {
-          showErrorCard(result && result.message);
+          // หาผลจริงไม่เจอ (edge case) — fallback ไปหน้าประวัติเหมือนเดิม
+          showToast('🎁 กล่องนี้เปิดสำเร็จไปแล้ว กำลังเปิดหน้าประวัติให้ดูรางวัลที่ได้รับ', 'success', 6000);
+          openHistoryOverlay();
         }
-        instruction.textContent = "🔄 กำลังซิงค์ข้อมูลใหม่...";
-        const attemptedMilestone = milestone;
-        reloadLootBoxData().then(()=>{
-          // ถ้ากล่องนี้หายไปจาก stock หลัง resync แปลว่า backend เปิดสำเร็จไปแล้วจริง
-          // (แค่ client ไม่ได้รับผลตอบกลับ) ต้องบอกผู้ใช้ ไม่งั้นจะไม่รู้เลยว่าได้รางวัลไปแล้ว
-          if(!stock.includes(attemptedMilestone)){
-            showToast('🎁 กล่องนี้เปิดสำเร็จไปแล้ว กำลังเปิดหน้าประวัติให้ดูรางวัลที่ได้รับ', 'success', 6000);
-            openHistoryOverlay();
-          }
-        });
-        return;
+      } catch (e) {
+        // ดึงประวัติไม่สำเร็จ — fallback ไปหน้าประวัติแทน ไม่ปล่อยให้ค้าง
+        showToast('🎁 กล่องนี้เปิดสำเร็จไปแล้ว กำลังเปิดหน้าประวัติให้ดูรางวัลที่ได้รับ', 'success', 6000);
+        openHistoryOverlay();
       }
+    }
+  });
+  return;
+}
 
       // เปิดสำเร็จ — ตัด milestone นี้ออกจาก stock queue จริง
       stock.shift();
