@@ -912,9 +912,51 @@ function renderCabinet(result){
 
 // เรียก callGAS พร้อม retry อัตโนมัติ 1 ครั้งถ้า fetch ล้มเหลวจริง (เน็ตหลุด/parse พัง ฯลฯ)
 // ไม่ retry ถ้า backend ตอบกลับมาแบบ success:false ชัดเจน (เช่น token ผิด) เพราะลองใหม่ก็ไม่ช่วย
-// timeoutMs สั้นกว่า default (10s) เพราะการ "โหลดข้อมูลตู้ตอนเปิดแอป" ควรรู้ผล/ขึ้น error เร็ว
-// ต่างจาก openLootBox ที่ยอมรอนานกว่าได้เพราะเป็น action ที่แก้ไขข้อมูลจริงฝั่ง backend
-const DATA_FETCH_TIMEOUT_MS = 10000;
+// timeoutMs ยาวพอสำหรับ worst-case ที่เคยวัดได้จริงตอน backend ช้า (GAS concurrent quota / Sheets API)
+// เดิมตั้งไว้แค่ 10000ms (10 วิ) ซึ่งสั้นกว่า worst-case จริงที่เคยเจอ (15+ วิ) ทำให้ AbortController
+// ตัด request ทิ้งก่อนที่ backend จะตอบสำเร็จ กลายเป็น error "เชื่อมต่อไม่สำเร็จ" ทั้งที่จริงๆ แค่ช้า
+// ขยับเป็น 18000ms (18 วิ) ให้คลุม worst-case ได้โดยไม่ยืดยาวเกินจำเป็น
+// ต่างจาก openLootBox ที่ยอมรอนานกว่าได้ (30s) เพราะเป็น action ที่แก้ไขข้อมูลจริงฝั่ง backend
+const DATA_FETCH_TIMEOUT_MS = 18000;
+
+// ============================================================
+//  BOOT SOFT-NOTICE — แจ้งผู้ใช้ตอนบูตแอปว่า "กำลังรอ" ไม่ใช่ "ค้าง"
+//  เกิดขึ้นก่อน hard timeout (DATA_FETCH_TIMEOUT_MS) มาก — แค่เปลี่ยนข้อความ ไม่ยกเลิก request จริง
+//  แยก element ต่างหากจาก .boot-text เดิม (ซึ่งมี interval คุม #boot-loading-dots อยู่แล้ว) กันชนกัน
+// ============================================================
+const BOOT_SOFT_NOTICE_MS = 4000;
+const BOOT_SOFT_NOTICE_TEXT = 'เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...';
+
+function showBootSoftNotice(){
+  const boot = document.getElementById('boot-mask');
+  if (!boot || !document.body.contains(boot)) return; // boot mask อาจถูกลบไปแล้วถ้าโหลดเสร็จก่อน timer นี้ทำงาน
+
+  let notice = document.getElementById('boot-soft-notice');
+  if (!notice) {
+    notice = document.createElement('div');
+    notice.id = 'boot-soft-notice';
+    notice.style.cssText = 'font-family:"Prompt",sans-serif;font-size:13px;color:#94A3B8;margin-top:-8px;text-align:center;padding:0 24px;';
+    boot.appendChild(notice);
+  }
+  notice.textContent = BOOT_SOFT_NOTICE_TEXT;
+}
+
+function clearBootSoftNotice(){
+  const notice = document.getElementById('boot-soft-notice');
+  if (notice) notice.remove();
+}
+
+// ห่อการเรียก load function ตอนบูตแอปด้วย soft-notice timer
+// ไม่กระทบ error handling เดิมของ load function เลย แค่แสดง/ซ่อนข้อความระหว่างรอ
+async function withBootSoftNotice(promiseFn){
+  const t = setTimeout(showBootSoftNotice, BOOT_SOFT_NOTICE_MS);
+  try {
+    return await promiseFn();
+  } finally {
+    clearTimeout(t);
+    clearBootSoftNotice();
+  }
+}
 
 async function callGASWithRetry(action, params, retries = 1, delayMs = 1200, timeoutMs = 10000){
   try {
@@ -1091,18 +1133,18 @@ async function init() {
   if (room) {
     bootMode = 'room'; bootParam = room;
     tryRenderFromCache('room', room); // โชว์ของรอบก่อนทันทีระหว่างรอ backend ตอบจริง (ถ้ามี cache)
-    await loadLootBoxForRoom(room);
+    await withBootSoftNotice(() => loadLootBoxForRoom(room));
   } else if (token) {
     bootMode = 'token'; bootParam = token;
     tryRenderFromCache('token', token);
-    await loadLootBoxByToken(token);
+    await withBootSoftNotice(() => loadLootBoxByToken(token));
   } else {
     // ไม่มี room/token → ต้องพึ่ง LIFF profile จริงๆ ค่อย await ตรงนี้ (cache ยังใช้ไม่ได้เพราะยังไม่รู้ userId)
     await initLiff();
     if (liffReady && liff.isLoggedIn() && liffProfile) {
       bootMode = 'userId'; bootParam = liffProfile.userId;
       tryRenderFromCache('userId', liffProfile.userId);
-      await loadLootBoxByUserId(liffProfile.userId);
+      await withBootSoftNotice(() => loadLootBoxByUserId(liffProfile.userId));
     } else {
       showError('❌ ไม่พบข้อมูลห้อง');
     }
