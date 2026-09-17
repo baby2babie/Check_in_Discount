@@ -3,19 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>ตู้กาชาปอง</title>
+  <title>กาชาปอง</title>
   <meta name="description" content="เปิดกาชาปองรับรางวัลส่วนลดค่าเช่า จากการเช็คอินและจ่ายบิลตรงเวลา">
   <meta name="theme-color" content="#0B0D11">
-  <meta property="og:title" content="ตู้กาชาปอง">
+  <meta property="og:title" content="กาชาปอง">
   <meta property="og:description" content="เปิดกาชาปองรับรางวัลส่วนลดค่าเช่า จากการเช็คอินและจ่ายบิลตรงเวลา">
   <meta property="og:type" content="website">
-  <!-- TODO: ใส่ og:image เป็นรูปจริง (แนะนำ 1200x630) เพื่อให้พรีวิวลิงก์ใน LINE/Facebook สวยขึ้น -->
-  <!-- favicon แบบ data URI ชั่วคราว (ไอคอนแคปซูลง่ายๆ โทนแดง-ทอง) — แนะนำเปลี่ยนเป็นไฟล์ .png จริงทีหลัง -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23F2E9D6'/%3E%3Cpath d='M1 16a15 15 0 0 1 30 0z' fill='%23C1372C'/%3E%3Ccircle cx='16' cy='16' r='15' fill='none' stroke='%23E7B94A' stroke-width='1.5'/%3E%3C/svg%3E">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@600;700&family=Prompt:wght@400;500;600;700&family=Kosugi+Maru&family=Orbitron:wght@800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@600;700&family=Prompt:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="style.css">
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" defer></script>
@@ -37,7 +35,7 @@
     #boot-mask .boot-dot:nth-child(2) { background: #DE5245; animation-delay: .15s; }
     #boot-mask .boot-dot:nth-child(3) { background: #E7B94A; animation-delay: .3s; }
     #boot-mask .boot-text {
-      font-family: 'Orbitron', monospace;
+      font-family: monospace;
       font-size: 12px; letter-spacing: 4px;
       color: #94A3B8;
       display: flex;
@@ -81,68 +79,40 @@
   </svg>
 </button>
 
-<h1>ตู้กาชาปอง</h1>
+<h1>กาชาปอง</h1>
 <div class="sub">รางวัลจากเช็คอิน &amp; จ่ายบิลตรงเวลา</div>
+<div class="room-pill"><span class="stock-pill" id="cabRoomBadge">—</span></div>
 
 <div class="stage">
-  <div class="cabinet">
-    <div class="sign-board">
-      <div class="sign-jp">ガシャポン</div>
-      <div class="sign-th" id="cabRoomBadge">—</div>
-    </div>
-    <div class="rivets"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="reveal-card" id="revealCard">
+    <div class="plate" id="plateText">กำลังโหลดข้อมูลห้อง...</div>
 
-    <div class="dome-window">
-      <div class="dome-glass-hi"></div>
-      <div class="prize-sticker">
-        <div class="grid">
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFC9DE 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#BFF3E1 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#FFE39A 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#C6E6FF 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,#D9C4FF 60%)"></span>
-          <span style="background:radial-gradient(circle at 32% 28%,#fff,var(--gold) 60%,var(--gold-deep))"></span>
-        </div>
-        <div class="cap-label">รางวัลรอบนี้</div>
+    <div class="reveal-screen" id="revealScreen">
+      <div class="headline" id="headline">
+        <p class="eyebrow" id="eyebrowText">คุณได้รับสิทธิ์เปิดกาชาปอง</p>
+        <p class="title" id="titleText">แตะปุ่มด้านล่างเพื่อเริ่ม</p>
       </div>
-      <div class="capsule-pile" id="pile"></div>
-    </div>
 
-    <div class="body-panel">
-      <div class="plate" id="plateText">กำลังโหลดข้อมูลห้อง...</div>
-      <div class="cab-instruction" id="instruction">กำลังโหลดข้อมูล...</div>
-      <button class="retry-btn" id="retryBtn" style="display:none;">🔄 ลองเชื่อมต่อใหม่</button>
+      <div class="board" id="board">
+        <div class="floor-spot"></div>
+        <div class="orbit-track"></div>
+      </div>
 
-      <div class="coin-crank-row">
-        <div class="coin-slot">
-          <div class="slot"></div>
-          <div class="slot-label">ช่องหยอด</div>
-        </div>
-        <div class="crank-wrap" id="crankWrap">
-          <div class="crank-arrow" id="crankArrow"></div>
-          <div class="idle-pulse" id="idlePulse"></div>
-          <div class="crank-glow" id="crankGlow"></div>
-          <div class="crank-base"></div>
-          <div class="tick-ring" id="tickRing"></div>
-          <div class="crank" id="crank" role="button" tabindex="0" aria-label="หมุนเพื่อเปิดกาชาปอง">
-            <div class="crank-arm"></div>
-            <div class="crank-knob"></div>
-          </div>
-          <div class="crank-pin"></div>
+      <div class="ticket" id="ticket">
+        <div class="ticket-inner">
+          <p class="kicker">คูปองส่วนลด</p>
+          <p class="amount"><span id="ticketAmount">0</span>฿</p>
+          <p class="desc" id="ticketDesc">ใช้ได้กับบิลรอบถัดไป</p>
         </div>
       </div>
 
-      <div class="chute-track" id="chuteTrack">
-        <div id="dropZone"></div>
-      </div>
-
-      <div class="flap-wrap">
-        <div class="flap-tray"></div>
-        <div class="flap-lid" id="flapLid"><div class="flap-handle"></div></div>
-      </div>
+      <p class="hint" id="hint"></p>
+      <button class="start-btn" id="startBtn">แตะเพื่อเริ่ม 🎰</button>
+      <button class="claim-btn" id="claimBtn">เก็บรางวัล 🎉</button>
     </div>
 
-    <div class="legs"><span></span><span></span></div>
+    <div class="cab-instruction" id="instruction">กำลังโหลดข้อมูล...</div>
+    <button class="retry-btn" id="retryBtn" style="display:none;">🔄 ลองเชื่อมต่อใหม่</button>
   </div>
 
   <div class="knob-panel">
@@ -156,18 +126,6 @@
 <div class="confetti-layer" id="confettiLayer"></div>
 
 <div class="footnote">สิทธิ์ส่วนลดสำหรับห้องที่มีสถานะเช่าอยู่ปกติเท่านั้น เงื่อนไขเป็นไปตามที่หอพักกำหนดและสงวนสิทธิ์เปลี่ยนแปลงโดยไม่ต้องแจ้งล่วงหน้า</div>
-
-<div class="overlay" id="overlay">
-  <div class="reveal-stage">
-    <div class="prize-card" id="prizeCard">
-      <div class="ribbon" id="rarityRibbon">ธรรมดา</div>
-      <div class="prize-tier" id="resultTierLabel">TIER</div>
-      <div class="prize-name" id="resultPrize">ส่วนลด 0 บาท</div>
-      <div class="prize-note" id="resultNote"></div>
-      <button class="close-btn" id="closeBtn">เก็บรางวัล 🎉</button>
-    </div>
-  </div>
-</div>
 
 <!-- HISTORY OVERLAY -->
 <div class="history-overlay" id="history-overlay">
