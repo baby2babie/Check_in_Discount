@@ -1,5 +1,5 @@
 // ============================================================
-//  คูปองส่วนลด — app.js (Suspense Reveal Edition)
+//  คูปองส่วนลด — app.js (Suspense Reveal Edition)DEMO
 //  แทนที่กลไกตู้กาชาปอง (crank/dome/mega-capsule) เดิม ด้วยเกมคูปองส่วนลด
 //  โครง backend/LIFF/cache/history — คงเดิม 100% จากระบบเดิม
 // ============================================================
@@ -50,7 +50,7 @@ function applyTier(tierLabel) {
   root.setProperty('--result-bg', t.bg);
 }
 
-// ตัวเลขล่อ (decoy) โชว์บนแคปซูลระหว่างเกม — ไม่ใช่รางวัลจริง รางวัลจริงมาจาก backend หลัง openLootBox เท่านั้น
+// ตัวเลขล่อ (decoy) โชว์บนคูปองระหว่างเกม — ไม่ใช่รางวัลจริง รางวัลจริงมาจาก backend หลัง openLootBox เท่านั้น
 const CAPSULE_NUMBERS = [20, 30, 40, 50, 60, 70, 80, 100];
 const N_CAPS = 7;
 
@@ -352,8 +352,8 @@ async function startShuffle() {
 
 function enablePicking() {
   return new Promise(resolve => {
-    titleText.textContent = "เลือกแคปซูลของคุณ";
-    hint.textContent = "แตะเลือกแคปซูลที่คุณคิดว่าใช่";
+    titleText.textContent = "เลือกคูปองของคุณ";
+    hint.textContent = "แตะเลือกคูปองที่คุณคิดว่าใช่";
     capEls.forEach(el => {
       el.classList.add('pickable');
       el.addEventListener('click', (e) => { resolve(e.currentTarget); }, { once: true });
@@ -444,7 +444,7 @@ async function playRound(milestone, apiPromise){
   chosen.classList.remove('suspense-shake');
   await wait(120);
 
-  // ── รอผลจริงจาก backend — ถ้ายังไม่มาก็สั่นวนลุ้นต่อ (เหมือนของเดิมตอนแคปซูลใบใหญ่สั่นรอผล) ──
+  // ── รอผลจริงจาก backend — ถ้ายังไม่มาก็สั่นวนลุ้นต่อ ──
   let resolved = false;
   apiPromise.then(() => { resolved = true; });
   chosen.classList.add('waiting');
@@ -510,7 +510,7 @@ async function startRound(){
   let requestSettled = false;
   realPromise.then(() => { requestSettled = true; });
 
-  const SOFT_TIMEOUT_MS = 4000;
+  const SOFT_TIMEOUT_MS = 6000; // GAS เขียนชีทมักใช้เวลาหลักวินาทีอยู่แล้วเป็นปกติ ขยับเกณฑ์ให้ห่างจากค่าปกตินั้นมากขึ้น
   const HARD_TIMEOUT_MS = 12000;
   const softTimer = setTimeout(()=>{
     if (!requestSettled) showToast('เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...', 'error', 3000);
@@ -648,7 +648,7 @@ const DATA_FETCH_TIMEOUT_MS = 18000;
 // ============================================================
 //  BOOT SOFT-NOTICE — แจ้งผู้ใช้ตอนบูตแอปว่า "กำลังรอ" ไม่ใช่ "ค้าง"
 // ============================================================
-const BOOT_SOFT_NOTICE_MS = 4000;
+const BOOT_SOFT_NOTICE_MS = 7000; // GAS cold start มักช้ากว่า 4 วิอยู่แล้วเป็นปกติ ขยับเกณฑ์ให้ห่างจากค่าปกตินั้นมากขึ้น
 const BOOT_SOFT_NOTICE_TEXT = 'เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...';
 
 function showBootSoftNotice(){
