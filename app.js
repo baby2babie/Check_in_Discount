@@ -97,6 +97,7 @@ function tryRenderFromCache(mode, param) {
 async function callGAS(action, params = {}, timeoutMs = 10000) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
+
   try {
     const res = await fetch(GAS_URL, {
       method: 'POST',
@@ -104,7 +105,18 @@ async function callGAS(action, params = {}, timeoutMs = 10000) {
       body: JSON.stringify({ action, ...params }),
       signal: ctrl.signal
     });
-    return await res.json();
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const text = await res.text();
+
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      throw new Error('Backend ส่งข้อมูลไม่ใช่ JSON');
+    }
   } finally {
     clearTimeout(t);
   }
@@ -341,7 +353,7 @@ async function startShuffle() {
     rotateBy(2), rotateBy(3), rotateBy(-2)
   ];
   let elapsed = 0;
-  while (elapsed < 7200) {
+  while (elapsed < 4600) {
     if (Math.random() < 0.45) {
       const dur = 600 + Math.random() * 500;
       await spinSegment(dur, Math.random() > 0.5 ? 1 : -1);
@@ -398,7 +410,7 @@ async function playRound(milestone, apiPromise){
   eyebrowText.textContent = boxNameFor(milestone);
   titleText.textContent = 'จำตำแหน่งส่วนลดให้ดี';
 
-  await wait(3200);
+  await wait(2200);
   closeCaps();
   await wait(500);
   await startShuffle();
@@ -447,14 +459,11 @@ async function playRound(milestone, apiPromise){
   chosen.classList.remove('suspense-shake');
   await wait(120);
 
-  // ── รอผลจริงจาก backend — ถ้ายังไม่มาก็สั่นวนลุ้นต่อ ──
-  let resolved = false;
-  apiPromise.then(() => { resolved = true; });
+  // ── รอผลจริงจาก backend ──
+  // ไม่ polling ทุก 700ms เพราะทำให้รู้สึกเหมือนหน้าเว็บค้าง
   chosen.classList.add('waiting');
-  while (!resolved) { await wait(700); }
-  chosen.classList.remove('waiting');
-
   const result = await apiPromise;
+  chosen.classList.remove('waiting');
 
   if (!result || !result.success) {
     return { success: false, result, chosenDecoy };
@@ -507,7 +516,7 @@ async function startRound(){
     return { success:false, message:'เชื่อมต่อกับระบบไม่สำเร็จ' };
   });
 
-  const HARD_TIMEOUT_MS = 12000;
+  const HARD_TIMEOUT_MS = 15000;
 
   const apiPromise = withTimeout(
     realPromise,
@@ -535,6 +544,12 @@ async function startRound(){
   }
   instruction.textContent = "🔄 กำลังซิงค์ข้อมูลใหม่...";
   headline.classList.remove('dim');
+
+  // ถ้า openLootBox ยังประมวลผลอยู่ ให้เวลาสั้น ๆ ก่อนอ่านสถานะใหม่
+  // โดยไม่ยิง openLootBox ซ้ำ ป้องกันการเปิดซ้ำ/แข่งกันเขียนข้อมูล
+  if (result && result.hardFail) {
+    await wait(1200);
+  }
   ticket.classList.remove('show');
   claimBtn.classList.remove('show');
   board.querySelectorAll('.cap').forEach(el => el.classList.add('gone'));
