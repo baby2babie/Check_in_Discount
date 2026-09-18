@@ -1,5 +1,5 @@
 // ============================================================
-//  คูปองส่วนลด — app.js (Suspense Reveal Edition)DEMO
+//  คูปองส่วนลด — app.js (Suspense Reveal Edition)DEMO1
 //  แทนที่กลไกตู้กาชาปอง (crank/dome/mega-capsule) เดิม ด้วยเกมคูปองส่วนลด
 //  โครง backend/LIFF/cache/history — คงเดิม 100% จากระบบเดิม
 // ============================================================
@@ -498,24 +498,13 @@ async function startRound(){
   const milestone = stock[0];
   const token = lootTokens[milestone];
 
-  // request จริง — ไม่ถูกยกเลิกแม้ผู้ใช้จะเห็น UI แจ้งว่า "ช้า" แล้วก็ตาม
+  // request จริง — ไม่ถูกยกเลิกแม้ backend จะตอบช้าก็ตาม (auto-resync ผ่าน HARD_TIMEOUT_MS ด้านล่างถ้าช้าเกินไปจริงๆ)
   const realPromise = callGAS('openLootBox', { token, tierLabel: currentTierLabel }, 30000).catch((err) => {
     console.error('openLootBox failed:', err);
     return { success:false, message:'เชื่อมต่อกับระบบไม่สำเร็จ' };
   });
 
-  // เดิม soft-timer เช็คจาก `busy` ซึ่ง true ตลอดช่วงเล่นแอนิเมชัน (~15-20 วิ) ไม่ว่า backend จะตอบเร็วแค่ไหน
-  // ทำให้ข้อความ "เชื่อมต่อช้ากว่าปกติ" ขึ้นเกือบทุกครั้งทั้งที่ backend อาจตอบใน 1 วิ — เปลี่ยนมาเช็คว่า
-  // request จริงยัง "ไม่เสร็จ" หรือเปล่าแทน ถึงจะขึ้นข้อความนี้เฉพาะตอนที่ backend ช้าจริงๆ เท่านั้น
-  let requestSettled = false;
-  realPromise.then(() => { requestSettled = true; });
-
-  const SOFT_TIMEOUT_MS = 6000; // GAS เขียนชีทมักใช้เวลาหลักวินาทีอยู่แล้วเป็นปกติ ขยับเกณฑ์ให้ห่างจากค่าปกตินั้นมากขึ้น
   const HARD_TIMEOUT_MS = 12000;
-  const softTimer = setTimeout(()=>{
-    if (!requestSettled) showToast('เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...', 'error', 3000);
-  }, SOFT_TIMEOUT_MS);
-  realPromise.finally(()=> clearTimeout(softTimer));
 
   const apiPromise = withTimeout(
     realPromise,
@@ -644,39 +633,6 @@ async function callGASWithRetry(action, params, retries = 1, delayMs = 1200, tim
 }
 
 const DATA_FETCH_TIMEOUT_MS = 18000;
-
-// ============================================================
-//  BOOT SOFT-NOTICE — แจ้งผู้ใช้ตอนบูตแอปว่า "กำลังรอ" ไม่ใช่ "ค้าง"
-// ============================================================
-const BOOT_SOFT_NOTICE_MS = 7000; // GAS cold start มักช้ากว่า 4 วิอยู่แล้วเป็นปกติ ขยับเกณฑ์ให้ห่างจากค่าปกตินั้นมากขึ้น
-const BOOT_SOFT_NOTICE_TEXT = 'เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...';
-
-function showBootSoftNotice(){
-  const boot = document.getElementById('boot-mask');
-  if (!boot || !document.body.contains(boot)) return;
-
-  let notice = document.getElementById('boot-soft-notice');
-  if (!notice) {
-    notice = document.createElement('div');
-    notice.id = 'boot-soft-notice';
-    notice.style.cssText = 'font-family:"Prompt",sans-serif;font-size:13px;color:#94A3B8;margin-top:-8px;text-align:center;padding:0 24px;';
-    boot.appendChild(notice);
-  }
-  notice.textContent = BOOT_SOFT_NOTICE_TEXT;
-}
-function clearBootSoftNotice(){
-  const notice = document.getElementById('boot-soft-notice');
-  if (notice) notice.remove();
-}
-async function withBootSoftNotice(promiseFn){
-  const t = setTimeout(showBootSoftNotice, BOOT_SOFT_NOTICE_MS);
-  try {
-    return await promiseFn();
-  } finally {
-    clearTimeout(t);
-    clearBootSoftNotice();
-  }
-}
 
 async function loadLootBoxForRoom(roomNo) {
   try {
@@ -838,17 +794,17 @@ async function init() {
   if (room) {
     bootMode = 'room'; bootParam = room;
     tryRenderFromCache('room', room);
-    await withBootSoftNotice(() => loadLootBoxForRoom(room));
+    await loadLootBoxForRoom(room);
   } else if (token) {
     bootMode = 'token'; bootParam = token;
     tryRenderFromCache('token', token);
-    await withBootSoftNotice(() => loadLootBoxByToken(token));
+    await loadLootBoxByToken(token);
   } else {
     await initLiff();
     if (liffReady && liff.isLoggedIn() && liffProfile) {
       bootMode = 'userId'; bootParam = liffProfile.userId;
       tryRenderFromCache('userId', liffProfile.userId);
-      await withBootSoftNotice(() => loadLootBoxByUserId(liffProfile.userId));
+      await loadLootBoxByUserId(liffProfile.userId);
     } else {
       showError('❌ ไม่พบข้อมูลห้อง');
     }
