@@ -1,18 +1,18 @@
 // ============================================================
-//  กล่องสุ่มรางวัล — app.js (Suspense Reveal Edition)
-//  แทนที่กลไกตู้กาชาปอง (crank/dome/mega-capsule) ด้วยเกมการ์ดส่วนลด
+//  คูปองส่วนลด — app.js (Suspense Reveal Edition)
+//  แทนที่กลไกตู้กาชาปอง (crank/dome/mega-capsule) เดิม ด้วยเกมคูปองส่วนลด
 //  โครง backend/LIFF/cache/history — คงเดิม 100% จากระบบเดิม
 // ============================================================
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbx580dyPfzslsut-QGtLrRHCt0Hdv9AscR3OfZF0ZTKYKfKETTKF9DAI7e6wXyhEvYlBw/exec';
 const LIFF_ID = '2004478373-aQPYZEpt';
 
-// milestone → ชื่อกาชาปอง (ใช้แสดงในป้าย/ประวัติ) — ลำดับนี้คือลำดับที่ stock queue จะเปิดก่อน-หลัง
+// milestone → ชื่อคูปอง (ใช้แสดงในป้าย/ประวัติ) — ลำดับนี้คือลำดับที่ stock queue จะเปิดก่อน-หลัง
 const LB_CONFIG = [
-  { milestone: 7,  name: 'GACHAPON · SILVER',   tier: 'silver' },
-  { milestone: 14, name: 'GACHAPON · GOLD',     tier: 'gold'   },
-  { milestone: 21, name: 'GACHAPON · PLATINUM', tier: 'plat'   },
-  { milestone: 28, name: 'GACHAPON · LEGEND',   tier: 'legend' },
+  { milestone: 7,  name: 'คูปอง · SILVER',   tier: 'silver' },
+  { milestone: 14, name: 'คูปอง · GOLD',     tier: 'gold'   },
+  { milestone: 21, name: 'คูปอง · PLATINUM', tier: 'plat'   },
+  { milestone: 28, name: 'คูปอง · LEGEND',   tier: 'legend' },
 ];
 const TIER_COLORS = { silver:'#94A3B8', gold:'#F59E0B', plat:'#A78BFA', legend:'#EF4444', paid:'#C084FC' };
 
@@ -168,16 +168,16 @@ let lootTokens = {};
 let busy = true; // true จนกว่าจะโหลดข้อมูลจริงเสร็จ / กำลังเล่นรอบอยู่
 
 function boxNameFor(milestone){
-  if(milestone === 'PAID') return 'GACHAPON · BONUS';
+  if(milestone === 'PAID') return 'คูปอง · BONUS';
   const cfg = LB_CONFIG.find(c => c.milestone === Number(milestone));
-  return cfg ? cfg.name : 'GACHAPON · MYSTERY';
+  return cfg ? cfg.name : 'คูปอง · MYSTERY';
 }
 
 function updatePlateText(){
   plateText.textContent = stock.length ? boxNameFor(stock[0]) : 'เปิดครบแล้วตอนนี้';
 }
 function updateStockCount(){
-  stockCount.textContent = stock.length ? `เปิดได้อีก ${stock.length} ลูก` : `ไม่มีกาชาปองให้เปิดตอนนี้`;
+  stockCount.textContent = stock.length ? `เปิดได้อีก ${stock.length} สิทธิ์` : `ไม่มีสิทธิ์เปิดคูปองตอนนี้`;
 }
 
 function updateStartState(){
@@ -189,7 +189,7 @@ function updateStartState(){
   } else {
     startBtn.classList.add('hide');
     titleText.textContent = 'เปิดครบแล้วตอนนี้';
-    eyebrowText.textContent = 'ไม่มีกาชาปองให้เปิดในตอนนี้';
+    eyebrowText.textContent = 'ไม่มีคูปองให้เปิดในตอนนี้';
     instruction.textContent = '';
   }
 }
@@ -224,7 +224,7 @@ function spawnConfetti(count){
 }
 
 // ============================================================
-//  SUSPENSE REVEAL — เกมการ์ดส่วนลด (แทนกลไกตู้กาชาปอง/มือดึงเดิม)
+//  SUSPENSE REVEAL — เกมคูปองส่วนลด (แทนกลไกตู้กาชาปอง/มือดึงเดิม)
 //  1 รอบ = 1 กล่อง (stock[0]) — ยิง openLootBox จริงตอนเริ่มรอบพร้อมกับเล่นแอนิเมชัน
 //  ตัวเลขบนการ์ดระหว่างเกมเป็นแค่ตัวล่อ (CAPSULE_NUMBERS) รางวัลจริงเฉลยจาก backend ตอนจบเท่านั้น
 // ============================================================
@@ -436,14 +436,12 @@ async function playRound(milestone, apiPromise){
   titleText.textContent = "มาดูกันว่าได้เท่าไหร่...";
   chosen.classList.add('to-center');
   chosen.style.transform = 'translate(0px, 0px)';
-  await wait(720);
+  await wait(430);
   chosen.classList.add('centered', 'scaled');
-  await wait(360);
-  for (let i = 0; i < 3; i++) {
-    chosen.style.transform = `translate(0px, 0px) rotate(${i % 2 ? 4 : -4}deg)`;
-    await wait(90);
-  }
-  chosen.style.transform = 'translate(0px, 0px)';
+  await wait(200);
+  chosen.classList.add('suspense-shake');
+  await wait(850);
+  chosen.classList.remove('suspense-shake');
   await wait(120);
 
   // ── รอผลจริงจาก backend — ถ้ายังไม่มาก็สั่นวนลุ้นต่อ (เหมือนของเดิมตอนแคปซูลใบใหญ่สั่นรอผล) ──
@@ -491,7 +489,7 @@ function showQuickTicket(milestone, amount){
 
 async function startRound(){
   if (busy && stock.length === 0) return;
-  if (stock.length === 0){ instruction.textContent = "ไม่มีกาชาปองให้เปิดแล้วตอนนี้"; return; }
+  if (stock.length === 0){ instruction.textContent = "ไม่มีคูปองให้เปิดแล้วตอนนี้"; return; }
   busy = true;
   startBtn.classList.add('hide');
   retryBtn.style.display = 'none';
@@ -506,10 +504,16 @@ async function startRound(){
     return { success:false, message:'เชื่อมต่อกับระบบไม่สำเร็จ' };
   });
 
+  // เดิม soft-timer เช็คจาก `busy` ซึ่ง true ตลอดช่วงเล่นแอนิเมชัน (~15-20 วิ) ไม่ว่า backend จะตอบเร็วแค่ไหน
+  // ทำให้ข้อความ "เชื่อมต่อช้ากว่าปกติ" ขึ้นเกือบทุกครั้งทั้งที่ backend อาจตอบใน 1 วิ — เปลี่ยนมาเช็คว่า
+  // request จริงยัง "ไม่เสร็จ" หรือเปล่าแทน ถึงจะขึ้นข้อความนี้เฉพาะตอนที่ backend ช้าจริงๆ เท่านั้น
+  let requestSettled = false;
+  realPromise.then(() => { requestSettled = true; });
+
   const SOFT_TIMEOUT_MS = 4000;
   const HARD_TIMEOUT_MS = 12000;
   const softTimer = setTimeout(()=>{
-    if (busy) showToast('เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...', 'error', 3000);
+    if (!requestSettled) showToast('เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...', 'error', 3000);
   }, SOFT_TIMEOUT_MS);
   realPromise.finally(()=> clearTimeout(softTimer));
 
@@ -763,7 +767,7 @@ function renderHistory(history) {
   const body = document.getElementById('history-body');
 
   if (!history.length) {
-    body.innerHTML = '<div class="loading">ยังไม่มีประวัติการเปิดกาชาปองครับ</div>';
+    body.innerHTML = '<div class="loading">ยังไม่มีประวัติการเปิดคูปองส่วนลดครับ</div>';
     return;
   }
 

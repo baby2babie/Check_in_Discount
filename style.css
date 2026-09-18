@@ -159,7 +159,7 @@ h1{
   transition: transform .15s ease;
 }
 .cap.settling{ transition: transform .55s cubic-bezier(.34,1.1,.4,1); }
-.cap.to-center{ transition: transform .7s cubic-bezier(.4,0,.2,1); }
+.cap.to-center{ transition: transform .4s cubic-bezier(.4,0,.2,1); }
 
 .cap-shadow{
   position:absolute; left:50%; bottom:-7px;
@@ -228,6 +228,33 @@ h1{
 .cap.gone{ opacity:0; pointer-events:none; transition:opacity .5s ease; }
 
 .cap.scaled .cap-body{ transform:scale(1.5); }
+
+/* เขย่า+เรืองแสงลุ้นก่อนเปิดจริง — สั่นแรงขึ้นเรื่อยๆแล้วค่อยแผ่วลง ให้ความรู้สึกลุ้นระทึก */
+.cap.suspense-shake .cap-body{
+  animation: capSuspenseShake .85s ease-in-out;
+}
+@keyframes capSuspenseShake{
+  0%   { transform: scale(1.5) translate(0,0)       rotate(0deg); }
+  8%   { transform: scale(1.5) translate(-2px,1px)   rotate(-3deg); }
+  16%  { transform: scale(1.52) translate(3px,-2px)  rotate(3deg); }
+  24%  { transform: scale(1.5) translate(-4px,2px)   rotate(-5deg); }
+  32%  { transform: scale(1.54) translate(4px,-2px)  rotate(5deg); }
+  40%  { transform: scale(1.5) translate(-5px,3px)   rotate(-6deg); }
+  48%  { transform: scale(1.55) translate(5px,-3px)  rotate(6deg); }
+  56%  { transform: scale(1.5) translate(-4px,2px)   rotate(-5deg); }
+  64%  { transform: scale(1.53) translate(4px,-2px)  rotate(4deg); }
+  72%  { transform: scale(1.5) translate(-3px,1px)   rotate(-3deg); }
+  80%  { transform: scale(1.51) translate(2px,-1px)  rotate(2deg); }
+  88%  { transform: scale(1.5) translate(-1px,1px)   rotate(-1deg); }
+  100% { transform: scale(1.5) translate(0,0)        rotate(0deg); }
+}
+.cap.suspense-shake .cap-face{
+  animation: capSuspenseGlow .85s ease-in-out;
+}
+@keyframes capSuspenseGlow{
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 3px 8px rgba(7,63,48,.16); }
+  50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 0 22px 6px var(--result-accent); }
+}
 .cap.waiting .cap-body{ animation: waitPulse 1.1s ease-in-out infinite; }
 @keyframes waitPulse{ 0%,100%{transform:scale(1.5);} 50%{transform:scale(1.62);} }
 .cap.open .cap-face{ animation: cardBurst .45s ease forwards; }
