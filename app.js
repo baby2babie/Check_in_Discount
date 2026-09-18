@@ -1,5 +1,5 @@
 // ============================================================
-//  คูปองส่วนลด — app.js (Suspense Reveal Edition)DD
+//  คูปองส่วนลด — app.js (Suspense Reveal Edition)
 //  แทนที่กลไกตู้กาชาปอง (crank/dome/mega-capsule) เดิม ด้วยเกมคูปองส่วนลด
 //  โครง backend/LIFF/cache/history — คงเดิม 100% จากระบบเดิม
 // ============================================================
@@ -491,7 +491,7 @@ function showQuickTicket(milestone, amount){
 }
 
 async function startRound(){
-  if (busy && stock.length === 0) return;
+  if (busy) return; // กันกดซ้ำระหว่างรอบกำลังเล่นอยู่ (เดิมเช็ค `busy && stock.length===0` ซึ่งแทบไม่มีผลจริง เพราะ stock ยังไม่ shift จนกว่าจะสำเร็จ)
   if (stock.length === 0){ instruction.textContent = "ไม่มีคูปองให้เปิดแล้วตอนนี้"; return; }
   busy = true;
   startBtn.classList.add('hide');
