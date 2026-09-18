@@ -50,8 +50,11 @@ function applyTier(tierLabel) {
   root.setProperty('--result-bg', t.bg);
 }
 
-// ตัวเลขล่อ (decoy) โชว์บนแคปซูลระหว่างเกม — ไม่ใช่รางวัลจริง รางวัลจริงมาจาก backend หลัง openLootBox เท่านั้น
-const CAPSULE_NUMBERS = [20, 30, 40, 50, 60, 70, 80, 100];
+// ตัวเลขล่อ (decoy) โชว์บนคูปองระหว่างเกม — ไม่ใช่รางวัลจริง รางวัลจริงมาจาก backend หลัง openLootBox เท่านั้น
+// ตัวเลขล่อ (decoy) โชว์บนคูปองระหว่างเกม — นี่คือชุดค่า discount_amount ที่ไม่ซ้ำกันทั้งหมดจากชีท LOOT_BOX จริง
+// (ครบทุก tier/milestone พอดี 7 ค่า = จำนวนใบพอดี) การันตีว่ารางวัลจริงที่ backend ส่งมาตอนจบ
+// จะเป็นหนึ่งใน 7 ค่านี้เสมอ ไม่มีทางที่ตัวเลขจริงจะไม่ตรงกับที่โชว์ให้จำไว้ตอนต้นเกม
+const CAPSULE_NUMBERS = [5, 10, 15, 20, 25, 30, 50];
 const N_CAPS = 7;
 
 // ============================================================
@@ -94,6 +97,7 @@ function tryRenderFromCache(mode, param) {
 async function callGAS(action, params = {}, timeoutMs = 10000) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
+
   try {
     const res = await fetch(GAS_URL, {
       method: 'POST',
@@ -101,7 +105,18 @@ async function callGAS(action, params = {}, timeoutMs = 10000) {
       body: JSON.stringify({ action, ...params }),
       signal: ctrl.signal
     });
-    return await res.json();
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const text = await res.text();
+
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      throw new Error('Backend ส่งข้อมูลไม่ใช่ JSON');
+    }
   } finally {
     clearTimeout(t);
   }
@@ -338,7 +353,7 @@ async function startShuffle() {
     rotateBy(2), rotateBy(3), rotateBy(-2)
   ];
   let elapsed = 0;
-  while (elapsed < 7200) {
+  while (elapsed < 4600) {
     if (Math.random() < 0.45) {
       const dur = 600 + Math.random() * 500;
       await spinSegment(dur, Math.random() > 0.5 ? 1 : -1);
@@ -352,8 +367,8 @@ async function startShuffle() {
 
 function enablePicking() {
   return new Promise(resolve => {
-    titleText.textContent = "เลือกแคปซูลของคุณ";
-    hint.textContent = "แตะเลือกแคปซูลที่คุณคิดว่าใช่";
+    titleText.textContent = "เลือกคูปองของคุณ";
+    hint.textContent = "แตะเลือกคูปองที่คุณคิดว่าใช่";
     capEls.forEach(el => {
       el.classList.add('pickable');
       el.addEventListener('click', (e) => { resolve(e.currentTarget); }, { once: true });
@@ -395,7 +410,7 @@ async function playRound(milestone, apiPromise){
   eyebrowText.textContent = boxNameFor(milestone);
   titleText.textContent = 'จำตำแหน่งส่วนลดให้ดี';
 
-  await wait(3200);
+  await wait(2200);
   closeCaps();
   await wait(500);
   await startShuffle();
@@ -436,24 +451,19 @@ async function playRound(milestone, apiPromise){
   titleText.textContent = "มาดูกันว่าได้เท่าไหร่...";
   chosen.classList.add('to-center');
   chosen.style.transform = 'translate(0px, 0px)';
-  await wait(720);
+  await wait(430);
   chosen.classList.add('centered', 'scaled');
-  await wait(360);
-  for (let i = 0; i < 3; i++) {
-    chosen.style.transform = `translate(0px, 0px) rotate(${i % 2 ? 4 : -4}deg)`;
-    await wait(90);
-  }
-  chosen.style.transform = 'translate(0px, 0px)';
+  await wait(200);
+  chosen.classList.add('suspense-shake');
+  await wait(850);
+  chosen.classList.remove('suspense-shake');
   await wait(120);
 
-  // ── รอผลจริงจาก backend — ถ้ายังไม่มาก็สั่นวนลุ้นต่อ (เหมือนของเดิมตอนแคปซูลใบใหญ่สั่นรอผล) ──
-  let resolved = false;
-  apiPromise.then(() => { resolved = true; });
+  // ── รอผลจริงจาก backend ──
+  // ไม่ polling ทุก 700ms เพราะทำให้รู้สึกเหมือนหน้าเว็บค้าง
   chosen.classList.add('waiting');
-  while (!resolved) { await wait(700); }
-  chosen.classList.remove('waiting');
-
   const result = await apiPromise;
+  chosen.classList.remove('waiting');
 
   if (!result || !result.success) {
     return { success: false, result, chosenDecoy };
@@ -490,7 +500,7 @@ function showQuickTicket(milestone, amount){
 }
 
 async function startRound(){
-  if (busy && stock.length === 0) return;
+  if (busy) return; // กันกดซ้ำระหว่างรอบกำลังเล่นอยู่ (เดิมเช็ค `busy && stock.length===0` ซึ่งแทบไม่มีผลจริง เพราะ stock ยังไม่ shift จนกว่าจะสำเร็จ)
   if (stock.length === 0){ instruction.textContent = "ไม่มีคูปองให้เปิดแล้วตอนนี้"; return; }
   busy = true;
   startBtn.classList.add('hide');
@@ -500,24 +510,13 @@ async function startRound(){
   const milestone = stock[0];
   const token = lootTokens[milestone];
 
-  // request จริง — ไม่ถูกยกเลิกแม้ผู้ใช้จะเห็น UI แจ้งว่า "ช้า" แล้วก็ตาม
+  // request จริง — ไม่ถูกยกเลิกแม้ backend จะตอบช้าก็ตาม (auto-resync ผ่าน HARD_TIMEOUT_MS ด้านล่างถ้าช้าเกินไปจริงๆ)
   const realPromise = callGAS('openLootBox', { token, tierLabel: currentTierLabel }, 30000).catch((err) => {
     console.error('openLootBox failed:', err);
     return { success:false, message:'เชื่อมต่อกับระบบไม่สำเร็จ' };
   });
 
-  // เดิม soft-timer เช็คจาก `busy` ซึ่ง true ตลอดช่วงเล่นแอนิเมชัน (~15-20 วิ) ไม่ว่า backend จะตอบเร็วแค่ไหน
-  // ทำให้ข้อความ "เชื่อมต่อช้ากว่าปกติ" ขึ้นเกือบทุกครั้งทั้งที่ backend อาจตอบใน 1 วิ — เปลี่ยนมาเช็คว่า
-  // request จริงยัง "ไม่เสร็จ" หรือเปล่าแทน ถึงจะขึ้นข้อความนี้เฉพาะตอนที่ backend ช้าจริงๆ เท่านั้น
-  let requestSettled = false;
-  realPromise.then(() => { requestSettled = true; });
-
-  const SOFT_TIMEOUT_MS = 4000;
-  const HARD_TIMEOUT_MS = 12000;
-  const softTimer = setTimeout(()=>{
-    if (!requestSettled) showToast('เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...', 'error', 3000);
-  }, SOFT_TIMEOUT_MS);
-  realPromise.finally(()=> clearTimeout(softTimer));
+  const HARD_TIMEOUT_MS = 15000;
 
   const apiPromise = withTimeout(
     realPromise,
@@ -545,6 +544,12 @@ async function startRound(){
   }
   instruction.textContent = "🔄 กำลังซิงค์ข้อมูลใหม่...";
   headline.classList.remove('dim');
+
+  // ถ้า openLootBox ยังประมวลผลอยู่ ให้เวลาสั้น ๆ ก่อนอ่านสถานะใหม่
+  // โดยไม่ยิง openLootBox ซ้ำ ป้องกันการเปิดซ้ำ/แข่งกันเขียนข้อมูล
+  if (result && result.hardFail) {
+    await wait(1200);
+  }
   ticket.classList.remove('show');
   claimBtn.classList.remove('show');
   board.querySelectorAll('.cap').forEach(el => el.classList.add('gone'));
@@ -646,39 +651,6 @@ async function callGASWithRetry(action, params, retries = 1, delayMs = 1200, tim
 }
 
 const DATA_FETCH_TIMEOUT_MS = 18000;
-
-// ============================================================
-//  BOOT SOFT-NOTICE — แจ้งผู้ใช้ตอนบูตแอปว่า "กำลังรอ" ไม่ใช่ "ค้าง"
-// ============================================================
-const BOOT_SOFT_NOTICE_MS = 4000;
-const BOOT_SOFT_NOTICE_TEXT = 'เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...';
-
-function showBootSoftNotice(){
-  const boot = document.getElementById('boot-mask');
-  if (!boot || !document.body.contains(boot)) return;
-
-  let notice = document.getElementById('boot-soft-notice');
-  if (!notice) {
-    notice = document.createElement('div');
-    notice.id = 'boot-soft-notice';
-    notice.style.cssText = 'font-family:"Prompt",sans-serif;font-size:13px;color:#94A3B8;margin-top:-8px;text-align:center;padding:0 24px;';
-    boot.appendChild(notice);
-  }
-  notice.textContent = BOOT_SOFT_NOTICE_TEXT;
-}
-function clearBootSoftNotice(){
-  const notice = document.getElementById('boot-soft-notice');
-  if (notice) notice.remove();
-}
-async function withBootSoftNotice(promiseFn){
-  const t = setTimeout(showBootSoftNotice, BOOT_SOFT_NOTICE_MS);
-  try {
-    return await promiseFn();
-  } finally {
-    clearTimeout(t);
-    clearBootSoftNotice();
-  }
-}
 
 async function loadLootBoxForRoom(roomNo) {
   try {
@@ -840,17 +812,17 @@ async function init() {
   if (room) {
     bootMode = 'room'; bootParam = room;
     tryRenderFromCache('room', room);
-    await withBootSoftNotice(() => loadLootBoxForRoom(room));
+    await loadLootBoxForRoom(room);
   } else if (token) {
     bootMode = 'token'; bootParam = token;
     tryRenderFromCache('token', token);
-    await withBootSoftNotice(() => loadLootBoxByToken(token));
+    await loadLootBoxByToken(token);
   } else {
     await initLiff();
     if (liffReady && liff.isLoggedIn() && liffProfile) {
       bootMode = 'userId'; bootParam = liffProfile.userId;
       tryRenderFromCache('userId', liffProfile.userId);
-      await withBootSoftNotice(() => loadLootBoxByUserId(liffProfile.userId));
+      await loadLootBoxByUserId(liffProfile.userId);
     } else {
       showError('❌ ไม่พบข้อมูลห้อง');
     }
