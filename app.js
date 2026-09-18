@@ -108,7 +108,8 @@ const T = prefersReducedMotion
   ? { memorize: 900, closeHold: 200, shuffle: 600, revealStep: 160, fadeOut: 250, toCenter: 250 }
   : { memorize: 2600, closeHold: 420, shuffle: 5400, revealStep: 380, fadeOut: 700, toCenter: 700 };
 
-const SPIN_SPEED = 215;   // องศา/วินาที — คิดตามเวลาจริง ไม่ผูกกับ refresh rate
+const SPIN_SPEED = 215;      // องศา/วินาที — คิดตามเวลาจริง ไม่ผูกกับ refresh rate
+const SLOW_NOTICE_MS = 2500; // เกมค้างรอผลนานเกินนี้ ค่อยบอกผู้ใช้
 const CONFETTI_MIN_AMOUNT = 70;
 
 // ============================================================
@@ -533,9 +534,18 @@ async function playRound(milestone, apiPromise) {
   chosen.classList.add('centered', 'scaled');
   await wait(320);
 
-  // ── รอผลจริงจาก backend — ถ้ายังไม่มาก็สั่นลุ้นต่อ (ไม่ต้อง poll แล้ว) ──
+  // ── รอผลจริงจาก backend — ถ้ายังไม่มาก็สั่นลุ้นต่อ ──
+  // เตือน "ช้ากว่าปกติ" เฉพาะตอนที่เกมค้างรออยู่จริงเกิน SLOW_NOTICE_MS
+  // และแจ้งในบรรทัด hint เฉยๆ ไม่ใช้ toast สีแดงที่ดูเหมือนเปิดไม่สำเร็จ
   chosen.classList.add('waiting');
+  const slowTimer = setTimeout(() => {
+    hint.textContent = 'กำลังบันทึกรางวัล รออีกสักครู่นะครับ...';
+  }, SLOW_NOTICE_MS);
+
   const result = await apiPromise;
+
+  clearTimeout(slowTimer);
+  hint.textContent = '';
   chosen.classList.remove('waiting');
 
   if (!result || !result.success) return { success: false, result };
@@ -575,8 +585,9 @@ function showQuickTicket(milestone, amount) {
 // ============================================================
 //  ROUND FLOW
 // ============================================================
-const SOFT_TIMEOUT_MS = 4000;
-const HARD_TIMEOUT_MS = 12000;
+// นับ "ช้ากว่าปกติ" จากตอนที่เกมรอผลจริง (ในเกม ดู SLOW_NOTICE_MS) ไม่ใช่ตอนยิง request
+// GAS เขียนชีทปกติใช้ 3-8 วิ ซึ่งสั้นกว่าแอนิเมชันอยู่แล้ว ผู้ใช้จึงไม่ได้รอเลยในกรณีปกติ
+const HARD_TIMEOUT_MS = 20000;
 
 async function startRound() {
   if (busy) return;                 // กันกดซ้ำ/กดระหว่างโหลด
@@ -599,15 +610,6 @@ async function startRound() {
       console.error('openLootBox failed:', err);
       return { success: false, message: 'เชื่อมต่อกับระบบไม่สำเร็จ' };
     });
-
-  // แจ้งเตือน "ช้ากว่าปกติ" เฉพาะตอน request ยังไม่เสร็จจริง
-  // (ของเดิมเช็คจาก busy ที่ true ตลอดช่วงแอนิเมชัน → เตือนเกือบทุกครั้ง)
-  let settled = false;
-  realPromise.then(() => { settled = true; });
-  const softTimer = setTimeout(() => {
-    if (!settled) showToast('เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...', 'error', 3000);
-  }, SOFT_TIMEOUT_MS);
-  realPromise.finally(() => clearTimeout(softTimer));
 
   const apiPromise = withTimeout(realPromise, HARD_TIMEOUT_MS, {
     success: false,
@@ -754,7 +756,8 @@ async function reloadLootBoxData() {
 // ============================================================
 //  BOOT SOFT-NOTICE — แจ้งว่า "กำลังรอ" ไม่ใช่ "ค้าง"
 // ============================================================
-const BOOT_SOFT_NOTICE_MS = 4000;
+// GAS cold start ปกติ 4-8 วิ ถ้าตั้ง 4000 จะขึ้นเตือนแทบทุกครั้งทั้งที่ระบบปกติ
+const BOOT_SOFT_NOTICE_MS = 9000;
 
 function showBootSoftNotice() {
   const boot = document.getElementById('boot-mask');
@@ -766,7 +769,7 @@ function showBootSoftNotice() {
     notice.className = 'boot-notice';
     boot.appendChild(notice);
   }
-  notice.textContent = 'เชื่อมต่อช้ากว่าปกติ กำลังรอผลอยู่...';
+  notice.textContent = 'กำลังเตรียมข้อมูลห้องของคุณ อาจใช้เวลาสักครู่...';
 }
 
 async function withBootSoftNotice(fn) {
