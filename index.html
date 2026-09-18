@@ -13,37 +13,47 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@600;700&family=Prompt:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@700&family=Prompt:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="style.css">
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" defer></script>
+
+  <!-- critical CSS ของ boot mask: inline ไว้เพื่อไม่ให้เห็นจอเปล่าก่อน style.css โหลดเสร็จ -->
   <style>
-    #boot-mask {
-      position: fixed; inset: 0; z-index: 9999;
-      background: #020617;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 20px;
-      transition: opacity .35s ease;
+    #boot-mask{
+      position:fixed; inset:0; z-index:9999;
+      background:#020617;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:20px;
+      transition:opacity .35s ease;
     }
-    #boot-mask.fade-out { opacity: 0; pointer-events: none; }
-    #boot-mask .boot-dots { display: flex; gap: 8px; }
-    #boot-mask .boot-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      animation: bootBounce 1s ease-in-out infinite;
+    #boot-mask.fade-out{ opacity:0; pointer-events:none; }
+    #boot-mask .boot-dots{ display:flex; gap:8px; }
+    #boot-mask .boot-dot{
+      width:10px; height:10px; border-radius:50%;
+      animation:bootBounce 1s ease-in-out infinite;
     }
-    #boot-mask .boot-dot:nth-child(1) { background: #E7B94A; }
-    #boot-mask .boot-dot:nth-child(2) { background: #DE5245; animation-delay: .15s; }
-    #boot-mask .boot-dot:nth-child(3) { background: #E7B94A; animation-delay: .3s; }
-    #boot-mask .boot-text {
-      font-family: monospace;
-      font-size: 12px; letter-spacing: 4px;
-      color: #94A3B8;
-      display: flex;
+    #boot-mask .boot-dot:nth-child(1){ background:#E7B94A; }
+    #boot-mask .boot-dot:nth-child(2){ background:#DE5245; animation-delay:.15s; }
+    #boot-mask .boot-dot:nth-child(3){ background:#E7B94A; animation-delay:.3s; }
+    #boot-mask .boot-text{
+      font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size:12px; letter-spacing:4px; color:#94A3B8;
     }
-    #boot-mask .boot-loading-dots { display: inline-block; width: 18px; text-align: left; }
-    @keyframes bootBounce {
-      0%, 100% { transform: translateY(0); opacity: .5; }
-      50%      { transform: translateY(-10px); opacity: 1; }
+    /* จุดไข่ปลาแบบ CSS ล้วน — ไม่ต้องใช้ setInterval ใน HTML อีก */
+    #boot-mask .boot-text::after{
+      content:''; display:inline-block; width:18px; text-align:left;
+      animation:bootEllipsis 1.6s steps(1) infinite;
+    }
+    @keyframes bootEllipsis{
+      0%{ content:''; } 25%{ content:'.'; } 50%{ content:'..'; } 75%{ content:'...'; }
+    }
+    @keyframes bootBounce{
+      0%,100%{ transform:translateY(0); opacity:.5; }
+      50%    { transform:translateY(-10px); opacity:1; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      #boot-mask .boot-dot, #boot-mask .boot-text::after{ animation:none; }
     }
   </style>
 </head>
@@ -55,24 +65,13 @@
     <div class="boot-dot"></div>
     <div class="boot-dot"></div>
   </div>
-  <div class="boot-text">LOADING<span class="boot-loading-dots" id="boot-loading-dots"></span></div>
+  <div class="boot-text">LOADING</div>
 </div>
-<script>
-(function(){
-  var n = 0;
-  var el = document.getElementById('boot-loading-dots');
-  var iv = setInterval(function(){
-    if (!el || !document.body.contains(el)) { clearInterval(iv); return; }
-    n = (n + 1) % 4;
-    el.textContent = '.'.repeat(n);
-  }, 400);
-})();
-</script>
 
-<div class="floor"></div>
+<div class="floor" aria-hidden="true"></div>
 
-<button class="btn-history-icon" id="btn-history" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดคูปองส่วนลด">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<button class="btn-history-icon" id="btn-history" type="button" aria-label="ดูประวัติการเปิดคูปองส่วนลด">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
     <path d="M3 3v5h5"></path>
     <path d="M12 7v5l4 2"></path>
@@ -90,15 +89,15 @@
     <div class="reveal-screen" id="revealScreen">
       <div class="headline" id="headline">
         <p class="eyebrow" id="eyebrowText">คุณได้รับสิทธิ์เปิดคูปองส่วนลด</p>
-        <p class="title" id="titleText">แตะปุ่มด้านล่างเพื่อเริ่ม</p>
+        <p class="title" id="titleText" aria-live="polite">แตะปุ่มด้านล่างเพื่อเริ่ม</p>
       </div>
 
       <div class="board" id="board">
-        <div class="floor-spot"></div>
-        <div class="orbit-track"></div>
+        <div class="floor-spot" aria-hidden="true"></div>
+        <div class="orbit-track" aria-hidden="true"></div>
       </div>
 
-      <div class="ticket" id="ticket">
+      <div class="ticket" id="ticket" aria-hidden="true">
         <div class="ticket-inner">
           <p class="kicker">คูปองส่วนลด</p>
           <p class="amount"><span id="ticketAmount">0</span>฿</p>
@@ -107,12 +106,12 @@
       </div>
 
       <p class="hint" id="hint"></p>
-      <button class="start-btn" id="startBtn">แตะเพื่อเริ่ม 🎟️</button>
-      <button class="claim-btn" id="claimBtn">เก็บรางวัล 🎉</button>
+      <button class="start-btn hide" id="startBtn" type="button">แตะเพื่อเริ่ม 🎟️</button>
+      <button class="claim-btn" id="claimBtn" type="button">เก็บรางวัล 🎉</button>
     </div>
 
-    <div class="cab-instruction" id="instruction">กำลังโหลดข้อมูล...</div>
-    <button class="retry-btn" id="retryBtn" style="display:none;">🔄 ลองเชื่อมต่อใหม่</button>
+    <div class="cab-instruction" id="instruction" aria-live="polite">กำลังโหลดข้อมูล...</div>
+    <button class="retry-btn" id="retryBtn" type="button">🔄 ลองเชื่อมต่อใหม่</button>
   </div>
 
   <div class="knob-panel">
@@ -122,24 +121,24 @@
   </div>
 </div>
 
-<div class="screen-flash" id="screenFlash"></div>
-<div class="confetti-layer" id="confettiLayer"></div>
+<div class="screen-flash" id="screenFlash" aria-hidden="true"></div>
+<div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
 
 <div class="footnote">สิทธิ์ส่วนลดสำหรับห้องที่มีสถานะเช่าอยู่ปกติเท่านั้น เงื่อนไขเป็นไปตามที่หอพักกำหนดและสงวนสิทธิ์เปลี่ยนแปลงโดยไม่ต้องแจ้งล่วงหน้า</div>
 
 <!-- HISTORY OVERLAY -->
-<div class="history-overlay" id="history-overlay">
+<div class="history-overlay" id="history-overlay" role="dialog" aria-modal="true" aria-labelledby="history-heading">
   <div class="history-panel">
     <div class="history-header">
-      <div class="history-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <div class="history-title" id="history-heading">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
           <path d="M3 3v5h5"></path>
           <path d="M12 7v5l4 2"></path>
         </svg>
         ประวัติการเปิดคูปองส่วนลด
       </div>
-      <button class="history-close" onclick="closeHistoryOverlay()" aria-label="ปิด">✕</button>
+      <button class="history-close" id="btn-history-close" type="button" aria-label="ปิด">✕</button>
     </div>
     <div class="history-body" id="history-body">
       <div class="loading">กำลังโหลด...</div>
@@ -147,7 +146,7 @@
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="app.js" defer></script>
 </body>
