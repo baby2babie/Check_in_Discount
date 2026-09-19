@@ -201,8 +201,8 @@ function updateStartState(){
     startBtn.classList.add('idle-pulse');
     stepGuide.style.display = 'flex';
     titleText.textContent = 'แตะปุ่มด้านล่างเพื่อเริ่ม';
-    eyebrowText.textContent = boxNameFor(stock[0]);
-    instruction.textContent = 'แตะปุ่มด้านล่างเพื่อลุ้นรางวัล';
+    eyebrowText.textContent = 'คุณได้รับสิทธิ์เปิดคูปองส่วนลด'; // ไม่ซ้ำกับ plate ด้านบนที่โชว์ชื่อ tier อยู่แล้ว
+    instruction.textContent = '';
     buildIdlePreview(); // โชว์การ์ดพรีวิวจางๆ กันหน้าแรกดูโล่งก่อนกดเริ่ม
   } else {
     startBtn.classList.add('hide');
@@ -458,7 +458,7 @@ async function playRound(milestone, apiPromise){
   claimBtn.classList.remove('show');
   headline.classList.remove('dim');
   hint.textContent = '';
-  eyebrowText.textContent = boxNameFor(milestone);
+  // ไม่ตั้ง eyebrowText ซ้ำกับ plate (plate โชว์ชื่อ tier/กล่องอยู่แล้วด้านบน) — ให้ titleText นำสายตาแทน
   titleText.textContent = 'จำตำแหน่งส่วนลดให้ดี';
 
   await wait(2200);
@@ -540,7 +540,6 @@ async function playRound(milestone, apiPromise){
 function showQuickTicket(milestone, amount){
   buildBoard();
   capEls.forEach(el => el.classList.add('gone'));
-  eyebrowText.textContent = boxNameFor(milestone);
   titleText.textContent = 'กล่องนี้เปิดไปแล้ว — นี่คือรางวัลที่ได้รับ';
   hint.textContent = '';
   headline.classList.add('dim');
@@ -555,6 +554,8 @@ async function startRound(){
   if (stock.length === 0){ instruction.textContent = "ไม่มีคูปองให้เปิดแล้วตอนนี้"; return; }
   busy = true;
   startBtn.classList.add('hide');
+  startBtn.classList.remove('idle-pulse');
+  stepGuide.style.display = 'none';
   retryBtn.style.display = 'none';
   instruction.textContent = "";
 
