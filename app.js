@@ -427,29 +427,6 @@ function enablePicking() {
   });
 }
 
-function spawnSparks() {
-  const cs = getComputedStyle(document.documentElement);
-  const colors = [
-    cs.getPropertyValue('--cap-mid').trim(),
-    cs.getPropertyValue('--cap-deep').trim(),
-    cs.getPropertyValue('--cap-soft').trim(),
-    '#D85A30'
-  ];
-  for (let i = 0; i < 24; i++) {
-    const p = document.createElement('div');
-    p.className = 'spark';
-    p.style.background = colors[i % colors.length];
-    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-    board.appendChild(p);
-    const ang = Math.random() * Math.PI * 2;
-    const dist = 60 + Math.random() * 100;
-    p.animate([
-      { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
-      { transform: `translate(${Math.cos(ang)*dist - 50}%, ${Math.sin(ang)*dist - 50}%) rotate(${Math.random()*360}deg) scale(0.4)`, opacity: 0 }
-    ], { duration: 950 + Math.random()*400, easing: 'cubic-bezier(.2,.6,.3,1)', fill: 'forwards' });
-    setTimeout(() => p.remove(), 1500);
-  }
-}
 
 // เล่น 1 รอบเต็ม: โชว์การ์ดล่อ → ปิด → สลับ → ให้เลือก → เฉลยใบอื่น → ลอยเข้ากลาง → รอผลจริงจาก backend → เปิด
 async function playRound(milestone, apiPromise){
@@ -522,7 +499,6 @@ async function playRound(milestone, apiPromise){
 
   headline.classList.add('dim');
   chosen.classList.add('open');
-  spawnSparks();
   screenFlash.classList.remove('go'); void screenFlash.offsetWidth; screenFlash.classList.add('go');
   await wait(450);
 
@@ -531,7 +507,7 @@ async function playRound(milestone, apiPromise){
   ticketDesc.textContent = "ส่วนลดเข้ารอบบิลถัดไปอัตโนมัติ";
   ticket.classList.add('show');
   claimBtn.classList.add('show');
-  if (amount >= 70) setTimeout(()=> spawnConfetti(24), 150);
+  spawnConfetti(amount >= 70 ? 40 : 22); // โปรยริบบิ้นทุกครั้งที่เปิดสำเร็จ (ยิ่งได้เยอะยิ่งโปรยถี่ขึ้น)
 
   return { success: true, result };
 }
