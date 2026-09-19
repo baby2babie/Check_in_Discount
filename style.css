@@ -91,7 +91,7 @@ h1{
 }
 
 .stage{
-  width:min(320px, 92vw);
+  width:min(420px, 94vw);
   position:relative;
   z-index:1;
   opacity:0;
@@ -108,6 +108,7 @@ h1{
 .reveal-card{
   position:relative;
   display:flex; flex-direction:column; align-items:center;
+  width:100%;
 }
 
 .plate{
@@ -134,8 +135,11 @@ h1{
 }
 .headline.dim{ opacity:.35; transition:opacity .3s ease; }
 
-/* ── บอร์ดวงกลม responsive แทนขนาดตายตัว 220×220 เดิม ── */
-.board{ position:relative; width:min(92vw, 380px); aspect-ratio:1/1; margin:4px auto 6px; }
+/* ── บอร์ดวงกลม responsive แทนขนาดตายตัว 220×220 เดิม
+   ผูกความกว้างกับกล่องแม่ (.reveal-screen) โดยตรงแทนหน่วย vw ล้วนๆ
+   กัน mismatch กับ .stage ที่จำกัดความกว้างไว้อีกชั้น ซึ่งเคยทำให้บอร์ดกว้างเกินกรอบแม่
+   จนล้นออกด้านข้างและดูเหมือนเลื่อนไม่อยู่กึ่งกลางจอ ── */
+.board{ position:relative; width:100%; max-width:380px; aspect-ratio:1/1; margin:4px auto 6px; }
 .floor-spot{
   position:absolute; left:50%; top:50%; width:56%; height:14%;
   transform:translate(-50%,-50%);
@@ -290,11 +294,12 @@ h1{
 }
 .start-btn.idle-pulse{ animation: startPulseGlow 1.8s ease-in-out infinite; }
 
-/* ── ticket ผลลัพธ์ท้ายเกม — ทรงตั๋วเดียวกับการ์ดระหว่างเกม แต่เป็นกระดาษจริง ── */
+/* ── ticket ผลลัพธ์ท้ายเกม — ทรงตั๋วเดียวกับการ์ดระหว่างเกม แต่เป็นกระดาษจริง ──
+   ผูกขนาดเป็น % ของ .board (พ่อแม่โดยตรง) แทนหน่วย vw กันหลุดกรอบ/เพี้ยนตำแหน่งเช่นเดียวกับบอร์ด */
 .ticket{
   position:absolute; left:50%; top:50%;
   transform:translate(-50%,-50%) scale(.4);
-  width:min(78vw, 280px); opacity:0; pointer-events:none; z-index:10;
+  width:80%; max-width:280px; opacity:0; pointer-events:none; z-index:10;
   transition: transform .4s cubic-bezier(.3,1.4,.4,1), opacity .3s ease;
 }
 .ticket.show{ opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto; }
