@@ -557,10 +557,6 @@ h1{
 
 .loading{ text-align:center; color:var(--muted); padding:40px 20px; font-size:14px; }
 
-.spark{
-  position:absolute; top:50%; left:50%;
-  width:8px; height:8px; opacity:0; z-index:35;
-}
 .room-pill{ display:inline-block; margin:-6px 0 10px; }
 
 @media (prefers-reduced-motion: reduce){
