@@ -166,7 +166,6 @@ const confettiLayer  = document.getElementById('confettiLayer');
 
 const board       = document.getElementById('board');
 const headline    = document.getElementById('headline');
-const eyebrowText = document.getElementById('eyebrowText');
 const titleText   = document.getElementById('titleText');
 const hint        = document.getElementById('hint');
 const ticket      = document.getElementById('ticket');
@@ -200,8 +199,7 @@ function updateStartState(){
     startBtn.classList.remove('hide');
     startBtn.classList.add('idle-pulse');
     stepGuide.style.display = 'flex';
-    titleText.textContent = 'แตะปุ่มด้านล่างเพื่อเริ่ม';
-    eyebrowText.textContent = 'คุณได้รับสิทธิ์เปิดคูปองส่วนลด'; // ไม่ซ้ำกับ plate ด้านบนที่โชว์ชื่อ tier อยู่แล้ว
+    titleText.textContent = 'แตะปุ่มตรงกลางเพื่อเริ่ม';
     instruction.textContent = '';
     buildIdlePreview(); // โชว์การ์ดพรีวิวจางๆ กันหน้าแรกดูโล่งก่อนกดเริ่ม
   } else {
@@ -209,7 +207,6 @@ function updateStartState(){
     startBtn.classList.remove('idle-pulse');
     stepGuide.style.display = 'none';
     titleText.textContent = 'เปิดครบแล้วตอนนี้';
-    eyebrowText.textContent = 'ไม่มีคูปองให้เปิดในตอนนี้';
     instruction.textContent = '';
     board.querySelectorAll('.cap').forEach(el => el.remove());
   }
@@ -435,7 +432,7 @@ async function playRound(milestone, apiPromise){
   claimBtn.classList.remove('show');
   headline.classList.remove('dim');
   hint.textContent = '';
-  // ไม่ตั้ง eyebrowText ซ้ำกับ plate (plate โชว์ชื่อ tier/กล่องอยู่แล้วด้านบน) — ให้ titleText นำสายตาแทน
+  // ไม่ตั้งข้อความ eyebrow แล้ว (เอาออกตามที่ขอ) — ให้ titleText นำสายตาแทน
   titleText.textContent = 'จำตำแหน่งส่วนลดให้ดี';
 
   await wait(2200);
