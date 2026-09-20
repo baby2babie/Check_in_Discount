@@ -5,129 +5,157 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>คูปองส่วนลด</title>
   <meta name="description" content="เปิดคูปองส่วนลดรับรางวัลลดค่าเช่า จากการเช็คอินและจ่ายบิลตรงเวลา">
-  <meta name="theme-color" content="#F0F1EF">
+  <meta name="theme-color" content="#0B0D11">
   <meta property="og:title" content="คูปองส่วนลด">
   <meta property="og:description" content="เปิดคูปองส่วนลดรับรางวัลลดค่าเช่า จากการเช็คอินและจ่ายบิลตรงเวลา">
   <meta property="og:type" content="website">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231C2320'/%3E%3Cpath d='M9 12.5A1.5 1.5 0 0 1 10.5 11h11a1.5 1.5 0 0 1 1.5 1.5V14a2 2 0 0 0 0 4v1.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 9 19.5V18a2 2 0 0 0 0-4z' fill='%23F0F1EF'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23F2E9D6'/%3E%3Cpath d='M1 16a15 15 0 0 1 30 0z' fill='%23C1372C'/%3E%3Ccircle cx='16' cy='16' r='15' fill='none' stroke='%23E7B94A' stroke-width='1.5'/%3E%3C/svg%3E">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@200;300;400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@600;700&family=Prompt:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="style.css">
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" defer></script>
   <style>
-    /* boot mask อยู่ inline เพื่อให้ขึ้นทันทีก่อน style.css โหลดเสร็จ */
     #boot-mask {
       position: fixed; inset: 0; z-index: 9999;
-      background: #F0F1EF;
+      background: #020617;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 14px;
-      font-family: 'Anuphan', 'Sarabun', system-ui, -apple-system, 'Noto Sans Thai', sans-serif;
+      gap: 20px;
       transition: opacity .35s ease;
     }
     #boot-mask.fade-out { opacity: 0; pointer-events: none; }
-    #boot-mask .boot-ring {
-      width: 22px; height: 22px; border-radius: 50%;
-      border: 1.5px solid rgba(28, 35, 32, .14);
-      border-top-color: #1C2320;
-      animation: bootSpin .9s linear infinite;
+    #boot-mask .boot-dots { display: flex; gap: 8px; }
+    #boot-mask .boot-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      animation: bootBounce 1s ease-in-out infinite;
     }
-    #boot-mask .boot-text { font-size: 13px; color: #5E6864; }
-    @keyframes bootSpin { to { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) { #boot-mask .boot-ring { animation-duration: 3s; } }
+    #boot-mask .boot-dot:nth-child(1) { background: #E7B94A; }
+    #boot-mask .boot-dot:nth-child(2) { background: #DE5245; animation-delay: .15s; }
+    #boot-mask .boot-dot:nth-child(3) { background: #E7B94A; animation-delay: .3s; }
+    #boot-mask .boot-text {
+      font-family: monospace;
+      font-size: 12px; letter-spacing: 4px;
+      color: #94A3B8;
+      display: flex;
+    }
+    #boot-mask .boot-loading-dots { display: inline-block; width: 18px; text-align: left; }
+    @keyframes bootBounce {
+      0%, 100% { transform: translateY(0); opacity: .5; }
+      50%      { transform: translateY(-10px); opacity: 1; }
+    }
   </style>
 </head>
 <body>
 
-<div id="boot-mask" role="status">
-  <div class="boot-ring"></div>
-  <div class="boot-text">กำลังโหลด</div>
+<div id="boot-mask">
+  <div class="boot-dots">
+    <div class="boot-dot"></div>
+    <div class="boot-dot"></div>
+    <div class="boot-dot"></div>
+  </div>
+  <div class="boot-text">LOADING<span class="boot-loading-dots" id="boot-loading-dots"></span></div>
 </div>
+<script>
+(function(){
+  var n = 0;
+  var el = document.getElementById('boot-loading-dots');
+  var iv = setInterval(function(){
+    if (!el || !document.body.contains(el)) { clearInterval(iv); return; }
+    n = (n + 1) % 4;
+    el.textContent = '.'.repeat(n);
+  }, 400);
+})();
+</script>
 
-<div class="app" id="revealCard" data-state="loading">
+<div class="floor"></div>
 
-  <header class="topbar">
-    <div class="brand">
-      <h1>คูปองส่วนลด</h1>
-      <p class="room" id="cabRoomBadge"></p>
-    </div>
-    <button class="pill-btn" id="btn-history" type="button" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดคูปองส่วนลด">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-        <path d="M3 3v5h5"></path>
-        <path d="M12 7v5l4 2"></path>
-      </svg>
-      <span>ประวัติ</span>
-    </button>
-  </header>
+<button class="btn-history-icon" id="btn-history" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดคูปองส่วนลด">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+    <path d="M3 3v5h5"></path>
+    <path d="M12 7v5l4 2"></path>
+  </svg>
+</button>
 
-  <section class="status">
-    <p class="title" id="titleText" aria-live="polite">กำลังโหลดข้อมูล</p>
-    <p class="hint" id="hint"></p>
-  </section>
+<h1>คูปองส่วนลด</h1>
+<div class="sub">รางวัลจากเช็คอิน &amp; จ่ายบิลตรงเวลา</div>
+<div class="room-pill"><span class="stock-pill" id="cabRoomBadge">—</span></div>
 
-  <ol class="steps" id="steps" aria-label="ขั้นตอนการเปิดคูปอง">
-    <li>จำ</li>
-    <li>สลับ</li>
-    <li>เลือก</li>
-    <li>เฉลย</li>
-  </ol>
+<div class="stage">
+  <div class="reveal-card" id="revealCard">
+    <div class="plate" id="plateText">กำลังโหลดข้อมูลห้อง...</div>
 
-  <main class="stage">
-    <div class="board" id="board">
-      <div class="core" aria-hidden="true">
-        <span class="core-num" id="stockCount">–</span>
-        <span class="core-label">สิทธิ์ที่เปิดได้</span>
+    <div class="reveal-screen" id="revealScreen">
+      <div class="headline" id="headline">
+        <p class="title" id="titleText">แตะปุ่มตรงกลางเพื่อเริ่ม</p>
       </div>
 
-      <div class="ticket" id="ticket" role="group">
-        <div class="ticket-paper">
-          <div class="ticket-top">
-            <p class="ticket-tier"><i class="ticket-dot"></i><span id="ticketTier">คูปอง</span></p>
-            <p class="ticket-amount"><span id="ticketAmount">0</span><small>฿</small></p>
-            <p class="ticket-label">ส่วนลดค่าเช่า</p>
-          </div>
-          <div class="ticket-perf" aria-hidden="true"></div>
-          <div class="ticket-bottom">
-            <p id="ticketDesc">ส่วนลดเข้ารอบบิลถัดไปอัตโนมัติ</p>
+      <div class="board" id="board">
+        <div class="floor-spot"></div>
+
+        <div class="ticket" id="ticket">
+          <div class="ticket-inner">
+            <div class="ticket-stub"><span class="stub-icon">🎟️</span></div>
+            <div class="ticket-tear"></div>
+            <div class="ticket-notch top"></div>
+            <div class="ticket-notch bottom"></div>
+            <div class="ticket-main">
+              <p class="kicker">คูปองส่วนลด</p>
+              <p class="amount"><span id="ticketAmount">0</span>฿</p>
+              <p class="desc" id="ticketDesc">ใช้ได้กับบิลรอบถัดไป</p>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  </main>
 
-  <div class="dock">
-    <p class="notice" id="instruction" aria-live="polite"></p>
-    <button class="btn primary hide" id="startBtn" type="button">เริ่มเปิดคูปอง</button>
-    <button class="btn primary claim" id="claimBtn" type="button">ตกลง</button>
-    <button class="btn ghost" id="retryBtn" type="button" style="display:none;">ลองเชื่อมต่อใหม่</button>
+        <button class="start-btn start-btn-center idle-pulse" id="startBtn">แตะเพื่อเริ่ม<br>🎟️</button>
+      </div>
+
+      <p class="hint" id="hint"></p>
+      <div class="step-guide" id="stepGuide">
+        <span>🎟️ จั่วคูปอง</span><span class="dot">•</span><span>✅ เลือก 1 ใบ</span><span class="dot">•</span><span>🎉 ลุ้นรับส่วนลด</span>
+      </div>
+      <button class="claim-btn" id="claimBtn">เก็บรางวัล 🎉</button>
+    </div>
+
+    <div class="cab-instruction" id="instruction">กำลังโหลดข้อมูล...</div>
+    <button class="retry-btn" id="retryBtn" style="display:none;">🔄 ลองเชื่อมต่อใหม่</button>
   </div>
 
-  <p class="footnote">สิทธิ์ส่วนลดสำหรับห้องที่มีสถานะเช่าอยู่ปกติเท่านั้น เงื่อนไขเป็นไปตามที่หอพักกำหนดและสงวนสิทธิ์เปลี่ยนแปลงโดยไม่ต้องแจ้งล่วงหน้า</p>
+  <div class="knob-panel">
+    <div class="stock-row">
+      <span class="stock-pill" id="stockCount">—</span>
+    </div>
+  </div>
 </div>
 
-<div class="screen-flash" id="screenFlash" aria-hidden="true"></div>
-<div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+<div class="screen-flash" id="screenFlash"></div>
+<div class="confetti-layer" id="confettiLayer"></div>
+
+<div class="footnote">สิทธิ์ส่วนลดสำหรับห้องที่มีสถานะเช่าอยู่ปกติเท่านั้น เงื่อนไขเป็นไปตามที่หอพักกำหนดและสงวนสิทธิ์เปลี่ยนแปลงโดยไม่ต้องแจ้งล่วงหน้า</div>
 
 <!-- HISTORY OVERLAY -->
-<div class="history-overlay" id="history-overlay" role="dialog" aria-modal="true" aria-labelledby="history-title">
+<div class="history-overlay" id="history-overlay">
   <div class="history-panel">
-    <span class="sheet-grip" aria-hidden="true"></span>
     <div class="history-header">
-      <h2 class="history-title" id="history-title">ประวัติการเปิดคูปองส่วนลด</h2>
-      <button class="icon-btn" id="history-close" type="button" onclick="closeHistoryOverlay()" aria-label="ปิด">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
-          <path d="M6 6l12 12M18 6L6 18"></path>
+      <div class="history-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+          <path d="M12 7v5l4 2"></path>
         </svg>
-      </button>
+        ประวัติการเปิดคูปองส่วนลด
+      </div>
+      <button class="history-close" onclick="closeHistoryOverlay()" aria-label="ปิด">✕</button>
     </div>
-    <div class="history-body" id="history-body"></div>
+    <div class="history-body" id="history-body">
+      <div class="loading">กำลังโหลด...</div>
+    </div>
   </div>
 </div>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="toast" id="toast"></div>
 
 <script src="app.js" defer></script>
 </body>
