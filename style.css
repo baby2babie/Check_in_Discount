@@ -196,9 +196,22 @@ body.lock{ overflow:hidden; }
 .app[data-state="error"] .stage{ opacity:.5; transition:opacity .3s ease; }
 
 /* ============================================================
-   CARDS — คูปอง 7 ใบบนวงแหวน
-   ด้านหน้า = กระดาษขาว + ตัวเลข · ด้านหลัง = สีเข้มของ tier
+   CARDS — คูปอง 7 ใบบนวงแหวน (ทรงตั๋วมีรอยบากซ้าย-ขวา)
+   ด้านหน้า = กระดาษขาว + ตัวเลข · ด้านหลัง = ฟอยล์สี tier เข้ม ลายตาข่าย ตราเปอร์เซ็นต์
+   เงา/วงแหวนแยกเป็นชั้นของตัวเอง เพราะ mask ที่เจาะรอยบากจะตัด box-shadow ของหน้าการ์ดทิ้ง
    ============================================================ */
+
+/* รางวงแหวนเส้นประ + แสง tier อ่อนๆ ตรงกลาง — ให้ 7 ใบมีโครงสร้างรองรับ */
+.board::before{
+  content:""; position:absolute; inset:14%;
+  border-radius:50%;
+  border:1px dashed rgba(28,35,32,.14);
+  background:radial-gradient(closest-side, var(--tier-soft), transparent);
+  pointer-events:none;
+  transition:opacity .4s ease;
+}
+.app[data-state="result"] .board::before{ opacity:0; }
+
 .cap{
   position:absolute; top:50%; left:50%;
   width:var(--cap-w); height:var(--cap-h);
@@ -221,6 +234,20 @@ body.lock{ overflow:hidden; }
   perspective:640px;
   transition:transform .25s var(--ease);
 }
+.cap-shadow{
+  position:absolute; left:8%; right:8%; top:18%; bottom:-14%;
+  border-radius:calc(var(--cap-w) * .12);
+  background:rgba(28,35,32,.55);
+  filter:blur(9px); opacity:.5;
+  pointer-events:none;
+  transition:opacity .4s ease;
+}
+.cap-ring{
+  position:absolute; inset:0;
+  border-radius:calc(var(--cap-w) * .1);
+  pointer-events:none;
+  transition:box-shadow .3s ease;
+}
 .cap-flip{
   position:absolute; inset:0;
   transform-style:preserve-3d; -webkit-transform-style:preserve-3d;
@@ -229,56 +256,81 @@ body.lock{ overflow:hidden; }
 .cap.closed .cap-flip{ transform:rotateY(180deg); }
 
 .cap-face{
+  --hole:calc(var(--cap-h) * .11);
   position:absolute; inset:0;
   border-radius:calc(var(--cap-w) * .1);
   display:flex; align-items:center; justify-content:center;
   backface-visibility:hidden; -webkit-backface-visibility:hidden;
-}
-.cap-front{
-  background:var(--paper);
-  box-shadow:0 0 0 1px var(--line), 0 10px 22px -12px rgba(28,35,32,.32);
-}
-.cap-back{
-  background:var(--tier-deep);
-  transform:rotateY(180deg);
-  box-shadow:0 12px 24px -10px rgba(28,35,32,.45);
-  transition:box-shadow .3s ease;
-}
-.cap-back::before{                                       /* เส้นขอบบางด้านใน */
-  content:""; position:absolute;
-  inset:calc(var(--cap-w) * .045);
-  border-radius:calc(var(--cap-w) * .06);
-  border:1px solid rgba(255,255,255,.16);
-}
-.cap-back::after{                                        /* จุดเดียวกลางใบ */
-  content:""; position:relative;
-  width:calc(var(--cap-w) * .07); aspect-ratio:1;
-  border-radius:50%;
-  background:var(--tier-line); opacity:.9;
+  -webkit-mask:
+    radial-gradient(circle var(--hole) at 0 50%, #0000 97%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle var(--hole) at 100% 50%, #0000 97%, #000) right / 51% 100% no-repeat;
+          mask:
+    radial-gradient(circle var(--hole) at 0 50%, #0000 97%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle var(--hole) at 100% 50%, #0000 97%, #000) right / 51% 100% no-repeat;
 }
 
+/* หน้า: กระดาษขาว กรอบประด้านใน */
+.cap-front{
+  background:linear-gradient(180deg, #FFFFFF 0%, #F5F6F4 100%);
+  border:1px solid var(--line);
+}
+.cap-front::before{
+  content:""; position:absolute; inset:calc(var(--cap-h) * .13);
+  border-radius:calc(var(--cap-w) * .05);
+  border:1px dashed rgba(28,35,32,.16);
+}
 .cap-label{
+  position:relative;
   font-size:calc(var(--cap-w) * .27);
   font-weight:300; line-height:1; color:var(--ink);
   font-variant-numeric:tabular-nums;
 }
 .cap-label small{ font-size:.58em; font-weight:400; margin-left:1px; color:var(--ink-2); }
 
-/* ใบที่ไม่ได้เลือก เมื่อเฉลย */
-.cap.revealed-miss .cap-front{ background:transparent; box-shadow:0 0 0 1px var(--line); }
-.cap.revealed-miss .cap-label{ color:var(--ink-2); }
-
-/* ใบที่เลือก */
-.cap.marked .cap-back{
-  box-shadow:0 0 0 2px var(--page), 0 0 0 3.5px var(--tier), 0 14px 26px -10px rgba(28,35,32,.5);
+/* หลัง: ฟอยล์ไล่สี + ลายตาข่ายละเอียด + เงาสะท้อน + กรอบบาง + ตราเปอร์เซ็นต์ */
+.cap-back{
+  transform:rotateY(180deg);
+  overflow:hidden;
+  background:
+    linear-gradient(118deg, rgba(255,255,255,0) 28%, rgba(255,255,255,.14) 44%, rgba(255,255,255,0) 58%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.06) 0 1px, transparent 1px 5px),
+    radial-gradient(130% 160% at 14% 0%, var(--tier) -35%, var(--tier-deep) 62%);
 }
+.cap-back::before{
+  content:""; position:absolute; inset:calc(var(--cap-h) * .13);
+  border-radius:calc(var(--cap-w) * .05);
+  border:1px solid rgba(255,255,255,.26);
+}
+.cap-emblem{
+  position:relative;
+  width:calc(var(--cap-h) * .46); height:calc(var(--cap-h) * .46);
+  color:var(--tier-line);
+}
+/* แสงฟอยล์วิ่งผ่านทีละใบไล่รอบวง — การเคลื่อนไหวเดียวที่ไม่ต้องรอผู้ใช้ */
+.cap-back::after{
+  content:""; position:absolute; top:-20%; bottom:-20%; left:0; width:55%;
+  background:linear-gradient(100deg, transparent, rgba(255,255,255,.4), transparent);
+  transform:translateX(-170%) skewX(-12deg);
+  pointer-events:none;
+}
+.cap.idle .cap-back::after{ animation:glint 6.5s ease-in-out var(--d, 0s) infinite; }
+@keyframes glint{
+  0%,55%{ transform:translateX(-170%) skewX(-12deg); }
+  82%,100%{ transform:translateX(280%) skewX(-12deg); }
+}
+
+/* ใบที่ไม่ได้เลือก เมื่อเฉลย — เหลือแค่เส้นบางๆ */
+.cap.revealed-miss .cap-front{ background:transparent; }
+.cap.revealed-miss .cap-front::before{ opacity:.5; }
+.cap.revealed-miss .cap-label{ color:var(--ink-2); }
+.cap.revealed-miss .cap-shadow{ opacity:0; }
+
+/* ใบที่เลือก / รอผล / โฟกัสคีย์บอร์ด — ใช้ชั้น .cap-ring */
+.cap.marked .cap-ring{ box-shadow:0 0 0 2px var(--page), 0 0 0 3.5px var(--tier); }
 
 .cap.faded{ opacity:.22; }
 .cap.gone{ opacity:0; pointer-events:none; }
-
-/* พักก่อนเริ่ม: หายใจเบาๆ เหลื่อมกัน — การเคลื่อนไหวเดียวที่ไม่ต้องรอผู้ใช้ */
-.cap.idle .cap-body{ animation:breathe 4.8s ease-in-out var(--d, 0s) infinite; }
-@keyframes breathe{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-3px); } }
 
 /* ช่องว่าง (ไม่มีสิทธิ์ / error) */
 .cap.empty .cap-body{ display:none; }
@@ -295,7 +347,7 @@ body.lock{ overflow:hidden; }
   .cap.pickable:hover .cap-body{ transform:translateY(-4px); }
 }
 .cap.pickable:focus-visible{ outline:none; }
-.cap.pickable:focus-visible .cap-back{ box-shadow:0 0 0 2px var(--page), 0 0 0 4px var(--ink); }
+.cap.pickable:focus-visible .cap-ring{ box-shadow:0 0 0 2px var(--page), 0 0 0 4px var(--ink); }
 
 /* ใบที่เลือกลอยเข้ากลาง → สั่นลุ้น → รอผลจริง → ละลาย */
 .cap.scaled .cap-body{ transform:scale(1.55); }
@@ -311,7 +363,7 @@ body.lock{ overflow:hidden; }
   86%{ transform:scale(1.55) translate(-1px,0) rotate(-1deg); }
 }
 .cap.waiting .cap-body{ animation:wait 1.8s ease-in-out infinite; }
-.cap.waiting .cap-back{ animation:halo 1.8s ease-out infinite; }
+.cap.waiting .cap-ring{ animation:halo 1.8s ease-out infinite; }
 @keyframes wait{ 0%,100%{ transform:scale(1.55); } 50%{ transform:scale(1.6); } }
 @keyframes halo{
   0%{ box-shadow:0 0 0 2px var(--page), 0 0 0 3.5px var(--tier), 0 0 0 3.5px var(--tier-glow); }

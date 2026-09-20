@@ -317,13 +317,13 @@ let dealTimer = null;
 function layoutMetrics() {
   const size = board.clientWidth;
   if (!size) return;
-  const capW = size * 0.27;
+  const capW = size * 0.285;
   const capH = capW * 0.64;
   const rs = document.documentElement.style;
   rs.setProperty('--cap-w', capW + 'px');
   rs.setProperty('--cap-h', capH + 'px');
   rs.setProperty('--amt-fs', (size * 0.25) + 'px');
-  radius = size * 0.36;
+  radius = size * 0.365;
 }
 window.addEventListener('resize', () => { layoutMetrics(); renderRing(); });
 
@@ -338,10 +338,19 @@ function clearCards() {
 function cardHTML() {
   return `
     <div class="cap-body">
+      <span class="cap-shadow"></span>
       <div class="cap-flip">
         <div class="cap-face cap-front"><span class="cap-label"></span></div>
-        <div class="cap-face cap-back"></div>
+        <div class="cap-face cap-back">
+          <svg class="cap-emblem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10.2"></circle>
+            <path d="M16.2 7.8 7.8 16.2"></path>
+            <circle cx="8.9" cy="8.9" r="1.7"></circle>
+            <circle cx="15.1" cy="15.1" r="1.7"></circle>
+          </svg>
+        </div>
       </div>
+      <span class="cap-ring"></span>
     </div>`;
 }
 
