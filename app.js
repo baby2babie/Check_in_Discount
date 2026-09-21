@@ -340,14 +340,13 @@ function cardHTML() {
     <div class="cap-body">
       <span class="cap-shadow"></span>
       <div class="cap-flip">
-        <div class="cap-face cap-front"><span class="cap-label"></span></div>
+        <div class="cap-face cap-front">
+          <span class="cf-stub"></span><span class="cf-perf"></span>
+          <span class="cap-label"></span>
+        </div>
         <div class="cap-face cap-back">
-          <svg class="cap-emblem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10.2"></circle>
-            <path d="M16.2 7.8 7.8 16.2"></path>
-            <circle cx="8.9" cy="8.9" r="1.7"></circle>
-            <circle cx="15.1" cy="15.1" r="1.7"></circle>
-          </svg>
+          <span class="cb-stub"></span><span class="cb-perf"></span>
+          <span class="cb-scratch">?</span>
         </div>
       </div>
       <span class="cap-ring"></span>
