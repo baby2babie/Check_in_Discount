@@ -307,7 +307,8 @@ function countUp(el, to, dur = 900) {
 
 // ============================================================
 //  SUSPENSE REVEAL — เกมคูปองส่วนลด
-//  1 รอบ = 1 กล่อง (stock[0]) — ยิง openLootBox จริงตอนเริ่มรอบพร้อมกับเล่นแอนิเมชัน
+//  1 รอบ = 1 กล่อง (stock[0]) — ยิง openLootBox จริง "ตอนผู้เล่นกดเลือกการ์ด" (ไม่ใช่ตอนกดเริ่ม)
+//  ถ้าผู้เล่นยังไม่เลือก/ปิดหน้าไปก่อน คูปองจะยังไม่ถูกใช้ กลับมาเล่นใหม่ได้
 //  ตัวเลขบนการ์ดระหว่างเกมเป็นแค่ตัวล่อ (CAPSULE_NUMBERS) รางวัลจริงเฉลยจาก backend ตอนจบเท่านั้น
 // ============================================================
 let capEls = [];
@@ -551,7 +552,7 @@ function presentTicket(milestone, amount, celebrate = true) {
 }
 
 // เล่น 1 รอบเต็ม: โชว์ตัวเลข → คว่ำ → สลับ → ให้เลือก → เฉลยใบอื่น → ลอยเข้ากลาง → รอผลจริงจาก backend → เปิด
-async function playRound(milestone, apiPromise) {
+async function playRound(milestone, requestOpen) {
   setState('play');
   buildBoard();
   ticket.classList.remove('show');
@@ -568,6 +569,9 @@ async function playRound(milestone, apiPromise) {
 
   const chosen = await enablePicking();
   const chosenDecoy = chosen.dataset.decoy;
+
+  // ผู้เล่นเลือกแล้ว — ตอนนี้เท่านั้นที่ส่งคำขอเปิดคูปองจริง และเริ่มนับเวลา HARD_TIMEOUT_MS
+  const apiPromise = requestOpen();
 
   setHint('');
   disablePicking();
@@ -651,21 +655,24 @@ async function startRound() {
   const milestone = stock[0];
   const token = lootTokens[milestone];
 
-  // request จริง — ไม่ถูกยกเลิกแม้ backend จะตอบช้า (auto-resync ผ่าน HARD_TIMEOUT_MS ด้านล่างถ้าช้าเกินไปจริงๆ)
-  const realPromise = callGAS('openLootBox', { token, tierLabel: currentTierLabel }, 30000).catch((err) => {
-    console.error('openLootBox failed:', err);
-    return { success: false, message: 'เชื่อมต่อกับระบบไม่สำเร็จ' };
-  });
-
   const HARD_TIMEOUT_MS = 15000;
 
-  const apiPromise = withTimeout(
-    realPromise,
-    HARD_TIMEOUT_MS,
-    { success: false, message: 'ระบบช้าผิดปกติ กำลังซิงค์ข้อมูลใหม่ให้อัตโนมัติ', hardFail: true }
-  );
+  // ส่งคำขอเปิดจริง "ตอนผู้เล่นกดเลือกการ์ด" (playRound เป็นคนเรียก)
+  // request ไม่ถูกยกเลิกแม้ backend จะตอบช้า (auto-resync ผ่าน HARD_TIMEOUT_MS ถ้าช้าเกินไปจริงๆ)
+  // นับเวลา 15 วินาทีจากตอนเลือก ซึ่งแอนิเมชันหลังเลือกใช้ราว 7 วินาที เหลือเวลารอผลจริงราว 8 วินาที
+  const requestOpen = () => {
+    const realPromise = callGAS('openLootBox', { token, tierLabel: currentTierLabel }, 30000).catch((err) => {
+      console.error('openLootBox failed:', err);
+      return { success: false, message: 'เชื่อมต่อกับระบบไม่สำเร็จ' };
+    });
+    return withTimeout(
+      realPromise,
+      HARD_TIMEOUT_MS,
+      { success: false, message: 'ระบบช้าผิดปกติ กำลังซิงค์ข้อมูลใหม่ให้อัตโนมัติ', hardFail: true }
+    );
+  };
 
-  const outcome = await playRound(milestone, apiPromise);
+  const outcome = await playRound(milestone, requestOpen);
 
   if (outcome.success) {
     stock.shift();
