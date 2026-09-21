@@ -655,13 +655,13 @@ async function startRound() {
   const milestone = stock[0];
   const token = lootTokens[milestone];
 
-  const HARD_TIMEOUT_MS = 15000;
+  const HARD_TIMEOUT_MS = 30000;   // เวลารอ backend หลังผู้เล่นกดเลือกการ์ด (มิลลิวินาที) — ปรับตัวเลขนี้ได้
 
   // ส่งคำขอเปิดจริง "ตอนผู้เล่นกดเลือกการ์ด" (playRound เป็นคนเรียก)
   // request ไม่ถูกยกเลิกแม้ backend จะตอบช้า (auto-resync ผ่าน HARD_TIMEOUT_MS ถ้าช้าเกินไปจริงๆ)
-  // นับเวลา 15 วินาทีจากตอนเลือก ซึ่งแอนิเมชันหลังเลือกใช้ราว 7 วินาที เหลือเวลารอผลจริงราว 8 วินาที
+  // นับเวลา HARD_TIMEOUT_MS จากตอนเลือก (แอนิเมชันหลังเลือกใช้ราว 7 วินาที ที่เหลือคือเวลารอผลจริง)
   const requestOpen = () => {
-    const realPromise = callGAS('openLootBox', { token, tierLabel: currentTierLabel }, 30000).catch((err) => {
+    const realPromise = callGAS('openLootBox', { token, tierLabel: currentTierLabel }, 45000).catch((err) => {
       console.error('openLootBox failed:', err);
       return { success: false, message: 'เชื่อมต่อกับระบบไม่สำเร็จ' };
     });
