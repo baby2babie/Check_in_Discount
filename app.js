@@ -344,11 +344,11 @@ function cardHTML() {
       <span class="cap-shadow"></span>
       <div class="cap-flip">
         <div class="cap-face cap-front">
-          <span class="cf-wm">%</span>
+          <span class="cf-wm">฿</span>
           <span class="cap-label"></span>
         </div>
         <div class="cap-face cap-back">
-          <span class="cb-wm">%</span>
+          <span class="cb-wm">฿</span>
           <span class="cb-q">?</span>
         </div>
       </div>

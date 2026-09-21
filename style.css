@@ -271,14 +271,14 @@ body.lock{ overflow:hidden; }
     radial-gradient(circle var(--hole) at 100% 50%, #0000 97%, #000) right / 51% 100% no-repeat;
 }
 
-/* เครื่องหมาย % ตัวใหญ่ตัดขอบเป็นลายน้ำ — ลายเซ็นของคูปองชุดนี้ */
+/* เครื่องหมาย ฿ ตัวใหญ่เป็นลายน้ำ — ลายเซ็นของคูปองชุดนี้ (ใช้ ฿ ไม่ใช้ % เพราะรางวัลเป็นจำนวนเงินบาทตายตัว ไม่ใช่เปอร์เซ็นต์) */
 .cf-wm, .cb-wm{
   position:absolute; right:-3%; top:50%; transform:translateY(-52%);
   font-size:calc(var(--cap-w) * .7); font-weight:200; line-height:1;
   pointer-events:none;
 }
 
-/* หน้า: กระดาษขาว + ลายน้ำ % สีพาสเทลจางๆ + ตัวเลขชิดซ้าย */
+/* หน้า: กระดาษขาว + ลายน้ำ ฿ สีพาสเทลจางๆ + ตัวเลขชิดซ้าย */
 .cap-front{
   background:linear-gradient(180deg, #FFFFFF 0%, #F5F6F4 100%);
   box-shadow:inset 0 0 0 1px var(--line);
@@ -293,7 +293,7 @@ body.lock{ overflow:hidden; }
 }
 .cap-label small{ font-size:.58em; font-weight:400; color:var(--ink-2); }
 
-/* หลัง: พาสเทลของ tier + ลายน้ำ % + วงกลม "?" (ปิดรางวัลไว้) */
+/* หลัง: พาสเทลของ tier + ลายน้ำ ฿ + วงกลม "?" (ปิดรางวัลไว้) */
 .cap-back{
   transform:rotateY(180deg);
   background:linear-gradient(150deg, var(--pas) 0%, var(--pas2) 140%);
@@ -423,8 +423,8 @@ body.lock{ overflow:hidden; }
   display:flex; flex-direction:column;
   padding:22px 22px 18px;
 }
-.ticket-top::before{                                     /* ลายน้ำ % เดียวกับการ์ด */
-  content:"%"; position:absolute; right:-7%; top:50%; transform:translateY(-46%);
+.ticket-top::before{                                     /* ลายน้ำ ฿ เดียวกับการ์ด */
+  content:"฿"; position:absolute; right:-1%; top:50%; transform:translateY(-46%);
   font-size:calc(var(--amt-fs) * 1.9); font-weight:200; line-height:1;
   color:var(--pas); opacity:.6; pointer-events:none;
 }
