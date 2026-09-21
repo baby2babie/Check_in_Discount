@@ -31,15 +31,15 @@ let currentTierLabel = null;
 
 // ============================================================
 //  THEME — สี tier ของผู้เช่า (โทนหม่น ใช้เป็นสีเน้นเท่านั้น)
-//  deep = ด้านหลังการ์ด · accent = แถบ/จุด/วงแหวน · tint = พื้นส่วนล่างตั๋ว
+//  pas/pas2 = พื้นหลังการ์ด (พาสเทล) · ink = ตัวอักษรบนพาสเทล · accent = แถบ/จุด/วงแหวน · tint = พื้นส่วนล่างตั๋ว
 // ============================================================
 const THEME = {
-  "Member":   { deep:"#25453A", accent:"#4E8F78", tint:"#EAF3EF", line:"#C5DDD3", ink:"#2F6553" },
-  "Silver":   { deep:"#2D3B52", accent:"#6F86A6", tint:"#ECF0F6", line:"#CAD5E4", ink:"#3D5677" },
-  "Gold":     { deep:"#5A4419", accent:"#B38A38", tint:"#F6F0E2", line:"#E3D2A8", ink:"#7A5C1D" },
-  "Platinum": { deep:"#3E3563", accent:"#8574B5", tint:"#F0EDF7", line:"#D8D0EA", ink:"#56478A" },
-  "Diamond":  { deep:"#1F4A54", accent:"#3F98A8", tint:"#E7F3F5", line:"#BFDFE4", ink:"#1F6572" },
-  "Legend":   { deep:"#5C2530", accent:"#B5505E", tint:"#F8ECEE", line:"#E8C6CB", ink:"#86303C" },
+  "Member":   { deep:"#25453A", accent:"#4E8F78", tint:"#EAF3EF", line:"#C5DDD3", ink:"#2F6553", pas:"#CFE9DE", pas2:"#A9D6C4" },
+  "Silver":   { deep:"#2D3B52", accent:"#6F86A6", tint:"#ECF0F6", line:"#CAD5E4", ink:"#3D5677", pas:"#D6E2F1", pas2:"#B4C8E2" },
+  "Gold":     { deep:"#5A4419", accent:"#B38A38", tint:"#F6F0E2", line:"#E3D2A8", ink:"#7A5C1D", pas:"#F6E6BE", pas2:"#EBCF8E" },
+  "Platinum": { deep:"#3E3563", accent:"#8574B5", tint:"#F0EDF7", line:"#D8D0EA", ink:"#56478A", pas:"#E0D9F3", pas2:"#C6BBE8" },
+  "Diamond":  { deep:"#1F4A54", accent:"#3F98A8", tint:"#E7F3F5", line:"#BFDFE4", ink:"#1F6572", pas:"#CBE9EE", pas2:"#A3D3DC" },
+  "Legend":   { deep:"#5C2530", accent:"#B5505E", tint:"#F8ECEE", line:"#E8C6CB", ink:"#86303C", pas:"#F5D5DA", pas2:"#EAB0BA" },
 };
 function applyTier(tierLabel) {
   const t = THEME[tierLabel] || THEME["Member"];
@@ -49,6 +49,9 @@ function applyTier(tierLabel) {
   s.setProperty('--tier-soft', t.tint);
   s.setProperty('--tier-line', t.line);
   s.setProperty('--tier-ink', t.ink);
+  s.setProperty('--pas', t.pas);
+  s.setProperty('--pas2', t.pas2);
+  s.setProperty('--pin', t.ink);
   s.setProperty('--tier-glow', t.accent + '38');
   s.setProperty('--tier-glow-2', t.accent + '1A');
 }
@@ -341,12 +344,12 @@ function cardHTML() {
       <span class="cap-shadow"></span>
       <div class="cap-flip">
         <div class="cap-face cap-front">
-          <span class="cf-stub"></span><span class="cf-perf"></span>
+          <span class="cf-wm">%</span>
           <span class="cap-label"></span>
         </div>
         <div class="cap-face cap-back">
-          <span class="cb-stub"></span><span class="cb-perf"></span>
-          <span class="cb-scratch">?</span>
+          <span class="cb-wm">%</span>
+          <span class="cb-q">?</span>
         </div>
       </div>
       <span class="cap-ring"></span>

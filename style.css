@@ -23,6 +23,9 @@
   --tier-ink:#2F6553;
   --tier-glow:#4E8F7838;
   --tier-glow-2:#4E8F781A;
+  --pas:#CFE9DE;             /* หลังการ์ด: พาสเทลของ tier */
+  --pas2:#A9D6C4;
+  --pin:#2F6553;             /* ตัวอักษร/วงกลมบนพาสเทล */
 
   --ease:cubic-bezier(.22,.8,.24,1);
   --board:clamp(264px, calc(100vh - 400px), 372px);   /* ขนาดบอร์ดปรับตามความสูงจอ */
@@ -238,7 +241,7 @@ body.lock{ overflow:hidden; }
   position:absolute; left:8%; right:8%; top:18%; bottom:-14%;
   border-radius:calc(var(--cap-w) * .12);
   background:rgba(28,35,32,.55);
-  filter:blur(9px); opacity:.5;
+  filter:blur(9px); opacity:.38;
   pointer-events:none;
   transition:opacity .4s ease;
 }
@@ -256,103 +259,76 @@ body.lock{ overflow:hidden; }
 .cap.closed .cap-flip{ transform:rotateY(180deg); }
 
 .cap-face{
-  --hole:calc(var(--cap-h) * .1);
-  --stub:30%;                                            /* ความกว้างชายตัดฝั่งซ้าย */
+  --hole:calc(var(--cap-w) * .06);
   position:absolute; inset:0; overflow:hidden;
   border-radius:calc(var(--cap-w) * .09);
   backface-visibility:hidden; -webkit-backface-visibility:hidden;
-  -webkit-mask:                                          /* รอยบากบน-ล่างตรงเส้นปรุ */
-    radial-gradient(circle var(--hole) at var(--stub) 0, #0000 97%, #000) top / 100% 51% no-repeat,
-    radial-gradient(circle var(--hole) at var(--stub) 100%, #0000 97%, #000) bottom / 100% 51% no-repeat;
+  -webkit-mask:                                          /* รอยบากข้างซ้าย-ขวา */
+    radial-gradient(circle var(--hole) at 0 50%, #0000 97%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle var(--hole) at 100% 50%, #0000 97%, #000) right / 51% 100% no-repeat;
           mask:
-    radial-gradient(circle var(--hole) at var(--stub) 0, #0000 97%, #000) top / 100% 51% no-repeat,
-    radial-gradient(circle var(--hole) at var(--stub) 100%, #0000 97%, #000) bottom / 100% 51% no-repeat;
+    radial-gradient(circle var(--hole) at 0 50%, #0000 97%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle var(--hole) at 100% 50%, #0000 97%, #000) right / 51% 100% no-repeat;
 }
 
-/* ชายตัด + เส้นปรุ + บาร์โค้ด — ใช้ร่วมกันทั้งหน้าและหลัง */
-.cf-stub, .cb-stub{ position:absolute; left:0; top:0; bottom:0; width:var(--stub); }
-.cf-stub::after, .cb-stub::after{                        /* บาร์โค้ดแนวนอนตามความสูงชายตัด */
-  content:""; position:absolute; left:27%; right:27%; top:26%; bottom:26%;
-  background:repeating-linear-gradient(0deg,
-    var(--bar) 0 1px, transparent 1px 2px, var(--bar) 2px 4px, transparent 4px 5px,
-    var(--bar) 5px 6px, transparent 6px 8px);
-}
-.cf-perf, .cb-perf{
-  position:absolute; left:var(--stub); transform:translateX(-50%);
-  top:calc(var(--hole) * 1.5); bottom:calc(var(--hole) * 1.5);
-  border-left:1.5px dashed;
+/* เครื่องหมาย % ตัวใหญ่ตัดขอบเป็นลายน้ำ — ลายเซ็นของคูปองชุดนี้ */
+.cf-wm, .cb-wm{
+  position:absolute; right:-3%; top:50%; transform:translateY(-52%);
+  font-size:calc(var(--cap-w) * .7); font-weight:200; line-height:1;
+  pointer-events:none;
 }
 
-/* หน้า: กระดาษขาว ชายตัดสีอ่อนของ tier */
+/* หน้า: กระดาษขาว + ลายน้ำ % สีพาสเทลจางๆ + ตัวเลขชิดซ้าย */
 .cap-front{
   background:linear-gradient(180deg, #FFFFFF 0%, #F5F6F4 100%);
   box-shadow:inset 0 0 0 1px var(--line);
 }
-.cap-front::before{                                      /* เส้นประตัดคูปอง */
-  content:""; position:absolute; inset:calc(var(--cap-h) * .05);
-  border-radius:calc(var(--cap-w) * .06);
-  border:1px dashed rgba(28,35,32,.16);
-  pointer-events:none;
-}
-.cf-stub{ background:var(--tier-soft); --bar:var(--tier); }
-.cf-perf{ border-left-color:rgba(28,35,32,.28); }
+.cf-wm{ color:var(--pas); opacity:.75; }
 .cap-label{
-  position:absolute; left:var(--stub); right:0; top:0; bottom:0;
-  display:flex; align-items:center; justify-content:center; gap:1px;
-  font-size:calc(var(--cap-w) * .26);
+  position:absolute; left:12%; right:0; top:0; bottom:0;
+  display:flex; align-items:center; justify-content:flex-start; gap:1px;
+  font-size:calc(var(--cap-w) * .3);
   font-weight:300; line-height:1; color:var(--ink);
   font-variant-numeric:tabular-nums;
 }
 .cap-label small{ font-size:.58em; font-weight:400; color:var(--ink-2); }
 
-/* หลัง: คูปองสี tier — ชายตัดเข้ม + บาร์โค้ด + แผ่นฟอยล์เงินสำหรับขูด (ปิดรางวัลไว้) */
+/* หลัง: พาสเทลของ tier + ลายน้ำ % + วงกลม "?" (ปิดรางวัลไว้) */
 .cap-back{
   transform:rotateY(180deg);
-  background:linear-gradient(140deg, var(--tier) 0%, var(--tier-deep) 135%);
+  background:linear-gradient(150deg, var(--pas) 0%, var(--pas2) 140%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);
+  color:var(--pin);
 }
-.cap-back::before{                                       /* เส้นประตัดคูปอง */
-  content:""; position:absolute; inset:calc(var(--cap-h) * .05);
-  border-radius:calc(var(--cap-w) * .06);
-  border:1px dashed rgba(255,255,255,.5);
-  pointer-events:none;
+.cb-wm{ color:rgba(255,255,255,.62); }
+.cb-q{
+  position:absolute; left:14%; top:50%; transform:translateY(-50%);
+  width:calc(var(--cap-w) * .21); height:calc(var(--cap-w) * .21);
+  border-radius:50%; border:1.5px solid currentColor;
+  display:grid; place-items:center;
+  font-size:calc(var(--cap-w) * .12); font-weight:400; line-height:1;
 }
-.cb-stub{ background:var(--tier-deep); --bar:rgba(255,255,255,.62); }
-.cb-perf{ border-left-color:rgba(255,255,255,.55); }
-.cb-scratch{
-  position:absolute; left:41%; right:11%; top:24%; bottom:24%;
-  display:flex; align-items:center; justify-content:center;
-  overflow:hidden;
-  border-radius:calc(var(--cap-w) * .045);
-  font-size:calc(var(--cap-w) * .21); font-weight:500; line-height:1;
-  color:#5A6460;
-  background:
-    radial-gradient(rgba(255,255,255,.7) .6px, transparent .9px) 0 0 / 4px 4px,
-    linear-gradient(135deg, #F0F2F1 0%, #BAC1BF 46%, #E8EBEA 72%, #AAB2B0 100%);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55), 0 1px 2px rgba(0,0,0,.25);
-}
-/* แสงวิ่งผ่านแผ่นฟอยล์ทีละใบไล่รอบวง — การเคลื่อนไหวเดียวที่ไม่ต้องรอผู้ใช้ */
-.cb-scratch::after{
-  content:""; position:absolute; top:-20%; bottom:-20%; left:0; width:55%;
-  background:linear-gradient(100deg, transparent, rgba(255,255,255,.85), transparent);
+/* แสงวิ่งผ่านหลังการ์ดทีละใบไล่รอบวง — การเคลื่อนไหวเดียวที่ไม่ต้องรอผู้ใช้ */
+.cap-back::after{
+  content:""; position:absolute; top:-20%; bottom:-20%; left:0; width:45%;
+  background:linear-gradient(100deg, transparent, rgba(255,255,255,.62), transparent);
   transform:translateX(-170%) skewX(-12deg);
   pointer-events:none;
 }
-.cap.idle .cb-scratch::after{ animation:glint 6.5s ease-in-out var(--d, 0s) infinite; }
+.cap.idle .cap-back::after{ animation:glint 6.5s ease-in-out var(--d, 0s) infinite; }
 @keyframes glint{
   0%,55%{ transform:translateX(-170%) skewX(-12deg); }
-  82%,100%{ transform:translateX(280%) skewX(-12deg); }
+  82%,100%{ transform:translateX(320%) skewX(-12deg); }
 }
 
 /* ใบที่ไม่ได้เลือก เมื่อเฉลย — เหลือแค่เส้นบางๆ */
 .cap.revealed-miss .cap-front{ background:transparent; }
-.cap.revealed-miss .cap-front::before{ opacity:.5; }
-.cap.revealed-miss .cf-stub{ background:transparent; }
-.cap.revealed-miss .cf-stub::after{ opacity:.45; }
+.cap.revealed-miss .cf-wm{ opacity:.3; }
 .cap.revealed-miss .cap-label{ color:var(--ink-2); }
 .cap.revealed-miss .cap-shadow{ opacity:0; }
 
 /* ใบที่เลือก / รอผล / โฟกัสคีย์บอร์ด — ใช้ชั้น .cap-ring */
-.cap.marked .cap-ring{ box-shadow:0 0 0 2px var(--page), 0 0 0 3.5px var(--tier); }
+.cap.marked .cap-ring{ box-shadow:0 0 0 2px var(--page), 0 0 0 4.5px var(--tier); }
 
 .cap.faded{ opacity:.22; }
 .cap.gone{ opacity:0; pointer-events:none; }
@@ -391,8 +367,8 @@ body.lock{ overflow:hidden; }
 .cap.waiting .cap-ring{ animation:halo 1.8s ease-out infinite; }
 @keyframes wait{ 0%,100%{ transform:scale(1.55); } 50%{ transform:scale(1.6); } }
 @keyframes halo{
-  0%{ box-shadow:0 0 0 2px var(--page), 0 0 0 3.5px var(--tier), 0 0 0 3.5px var(--tier-glow); }
-  100%{ box-shadow:0 0 0 2px var(--page), 0 0 0 3.5px var(--tier), 0 0 0 20px transparent; }
+  0%{ box-shadow:0 0 0 2px var(--page), 0 0 0 4.5px var(--tier), 0 0 0 4.5px var(--tier-glow); }
+  100%{ box-shadow:0 0 0 2px var(--page), 0 0 0 4.5px var(--tier), 0 0 0 22px transparent; }
 }
 .cap.open .cap-body{ animation:dissolve .5s var(--ease) forwards; }
 @keyframes dissolve{
@@ -447,6 +423,12 @@ body.lock{ overflow:hidden; }
   display:flex; flex-direction:column;
   padding:22px 22px 18px;
 }
+.ticket-top::before{                                     /* ลายน้ำ % เดียวกับการ์ด */
+  content:"%"; position:absolute; right:-7%; top:50%; transform:translateY(-46%);
+  font-size:calc(var(--amt-fs) * 1.9); font-weight:200; line-height:1;
+  color:var(--pas); opacity:.6; pointer-events:none;
+}
+.ticket-tier, .ticket-amount, .ticket-label{ position:relative; }
 .ticket-tier{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; }
 .ticket-dot{ width:7px; height:7px; border-radius:50%; background:var(--tier); flex:none; }
 .ticket-amount{
