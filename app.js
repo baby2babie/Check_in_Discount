@@ -62,6 +62,19 @@ function applyTier(tierLabel) {
 const CAPSULE_NUMBERS = [5, 10, 15, 20, 25, 30, 50];
 const N_CAPS = 7;
 
+// ตัวเลขสำหรับเฉลยใบที่ไม่ได้เลือก "หลังรู้ผลจริงแล้ว" — ตัดค่าที่ตรงกับรางวัลจริงออกก่อนเสมอ
+// เพื่อการันตีว่าใบอื่นจะไม่โชว์ตัวเลขซ้ำกับรางวัลที่ผู้เล่นได้จริง
+function decoysExcluding(amount) {
+  const pool = [...CAPSULE_NUMBERS];
+  const idx = pool.indexOf(amount);
+  if (idx !== -1) pool.splice(idx, 1); else pool.pop(); // เผื่อ backend ให้ค่านอกชุด — ตัดออก 1 ตัวให้จำนวนพอดีกับใบที่เหลือ
+  for (let i = pool.length - 1; i > 0; i--) {            // สลับสุ่ม
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool;
+}
+
 // ============================================================
 //  CACHE (sessionStorage) — stale-while-revalidate
 //  โชว์ผลล่าสุดทันทีตอนเปิดแอปรอบถัดไป แล้วค่อยทับด้วยของจริงจาก backend
@@ -568,7 +581,6 @@ async function playRound(milestone, requestOpen) {
   await startShuffle();
 
   const chosen = await enablePicking();
-  const chosenDecoy = chosen.dataset.decoy;
 
   // ผู้เล่นเลือกแล้ว — ตอนนี้เท่านั้นที่ส่งคำขอเปิดคูปองจริง และเริ่มนับเวลา HARD_TIMEOUT_MS
   const apiPromise = requestOpen();
@@ -577,31 +589,17 @@ async function playRound(milestone, requestOpen) {
   disablePicking();
   chosen.classList.add('marked');
 
-  setPhase(4);
-  setTitle('มาดูใบที่คุณไม่ได้เลือก');
-  await wait(600);
-
   const others = capEls.filter(el => el !== chosen);
   others.sort((a, b) => {
     const ia = capEls.indexOf(a), ib = capEls.indexOf(b);
     return currentOrder[ia] - currentOrder[ib];
   });
 
-  for (const el of others) {
-    el.querySelector('.cap-label').innerHTML = `${el.dataset.decoy}<small>฿</small>`;
-    el.classList.add('revealed-miss');
-    el.classList.remove('closed'); // พลิกหงาย
-    await wait(480);
-  }
-
-  await wait(700);
-  setTitle('เหลือใบของคุณใบเดียว');
-  others.forEach(el => el.classList.add('faded'));
-  await wait(900);
-  others.forEach(el => el.classList.add('gone'));
-
-  await wait(300);
+  // ใบที่เลือกลอยเข้ากลางจอ "ก่อน" เฉลยใบอื่น — รอผลจริงจาก backend ตรงนี้
+  // (ไม่เฉลยใบอื่นจนกว่าจะรู้ผลจริง เพื่อกันไม่ให้ตัวเลขที่เฉลยไปแล้วซ้ำกับรางวัลที่ได้จริง)
+  setPhase(4);
   setTitle('มาดูกันว่าได้เท่าไหร่');
+  await wait(500);
   chosen.classList.add('to-center');
   chosen.style.transform = 'translate(0px, 0px)';
   await wait(430);
@@ -612,20 +610,39 @@ async function playRound(milestone, requestOpen) {
   chosen.classList.remove('suspense-shake');
   await wait(120);
 
-  // ── รอผลจริงจาก backend (ไม่ polling — กันรู้สึกเหมือนหน้าเว็บค้าง) ──
   chosen.classList.add('waiting');
   const result = await apiPromise;
   chosen.classList.remove('waiting');
 
   if (!result || !result.success) {
-    return { success: false, result, chosenDecoy };
+    return { success: false, result };
   }
 
+  const amount = Number(result.discount_amount) || 0;
+
+  // เฉลยใบอื่นด้วยตัวเลขที่เหลือจากชุดรางวัลจริง (ตัดค่าที่ตรงกับผลจริงออกก่อนแล้ว)
+  // การันตีว่าตัวเลขที่เฉลยจะไม่ซ้ำกับรางวัลที่ผู้เล่นได้จริงเลย
+  const revealPool = decoysExcluding(amount);
+  others.forEach((el, i) => { el.dataset.decoy = revealPool[i]; });
+
+  setTitle('มาดูใบที่คุณไม่ได้เลือก');
+  for (const el of others) {
+    el.querySelector('.cap-label').innerHTML = `${el.dataset.decoy}<small>฿</small>`;
+    el.classList.add('revealed-miss');
+    el.classList.remove('closed'); // พลิกหงาย
+    await wait(420);
+  }
+
+  await wait(600);
+  others.forEach(el => el.classList.add('faded'));
+  await wait(700);
+  others.forEach(el => el.classList.add('gone'));
+
+  await wait(200);
   chosen.classList.add('open');
   screenFlash.classList.remove('go'); void screenFlash.offsetWidth; screenFlash.classList.add('go');
   await wait(450);
 
-  const amount = Number(result.discount_amount) || 0;
   setState('result');
   setTitle('คุณได้รับส่วนลด');
   setHint('');
