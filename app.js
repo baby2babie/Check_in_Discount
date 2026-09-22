@@ -595,24 +595,16 @@ async function playRound(milestone, requestOpen) {
     return currentOrder[ia] - currentOrder[ib];
   });
 
-  // ใบที่เลือกลอยเข้ากลางจอ "ก่อน" เฉลยใบอื่น — รอผลจริงจาก backend ตรงนี้
-  // (ไม่เฉลยใบอื่นจนกว่าจะรู้ผลจริง เพื่อกันไม่ให้ตัวเลขที่เฉลยไปแล้วซ้ำกับรางวัลที่ได้จริง)
   setPhase(4);
-  setTitle('มาดูกันว่าได้เท่าไหร่');
+  setTitle('มาดูใบที่คุณไม่ได้เลือก');
   await wait(500);
-  chosen.classList.add('to-center');
-  chosen.style.transform = 'translate(0px, 0px)';
-  await wait(430);
-  chosen.classList.add('centered', 'scaled');
-  await wait(200);
-  chosen.classList.add('suspense-shake');
-  await wait(850);
-  chosen.classList.remove('suspense-shake');
-  await wait(120);
 
-  chosen.classList.add('waiting');
-  const result = await apiPromise;
-  chosen.classList.remove('waiting');
+  // รอผลจริงจาก backend อย่างเงียบๆ ก่อนเริ่มเฉลย (ปกติไวมาก ผู้เล่นแทบไม่รู้สึกถึงจังหวะรอนี้)
+  // ต้องรู้ผลจริงก่อนเสมอ เพื่อเลือกตัวเลขเฉลยใบอื่นที่ไม่ซ้ำกับรางวัลที่ได้จริง
+  const pendingTimer = setTimeout(() => chosen.classList.add('pending'), 900);
+  const [result] = await Promise.all([apiPromise, wait(500)]);
+  clearTimeout(pendingTimer);
+  chosen.classList.remove('pending');
 
   if (!result || !result.success) {
     return { success: false, result };
@@ -625,7 +617,6 @@ async function playRound(milestone, requestOpen) {
   const revealPool = decoysExcluding(amount);
   others.forEach((el, i) => { el.dataset.decoy = revealPool[i]; });
 
-  setTitle('มาดูใบที่คุณไม่ได้เลือก');
   for (const el of others) {
     el.querySelector('.cap-label').innerHTML = `${el.dataset.decoy}<small>฿</small>`;
     el.classList.add('revealed-miss');
@@ -634,11 +625,23 @@ async function playRound(milestone, requestOpen) {
   }
 
   await wait(600);
+  setTitle('เหลือใบของคุณใบเดียว');
   others.forEach(el => el.classList.add('faded'));
   await wait(700);
   others.forEach(el => el.classList.add('gone'));
 
   await wait(200);
+  setTitle('มาดูกันว่าได้เท่าไหร่');
+  chosen.classList.add('to-center');
+  chosen.style.transform = 'translate(0px, 0px)';
+  await wait(430);
+  chosen.classList.add('centered', 'scaled');
+  await wait(200);
+  chosen.classList.add('suspense-shake');
+  await wait(850);
+  chosen.classList.remove('suspense-shake');
+  await wait(150);
+
   chosen.classList.add('open');
   screenFlash.classList.remove('go'); void screenFlash.offsetWidth; screenFlash.classList.add('go');
   await wait(450);

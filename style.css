@@ -365,6 +365,8 @@ body.lock{ overflow:hidden; }
 }
 .cap.waiting .cap-body{ animation:wait 1.8s ease-in-out infinite; }
 .cap.waiting .cap-ring{ animation:halo 1.8s ease-out infinite; }
+/* ระหว่างรอผลจริงเงียบๆ ตอนยังอยู่ตำแหน่งเดิมในวงแหวน (ก่อนลอยเข้ากลาง) — สั่นเฉพาะวงแหวน ไม่ขยายตัวการ์ด */
+.cap.pending .cap-ring{ animation:halo 1.8s ease-out infinite; }
 @keyframes wait{ 0%,100%{ transform:scale(1.55); } 50%{ transform:scale(1.6); } }
 @keyframes halo{
   0%{ box-shadow:0 0 0 2px var(--page), 0 0 0 4.5px var(--tier), 0 0 0 4.5px var(--tier-glow); }
