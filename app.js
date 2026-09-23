@@ -170,6 +170,7 @@ let stock = [];
 let lootTokens = {};
 let busy = true;        // true จนกว่าจะโหลดข้อมูลจริงเสร็จ / กำลังเล่นรอบอยู่
 let loadFailed = false; // โหลดข้อมูลล่าสุดล้มเหลว (ใช้คงสถานะ error ไว้ ไม่ให้ถูกทับด้วยข้อมูลเก่า)
+let manualRetryCount = 0; // จำนวนครั้งที่ผู้ใช้กด "ลองเชื่อมต่อใหม่" แล้วยังพลาดซ้ำ — ใช้แนะนำให้เปิดลิงก์ใหม่หลังลองหลายครั้งไม่สำเร็จ
 
 // ============================================================
 //  UI helpers
@@ -210,7 +211,11 @@ function showError(msg, retryable = false) {
   setState('error');
   setPhase(0);
   setTitle('ไม่พร้อมใช้งาน');
-  setHint(msg);
+  // ลองเชื่อมต่อใหม่ด้วยตัวเองไม่ได้ผลติดต่อกันหลายครั้ง — session อาจหมดอายุ แนะนำให้เปิดลิงก์ใหม่แทน
+  const hintText = manualRetryCount >= 2
+    ? `${msg} ลองเชื่อมต่อใหม่หลายครั้งแล้วยังไม่สำเร็จ — ลองปิดหน้านี้แล้วเปิดลิงก์เข้ามาใหม่อีกครั้ง`
+    : msg;
+  setHint(hintText);
   instruction.textContent = '';
   stockCount.textContent = '–';
   startBtn.classList.add('hide');
@@ -762,6 +767,7 @@ claimBtn.addEventListener('click', () => {
 });
 startBtn.addEventListener('click', startRound);
 retryBtn.addEventListener('click', () => {
+  manualRetryCount++;
   retryBtn.classList.add('loading');
   instruction.textContent = 'กำลังลองเชื่อมต่อใหม่...';
   reloadLootBoxData().finally(() => retryBtn.classList.remove('loading'));
@@ -798,6 +804,7 @@ function applyRoomData(result) {
 
 function renderCabinet(result) {
   loadFailed = false;
+  manualRetryCount = 0;
   retryBtn.style.display = 'none';
   applyRoomData(result);
   busy = false;
@@ -817,7 +824,7 @@ async function callGASWithRetry(action, params, retries = 1, delayMs = 1200, tim
   }
 }
 
-const DATA_FETCH_TIMEOUT_MS = 18000;
+const DATA_FETCH_TIMEOUT_MS = 10000;   // เวลารอโหลดข้อมูลคูปองต่อครั้ง (ลองใหม่อัตโนมัติ 1 รอบถ้าพลาด รวมสูงสุดราว 10+10 วินาที)
 
 async function loadLootBoxForRoom(roomNo) {
   try {
