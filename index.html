@@ -17,6 +17,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@200;300;400;500;600&display=swap">
   <link rel="stylesheet" href="style.css">
+  <link rel="preload" href="assets/logo.png" as="image">
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" defer></script>
   <style>
@@ -51,9 +52,12 @@
 <div class="app" id="revealCard" data-state="loading">
 
   <header class="topbar">
-    <div class="brand">
-      <h1>คูปองส่วนลด</h1>
-      <p class="room" id="cabRoomBadge"></p>
+    <div class="brandrow">
+      <img class="brand-logo" src="assets/logo.png" alt="โลโก้หอพัก">
+      <div class="brand">
+        <h1>คูปองส่วนลด</h1>
+        <p class="room" id="cabRoomBadge"></p>
+      </div>
     </div>
     <button class="pill-btn" id="btn-history" type="button" onclick="openHistoryOverlay()" aria-label="ดูประวัติการเปิดคูปองส่วนลด">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

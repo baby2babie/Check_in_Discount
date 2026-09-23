@@ -72,6 +72,11 @@ body.lock{ overflow:hidden; }
 
 /* ── top bar ── */
 .topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.brandrow{ display:flex; align-items:center; gap:10px; min-width:0; }
+.brand-logo{
+  flex:none; width:34px; height:34px; border-radius:50%;
+  object-fit:contain;                    /* โลโก้มีรูปทรงกลม+ข้อความรอบตัวอยู่แล้ว ไม่ครอปทับ */
+}
 .brand h1{ font-size:16px; font-weight:500; line-height:1.4; }
 .room{ font-size:13px; color:var(--ink-2); line-height:1.4; }
 .room:empty{ display:none; }
