@@ -75,17 +75,19 @@
   </section>
 
   <ol class="steps" id="steps" aria-label="ขั้นตอนการเปิดคูปอง">
-    <li>จำ</li>
-    <li>สลับ</li>
-    <li>เลือก</li>
+    <li>หมุน</li>
     <li>เฉลย</li>
   </ol>
 
   <main class="stage">
     <div class="board" id="board">
-      <div class="core" aria-hidden="true">
-        <span class="core-num" id="stockCount">–</span>
-        <span class="core-label">สิทธิ์ที่เปิดได้</span>
+      <div class="wheel-shell">
+        <div class="wheel-pointer" aria-hidden="true"></div>
+        <canvas id="wheelCanvas" class="wheel-canvas" aria-hidden="true"></canvas>
+        <div class="wheel-hub" aria-hidden="true">
+          <span class="wheel-hub-num" id="stockCount">–</span>
+          <span class="wheel-hub-label">สิทธิ์ที่เปิดได้</span>
+        </div>
       </div>
 
       <div class="ticket" id="ticket" role="group">
@@ -107,6 +109,7 @@
   <div class="dock">
     <p class="notice" id="instruction" aria-live="polite"></p>
     <button class="btn primary hide" id="startBtn" type="button">เริ่มเปิดคูปอง</button>
+    <button class="btn primary hide" id="wheelSpinBtn" type="button">หมุนเลย</button>
     <button class="btn primary claim" id="claimBtn" type="button">ตกลง</button>
     <button class="btn ghost" id="retryBtn" type="button" style="display:none;">ลองเชื่อมต่อใหม่</button>
   </div>

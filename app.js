@@ -54,26 +54,15 @@ function applyTier(tierLabel) {
   s.setProperty('--pin', t.ink);
   s.setProperty('--tier-glow', t.accent + '38');
   s.setProperty('--tier-glow-2', t.accent + '1A');
+  refreshWheelColors();
+  if (wheelCtx && wheelValues.length) drawWheel();
 }
 
-// ตัวเลขล่อ (decoy) โชว์บนคูปองระหว่างเกม — คือชุดค่า discount_amount ที่ไม่ซ้ำกันทั้งหมดจากชีท LOOT_BOX จริง
-// (ครบทุก tier/milestone พอดี 7 ค่า = จำนวนใบพอดี) การันตีว่ารางวัลจริงที่ backend ส่งมาตอนจบ
+// ตัวเลขล่อ (decoy) โชว์บนวงล้อระหว่างหมุน — คือชุดค่า discount_amount ที่ไม่ซ้ำกันทั้งหมดจากชีท LOOT_BOX จริง
+// (ครบทุก tier/milestone พอดี 7 ค่า = จำนวนช่องบนวงล้อพอดี) การันตีว่ารางวัลจริงที่ backend ส่งมาตอนจบ
 // จะเป็นหนึ่งใน 7 ค่านี้เสมอ
 const CAPSULE_NUMBERS = [5, 10, 15, 20, 25, 30, 50];
 const N_CAPS = 7;
-
-// ตัวเลขสำหรับเฉลยใบที่ไม่ได้เลือก "หลังรู้ผลจริงแล้ว" — ตัดค่าที่ตรงกับรางวัลจริงออกก่อนเสมอ
-// เพื่อการันตีว่าใบอื่นจะไม่โชว์ตัวเลขซ้ำกับรางวัลที่ผู้เล่นได้จริง
-function decoysExcluding(amount) {
-  const pool = [...CAPSULE_NUMBERS];
-  const idx = pool.indexOf(amount);
-  if (idx !== -1) pool.splice(idx, 1); else pool.pop(); // เผื่อ backend ให้ค่านอกชุด — ตัดออก 1 ตัวให้จำนวนพอดีกับใบที่เหลือ
-  for (let i = pool.length - 1; i > 0; i--) {            // สลับสุ่ม
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return pool;
-}
 
 // ============================================================
 //  CACHE (sessionStorage) — stale-while-revalidate
@@ -162,6 +151,9 @@ const ticketTier  = document.getElementById('ticketTier');
 const ticketDesc  = document.getElementById('ticketDesc');
 const claimBtn    = document.getElementById('claimBtn');
 const startBtn    = document.getElementById('startBtn');
+const wheelSpinBtn = document.getElementById('wheelSpinBtn');
+const wheelCanvas  = document.getElementById('wheelCanvas');
+const wheelCtx     = wheelCanvas.getContext('2d');
 const stepEls     = Array.prototype.slice.call(document.querySelectorAll('#steps li'));
 
 // stock = milestone keys (string) ที่มีคูปองเปิดได้จริงตอนนี้ เรียงตามลำดับที่จะเปิด
@@ -324,330 +316,262 @@ function countUp(el, to, dur = 900) {
 }
 
 // ============================================================
-//  SUSPENSE REVEAL — เกมคูปองส่วนลด
-//  1 รอบ = 1 กล่อง (stock[0]) — ยิง openLootBox จริง "ตอนผู้เล่นกดเลือกการ์ด" (ไม่ใช่ตอนกดเริ่ม)
-//  ถ้าผู้เล่นยังไม่เลือก/ปิดหน้าไปก่อน คูปองจะยังไม่ถูกใช้ กลับมาเล่นใหม่ได้
-//  ตัวเลขบนการ์ดระหว่างเกมเป็นแค่ตัวล่อ (CAPSULE_NUMBERS) รางวัลจริงเฉลยจาก backend ตอนจบเท่านั้น
+//  SUSPENSE REVEAL — วงล้อเปิดคูปอง
+//  1 รอบ = 1 กล่อง (stock[0]) — ยิง openLootBox จริง "ตอนผู้เล่นกดหมุน" (ไม่ใช่ตอนกดเริ่ม)
+//  ถ้าผู้เล่นยังไม่กดหมุน/ปิดหน้าไปก่อน คูปองจะยังไม่ถูกใช้ กลับมาเล่นใหม่ได้
+//  ตัวเลขบนวงล้อระหว่างหมุนเป็นแค่ตัวล่อ (CAPSULE_NUMBERS) รางวัลจริงเฉลยจาก backend ตอนวงล้อหยุดเท่านั้น
 // ============================================================
-let capEls = [];
-let currentOrder = [];
-let ringRotation = 0;
-let radius = 120; // คำนวณใหม่จากขนาดจริงของ .board ผ่าน layoutMetrics()
-let dealTimer = null;
+let wheelValues = [];       // ตัวเลขล่อ 7 ค่าที่สับตำแหน่งไว้บนวงล้อรอบนี้
+let wheelRotation = 0;      // มุมหมุนปัจจุบัน (เรเดียน)
+let wheelSize = 0;          // ขนาดจริง (css px) ของ canvas — คำนวณใหม่จาก .board ผ่าน layoutWheel()
+let wheelLoopHandle = null; // requestAnimationFrame handle ของช่วงหมุนวนไม่ทราบผล
+let wheelColors = { paper: '#FFFFFF', pas: '#EAF3EF', ink: '#1C2320', inkTier: '#2F6553', tier: '#4E8F78', line: 'rgba(28,35,32,.12)' };
 
-// ขนาดการ์ด/รัศมีวงแหวน/ขนาดตัวเลขตั๋ว ผูกกับความกว้างจริงของบอร์ด — เรียกตอน build และตอน resize
-function layoutMetrics() {
-  const size = board.clientWidth;
-  if (!size) return;
-  const capW = size * 0.285;
-  const capH = capW * 0.64;
-  const rs = document.documentElement.style;
-  rs.setProperty('--cap-w', capW + 'px');
-  rs.setProperty('--cap-h', capH + 'px');
-  rs.setProperty('--amt-fs', (size * 0.25) + 'px');
-  radius = size * 0.365;
-}
-window.addEventListener('resize', () => { layoutMetrics(); renderRing(); });
-
-function clearCards() {
-  clearTimeout(dealTimer);
-  board.querySelectorAll('.cap').forEach(el => el.remove());
-  capEls = [];
-  currentOrder = [];
-  ringRotation = 0;
+function refreshWheelColors() {
+  const cs = getComputedStyle(document.documentElement);
+  wheelColors = {
+    paper:   cs.getPropertyValue('--paper').trim()   || wheelColors.paper,
+    pas:     cs.getPropertyValue('--pas').trim()     || wheelColors.pas,
+    ink:     cs.getPropertyValue('--ink').trim()     || wheelColors.ink,
+    inkTier: cs.getPropertyValue('--tier-ink').trim()|| wheelColors.inkTier,
+    tier:    cs.getPropertyValue('--tier').trim()    || wheelColors.tier,
+    line:    cs.getPropertyValue('--line').trim()    || wheelColors.line,
+  };
 }
 
-function cardHTML() {
-  return `
-    <div class="cap-body">
-      <span class="cap-shadow"></span>
-      <div class="cap-flip">
-        <div class="cap-face cap-front">
-          <span class="cf-wm">฿</span>
-          <span class="cap-label"></span>
-        </div>
-        <div class="cap-face cap-back">
-          <span class="cb-wm">฿</span>
-          <span class="cb-q">?</span>
-        </div>
-      </div>
-      <span class="cap-ring"></span>
-    </div>`;
-}
-
-// สร้างการ์ด 7 ใบ — mode: 'closed' (คว่ำ พร้อมเล่น) | 'empty' (ช่องว่างเส้นประ)
-function createCards(mode) {
-  layoutMetrics();
-  clearCards();
-  const empty = mode === 'empty';
-  for (let i = 0; i < N_CAPS; i++) {
-    const el = document.createElement('div');
-    el.className = 'cap dealing ' + (empty ? 'empty' : 'closed idle');
-    el.style.setProperty('--deal', (i * 50) + 'ms');
-    el.style.setProperty('--d', (i * 0.35).toFixed(2) + 's');
-    el.innerHTML = cardHTML();
-    board.appendChild(el);
-    capEls.push(el);
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  currentOrder = capEls.map((_, i) => i);
-  void board.offsetWidth; // ยืนยันตำแหน่งเริ่มที่กลางวง แล้วค่อยลอยออก
-  renderRing();
-  capEls.forEach(el => el.classList.add('dealt'));
-  dealTimer = setTimeout(() => capEls.forEach(el => el.classList.remove('dealing', 'dealt')), 1300);
-}
-
-function hasPristineIdleCards() {
-  return capEls.length === N_CAPS && capEls.every(el =>
-    el.isConnected && el.classList.contains('idle') && el.classList.contains('closed'));
-}
-function hasEmptySlots() {
-  return capEls.length === N_CAPS && capEls.every(el => el.isConnected && el.classList.contains('empty'));
-}
-
-// พรีวิวก่อนกดเริ่ม — การ์ดคว่ำ 7 ใบ กันหน้าแรกดูโล่ง
-function buildIdlePreview() {
-  if (hasPristineIdleCards()) { layoutMetrics(); renderRing(); return; }
-  createCards('closed');
-}
-function showEmptySlots() {
-  if (hasEmptySlots()) { layoutMetrics(); renderRing(); return; }
-  createCards('empty');
-}
-
-// เริ่มรอบเล่นจริง — ใช้การ์ดคว่ำจากพรีวิวต่อ (พลิกหงายให้เห็นตัวเลข) หรือสร้างใหม่ถ้าสภาพไม่พร้อม
-function buildBoard() {
-  layoutMetrics();
-  if (!hasPristineIdleCards()) createCards('closed');
-  clearTimeout(dealTimer);
-  const decoys = [...CAPSULE_NUMBERS].sort(() => Math.random() - 0.5).slice(0, N_CAPS);
-  capEls.forEach((el, i) => {
-    el.classList.remove('idle', 'dealing', 'dealt');
-    el.dataset.decoy = decoys[i];
-    el.querySelector('.cap-label').innerHTML = `${decoys[i]}<small>฿</small>`;
-  });
-  currentOrder = capEls.map((_, i) => i);
-  ringRotation = 0;
-  renderRing();
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    capEls.forEach(el => el.classList.remove('closed'));
-  }));
-}
-
-function slotAngle(s) { return (360 / N_CAPS) * s - 90 + ringRotation; }
-
-function renderRing() {
-  capEls.forEach((el, i) => {
-    if (el.classList.contains('to-center') || el.classList.contains('centered')) return;
-    const rad = slotAngle(currentOrder[i]) * Math.PI / 180;
-    el.style.transform = `translate(${Math.cos(rad) * radius}px, ${Math.sin(rad) * radius}px)`;
-  });
-}
-function slotOccupants() {
-  const arr = new Array(N_CAPS);
-  capEls.forEach((el, i) => { arr[currentOrder[i]] = i; });
   return arr;
 }
-function swapSlots(a, b) {
-  const occ = slotOccupants();
-  const ba = occ[a], bb = occ[b];
-  if (ba === undefined || bb === undefined) return;
-  currentOrder[ba] = b;
-  currentOrder[bb] = a;
+
+// ขนาด canvas ผูกกับความกว้างจริงของบอร์ด (รองรับ retina ผ่าน devicePixelRatio) — เรียกตอน build และตอน resize
+function layoutWheel() {
+  const size = board.clientWidth * 0.88; // ตรงกับ width 88% ใน .wheel-canvas
+  if (!size) return;
+  wheelSize = size;
+  const dpr = window.devicePixelRatio || 1;
+  wheelCanvas.width = size * dpr;
+  wheelCanvas.height = size * dpr;
+  wheelCanvas.style.width = size + 'px';
+  wheelCanvas.style.height = size + 'px';
+  wheelCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', () => { layoutWheel(); drawWheel(); });
+
+function currentSliceIndex() {
+  const n = wheelValues.length;
+  if (!n) return 0;
+  const slice = (Math.PI * 2) / n;
+  const pointerAngle = -Math.PI / 2;
+  const normalized = ((pointerAngle - wheelRotation) % (Math.PI * 2) + Math.PI * 4) % (Math.PI * 2);
+  return Math.floor(normalized / slice);
 }
 
-// คว่ำการ์ดทุกใบ แล้วเอาตัวเลขออกจาก DOM หลังพลิกจบ
-function closeCaps() {
-  capEls.forEach(el => el.classList.add('closed'));
-  setTitle('ปิดแล้ว เตรียมสลับ');
-  setTimeout(() => {
-    capEls.forEach(el => {
-      const label = el.querySelector('.cap-label');
-      if (label) label.textContent = '';
-    });
-  }, 700);
-}
+function drawWheel(highlightIdx) {
+  if (!wheelCtx || !wheelSize) return;
+  const ctx = wheelCtx;
+  const center = wheelSize / 2;
+  const r = wheelSize / 2 - 3;
+  const n = wheelValues.length;
+  if (!n) return;
+  const slice = (Math.PI * 2) / n;
 
-function spinSegment(dur, dir) {
-  return new Promise(res => {
-    const start = performance.now();
-    (function loop(now) {
-      ringRotation += 3.5 * dir;
-      renderRing();
-      if (now - start < dur) requestAnimationFrame(loop);
-      else res();
-    })(performance.now());
-  });
-}
-async function settle(fn) {
-  fn();
-  capEls.forEach(el => el.classList.add('settling'));
-  renderRing();
-  await wait(560);
-  capEls.forEach(el => el.classList.remove('settling'));
-}
-const adjacentSwap = () => { for (let s = 0; s + 1 < N_CAPS; s += 2) swapSlots(s, s + 1); };
-const oppositeSwap = () => { const h = Math.floor(N_CAPS/2); for (let s = 0; s < h; s++) swapSlots(s, s + h); };
-const mirrorFlip   = () => { for (let s = 0; s < Math.floor(N_CAPS/2); s++) swapSlots(s, N_CAPS - 1 - s); };
-const scrambleJump = () => {
-  const sh = [...Array(N_CAPS).keys()];
-  for (let i = sh.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [sh[i], sh[j]] = [sh[j], sh[i]]; }
-  currentOrder = capEls.map((_, i) => sh[i]);
-};
-const splitCounter = () => {
-  const h = Math.floor(N_CAPS/2);
-  for (let s = 0; s < h; s++) swapSlots(s, (s + 1) % h);
-  for (let s = h; s < N_CAPS; s++) { const rel = s - h, len = N_CAPS - h; swapSlots(s, h + ((rel - 1 + len) % len)); }
-};
-const rotateBy = (k) => () => {
-  const occ = slotOccupants();
-  const newOrder = new Array(N_CAPS);
-  for (let s = 0; s < N_CAPS; s++) {
-    const box = occ[s];
-    if (box !== undefined) newOrder[box] = ((s + k) % N_CAPS + N_CAPS) % N_CAPS;
-  }
-  currentOrder = newOrder;
-};
+  ctx.clearRect(0, 0, wheelSize, wheelSize);
+  for (let i = 0; i < n; i++) {
+    const start = wheelRotation + i * slice;
+    const end = start + slice;
+    ctx.beginPath();
+    ctx.moveTo(center, center);
+    ctx.arc(center, center, r, start, end);
+    ctx.closePath();
+    ctx.fillStyle = (i % 2 === 0) ? wheelColors.paper : wheelColors.pas;
+    ctx.fill();
 
-async function startShuffle() {
-  setTitle('กำลังสลับ ตามให้ทัน');
-  const patterns = [
-    adjacentSwap, oppositeSwap, mirrorFlip, scrambleJump, splitCounter,
-    rotateBy(2), rotateBy(3), rotateBy(-2)
-  ];
-  let elapsed = 0;
-  while (elapsed < 4600) {
-    if (Math.random() < 0.45) {
-      const dur = 600 + Math.random() * 500;
-      await spinSegment(dur, Math.random() > 0.5 ? 1 : -1);
-      elapsed += dur;
-    } else {
-      await settle(patterns[Math.floor(Math.random() * patterns.length)]);
-      elapsed += 560;
+    if (i === highlightIdx) {
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = wheelColors.tier;
+      ctx.fill();
+      ctx.restore();
     }
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = wheelColors.line;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(center, center);
+    ctx.rotate(start + slice / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = (i % 2 === 0) ? wheelColors.ink : wheelColors.inkTier;
+    const fontSize = Math.max(14, Math.min(22, wheelSize * 0.055));
+    ctx.font = '300 ' + fontSize + 'px "Anuphan","Sarabun",sans-serif';
+    ctx.fillText(wheelValues[i] + '฿', r - 14, fontSize * 0.32);
+    ctx.restore();
   }
+
+  ctx.beginPath();
+  ctx.arc(center, center, r, 0, Math.PI * 2);
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = wheelColors.tier;
+  ctx.stroke();
 }
 
-function onCapKey(e) {
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); }
+// สับตัวเลขล่อใหม่ 1 ชุดสำหรับรอบนี้ — ใช้ทั้งพรีวิวตอน idle และตอนเริ่มเล่นจริง
+function buildWheelValues() {
+  wheelValues = shuffleArray([...CAPSULE_NUMBERS]);
+  wheelRotation = 0;
+  layoutWheel();
+  refreshWheelColors();
+  drawWheel();
 }
-function enablePicking() {
+
+function buildIdlePreview() {
+  if (!wheelValues.length) { buildWheelValues(); return; }
+  layoutWheel();
+  drawWheel();
+}
+function showEmptySlots() {
+  layoutWheel();
+  drawWheel();
+}
+
+// หมุนวนต่อเนื่องระหว่างที่ยังไม่รู้ผลจริงจาก backend (ไม่ทราบเป้าหมาย จึงหมุนด้วยความเร็วคงที่)
+function startContinuousSpin() {
+  let last = null;
+  let velocity = 0;
+  const maxVel = 0.011;   // เรเดียน/ms ความเร็วสูงสุด
+  const accel = 0.00002;  // เร่งความเร็วช่วงแรก
+  function loop(ts) {
+    if (last == null) last = ts;
+    const dt = ts - last; last = ts;
+    velocity = Math.min(maxVel, velocity + accel * dt);
+    wheelRotation += velocity * dt;
+    drawWheel();
+    wheelLoopHandle = requestAnimationFrame(loop);
+  }
+  wheelLoopHandle = requestAnimationFrame(loop);
+}
+function stopContinuousSpin() {
+  if (wheelLoopHandle) cancelAnimationFrame(wheelLoopHandle);
+  wheelLoopHandle = null;
+}
+
+// หมุนวนรอผลจริงจาก backend อย่างน้อย MIN_SPIN_MS (กันดูเหมือนหยุดกึกทันทีถ้า backend ตอบไวเกินไป)
+async function spinWhileWaiting(apiPromise) {
+  startContinuousSpin();
+  const MIN_SPIN_MS = 1800;
+  const [result] = await Promise.all([apiPromise, wait(MIN_SPIN_MS)]);
+  return result;
+}
+
+// เมื่อรู้ผลจริงแล้ว — หยุดหมุนวนแล้วเข้าสู่ช่วงชะลอไปหยุดที่ช่องตรงกับรางวัลจริง
+async function landOnAmount(amount) {
+  stopContinuousSpin();
+
+  let targetIndex = wheelValues.indexOf(amount);
+  if (targetIndex === -1) {
+    // เผื่อ backend ส่งค่านอกชุดตัวเลขล่อ (ไม่ควรเกิดตามปกติ) — สุ่มช่องแล้วสลับให้โชว์ค่าจริงตอนจะหยุด
+    targetIndex = Math.floor(Math.random() * wheelValues.length);
+    wheelValues[targetIndex] = amount;
+  }
+
+  const n = wheelValues.length;
+  const slice = (Math.PI * 2) / n;
+  const pointerAngle = -Math.PI / 2;
+  const targetCenter = targetIndex * slice + slice / 2;
+  const extraSpins = 3 + Math.floor(Math.random() * 2);
+  const finalRotation = pointerAngle - targetCenter + Math.PI * 2 * extraSpins;
+
+  const startRotation = wheelRotation;
+  const delta = finalRotation - (startRotation % (Math.PI * 2));
+  const duration = 2600;
+  const power = 4.2 + Math.random() * 0.8;
+  const easeOut = t => 1 - Math.pow(1 - t, power);
+
+  await new Promise(resolve => {
+    let startTime = null;
+    function frame(ts) {
+      if (!startTime) startTime = ts;
+      const t = Math.min(1, (ts - startTime) / duration);
+      wheelRotation = startRotation + delta * easeOut(t);
+      drawWheel(currentSliceIndex());
+      if (t < 1) requestAnimationFrame(frame);
+      else resolve();
+    }
+    requestAnimationFrame(frame);
+  });
+
+  // เหวี่ยงส่ายเล็กน้อยก่อนหยุดสนิท เหมือนวงล้อจริงที่มีแรงเฉื่อย — ใช้เท่ากันทุกช่อง ไม่เกี่ยวกับมูลค่ารางวัล
+  await new Promise(resolve => {
+    const base = wheelRotation;
+    let t0 = null;
+    const dur = 700;
+    function frame(ts) {
+      if (!t0) t0 = ts;
+      const t = Math.min(1, (ts - t0) / dur);
+      const decay = Math.pow(1 - t, 2);
+      wheelRotation = base + Math.sin(t * Math.PI * 3) * 0.045 * decay;
+      drawWheel(targetIndex);
+      if (t < 1) requestAnimationFrame(frame);
+      else { wheelRotation = base; drawWheel(targetIndex); resolve(); }
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+// รอผู้เล่นกดหมุน (แตะปุ่ม "หมุนเลย" หรือแตะที่ตัววงล้อเอง) ก่อนจะยิง backend จริง
+function enableSpinTap() {
   return new Promise(resolve => {
-    setPhase(3);
-    setTitle('เลือกคูปอง 1 ใบ');
-    setHint('แตะใบที่คุณคิดว่าใช่');
-    capEls.forEach((el, i) => {
-      el.classList.add('pickable');
-      el.setAttribute('role', 'button');
-      el.setAttribute('aria-label', `เลือกคูปองใบที่ ${i + 1}`);
-      el.tabIndex = 0;
-      el.addEventListener('keydown', onCapKey);
-      el.addEventListener('click', (e) => { resolve(e.currentTarget); }, { once: true });
-    });
-  });
-}
-function disablePicking() {
-  capEls.forEach(el => {
-    el.classList.remove('pickable');
-    el.removeAttribute('role');
-    el.removeAttribute('aria-label');
-    el.removeAttribute('tabindex');
-    el.removeEventListener('keydown', onCapKey);
+    wheelSpinBtn.classList.remove('hide');
+    wheelCanvas.style.cursor = 'pointer';
+    setPhase(1);
+    setTitle('พร้อมหมุนแล้ว');
+    setHint('แตะวงล้อหรือกดหมุนเพื่อลุ้นส่วนลด');
+    function commit() {
+      wheelSpinBtn.removeEventListener('click', commit);
+      wheelCanvas.removeEventListener('click', commit);
+      wheelSpinBtn.classList.add('hide');
+      wheelCanvas.style.cursor = 'default';
+      resolve();
+    }
+    wheelSpinBtn.addEventListener('click', commit, { once: true });
+    wheelCanvas.addEventListener('click', commit, { once: true });
   });
 }
 
-function presentTicket(milestone, amount, celebrate = true) {
-  ticketTier.textContent = `คูปอง ${boxNameFor(milestone)}`;
-  ticketDesc.textContent = 'ส่วนลดเข้ารอบบิลถัดไปอัตโนมัติ';
-  ticket.setAttribute('aria-label', `คูปอง ${boxNameFor(milestone)} ส่วนลดค่าเช่า ${amount} บาท`);
-  ticket.classList.add('show');
-  claimBtn.classList.add('show');
-  if (celebrate) {
-    countUp(ticketAmt, amount);
-    spawnConfetti(amount >= 70 ? 28 : 16);
-  } else {
-    ticketAmt.textContent = amount;
-  }
-}
-
-// เล่น 1 รอบเต็ม: โชว์ตัวเลข → คว่ำ → สลับ → ให้เลือก → เฉลยใบอื่น → ลอยเข้ากลาง → รอผลจริงจาก backend → เปิด
+// เล่น 1 รอบเต็ม: สับเลขล่อ → รอผู้เล่นกดหมุน → ยิง backend จริง → หมุนวนรอผล → ชะลอไปหยุดที่ผลจริง → เฉลย
 async function playRound(milestone, requestOpen) {
   setState('play');
-  buildBoard();
+  buildWheelValues();
   ticket.classList.remove('show');
   claimBtn.classList.remove('show');
-  setPhase(1);
-  setTitle('จำตำแหน่งส่วนลดให้ดี');
-  setHint('');
 
-  await wait(2200);
-  closeCaps();
-  await wait(650);
-  setPhase(2);
-  await startShuffle();
+  await enableSpinTap();
 
-  const chosen = await enablePicking();
-
-  // ผู้เล่นเลือกแล้ว — ตอนนี้เท่านั้นที่ส่งคำขอเปิดคูปองจริง และเริ่มนับเวลา HARD_TIMEOUT_MS
+  // ผู้เล่นกดหมุนแล้ว — ตอนนี้เท่านั้นที่ส่งคำขอเปิดคูปองจริง
   const apiPromise = requestOpen();
 
+  setPhase(2);
+  setTitle('กำลังหมุน...');
   setHint('');
-  disablePicking();
-  chosen.classList.add('marked');
 
-  const others = capEls.filter(el => el !== chosen);
-  others.sort((a, b) => {
-    const ia = capEls.indexOf(a), ib = capEls.indexOf(b);
-    return currentOrder[ia] - currentOrder[ib];
-  });
-
-  setPhase(4);
-  setTitle('มาดูใบที่คุณไม่ได้เลือก');
-  await wait(500);
-
-  // รอผลจริงจาก backend อย่างเงียบๆ ก่อนเริ่มเฉลย (ปกติไวมาก ผู้เล่นแทบไม่รู้สึกถึงจังหวะรอนี้)
-  // ต้องรู้ผลจริงก่อนเสมอ เพื่อเลือกตัวเลขเฉลยใบอื่นที่ไม่ซ้ำกับรางวัลที่ได้จริง
-  const pendingTimer = setTimeout(() => chosen.classList.add('pending'), 900);
-  const [result] = await Promise.all([apiPromise, wait(500)]);
-  clearTimeout(pendingTimer);
-  chosen.classList.remove('pending');
+  const result = await spinWhileWaiting(apiPromise);
 
   if (!result || !result.success) {
+    stopContinuousSpin();
     return { success: false, result };
   }
 
   const amount = Number(result.discount_amount) || 0;
+  await landOnAmount(amount);
 
-  // เฉลยใบอื่นด้วยตัวเลขที่เหลือจากชุดรางวัลจริง (ตัดค่าที่ตรงกับผลจริงออกก่อนแล้ว)
-  // การันตีว่าตัวเลขที่เฉลยจะไม่ซ้ำกับรางวัลที่ผู้เล่นได้จริงเลย
-  const revealPool = decoysExcluding(amount);
-  others.forEach((el, i) => { el.dataset.decoy = revealPool[i]; });
-
-  for (const el of others) {
-    el.querySelector('.cap-label').innerHTML = `${el.dataset.decoy}<small>฿</small>`;
-    el.classList.add('revealed-miss');
-    el.classList.remove('closed'); // พลิกหงาย
-    await wait(420);
-  }
-
-  await wait(600);
-  setTitle('เหลือใบของคุณใบเดียว');
-  others.forEach(el => el.classList.add('faded'));
-  await wait(700);
-  others.forEach(el => el.classList.add('gone'));
-
-  await wait(200);
   setTitle('มาดูกันว่าได้เท่าไหร่');
-  chosen.classList.add('to-center');
-  chosen.style.transform = 'translate(0px, 0px)';
-  await wait(430);
-  chosen.classList.add('centered', 'scaled');
-  await wait(200);
-  chosen.classList.add('suspense-shake');
-  await wait(850);
-  chosen.classList.remove('suspense-shake');
   await wait(150);
 
-  chosen.classList.add('open');
   screenFlash.classList.remove('go'); void screenFlash.offsetWidth; screenFlash.classList.add('go');
   await wait(450);
 
@@ -661,9 +585,9 @@ async function playRound(milestone, requestOpen) {
 
 // แสดงผลแบบเร็ว (ไม่เล่นเกมใหม่) — ใช้ตอนกู้คืนผลที่เปิดสำเร็จไปแล้วจริง (เช่นหลัง error/retry)
 function showQuickTicket(milestone, amount) {
-  clearCards();
+  stopContinuousSpin();
   setState('result');
-  setPhase(4);
+  setPhase(2);
   setTitle('คูปองใบนี้เปิดไปแล้ว');
   setHint('นี่คือส่วนลดที่คุณได้รับ');
   presentTicket(milestone, amount, false);
@@ -726,7 +650,7 @@ async function startRound() {
   }
   ticket.classList.remove('show');
   claimBtn.classList.remove('show');
-  capEls.forEach(el => el.classList.add('gone'));
+  stopContinuousSpin();
 
   await reloadLootBoxData();
 
