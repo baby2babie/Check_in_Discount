@@ -590,8 +590,7 @@ async function playRound(milestone, requestOpen) {
   setPhase(2);
   await landOnAmount(amount);
 
-  setTitle('มาดูกันว่าได้เท่าไหร่');
-  await wait(150);
+  await wait(150); // เว้นจังหวะเล็กน้อยก่อน flash ให้ไม่ดูกระตุก
 
   screenFlash.classList.remove('go'); void screenFlash.offsetWidth; screenFlash.classList.add('go');
   await wait(450);
