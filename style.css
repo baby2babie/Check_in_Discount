@@ -100,6 +100,18 @@ body.lock{ overflow:hidden; }
 }
 .icon-btn:hover{ background:rgba(28,35,32,.06); color:var(--ink); }
 
+/* ── ปุ่มเพลงพื้นหลัง ── */
+.topbar-actions{ display:flex; align-items:center; gap:2px; flex:none; }
+#btn-music .icon-music-off{ display:block; }
+#btn-music .icon-music-on{ display:none; }
+#btn-music[aria-pressed="true"]{ color:var(--tier-ink); position:relative; }
+#btn-music[aria-pressed="true"] .icon-music-on{ display:block; }
+#btn-music[aria-pressed="true"] .icon-music-off{ display:none; }
+#btn-music[aria-pressed="true"]::after{
+  content:""; position:absolute; top:9px; right:9px; width:6px; height:6px; border-radius:50%;
+  background:var(--tier); box-shadow:0 0 0 2px var(--paper);
+}
+
 /* ── status: หัวเรื่องบรรทัดเดียว + คำอธิบาย ── */
 .status{ margin-top:28px; }
 .title{

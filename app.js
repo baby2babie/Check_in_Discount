@@ -150,6 +150,8 @@ const ticketTier  = document.getElementById('ticketTier');
 const ticketDesc  = document.getElementById('ticketDesc');
 const claimBtn    = document.getElementById('claimBtn');
 const startBtn    = document.getElementById('startBtn');
+const bgm         = document.getElementById('bgm');
+const btnMusic    = document.getElementById('btn-music');
 const wheelCanvas  = document.getElementById('wheelCanvas');
 const wheelCtx     = wheelCanvas.getContext('2d');
 
@@ -377,6 +379,29 @@ function playWin(big) {
   });
 }
 
+// ============================================================
+//  เพลงพื้นหลัง — ไฟล์จริงอยู่ assets/bgm.mp3 (ต้องนำไฟล์ไปวางเอง)
+//  เริ่มเล่นตอนกด "เริ่มเปิดคูปอง" เท่านั้น (ต้องมี user gesture เบราว์เซอร์/LIFF ถึงจะยอมให้เล่น)
+//  หยุดทันทีตอนออกจากหน้า/ปิด LIFF ผ่าน pagehide — ปุ่มลำโพงคุมแค่ mute ไม่ทำให้เพลงหยุดเล่นจริง
+// ============================================================
+let musicOn = localStorage.getItem('bgmOn') !== '0'; // ค่าเริ่มต้น = เปิดเสียง
+bgm.volume = 0.55;
+bgm.muted = !musicOn;
+
+function setMusicBtnUI() {
+  btnMusic.setAttribute('aria-pressed', String(musicOn));
+}
+setMusicBtnUI();
+
+btnMusic.addEventListener('click', () => {
+  musicOn = !musicOn;
+  bgm.muted = !musicOn;
+  localStorage.setItem('bgmOn', musicOn ? '1' : '0');
+  setMusicBtnUI();
+});
+
+window.addEventListener('pagehide', () => { bgm.pause(); });
+
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -568,21 +593,6 @@ async function landOnAmount(amount) {
   });
 }
 
-// ตั๋วเฉลยรางวัล — เรียกตอนวงล้อหยุดแล้ว (celebrate=true) หรือตอนกู้คืนผลเก่าแบบเงียบๆ (celebrate=false)
-function presentTicket(milestone, amount, celebrate = true) {
-  ticketTier.textContent = `คูปอง ${boxNameFor(milestone)}`;
-  ticketDesc.textContent = 'ส่วนลดเข้ารอบบิลถัดไปอัตโนมัติ';
-  ticket.setAttribute('aria-label', `คูปอง ${boxNameFor(milestone)} ส่วนลดค่าเช่า ${amount} บาท`);
-  ticket.classList.add('show');
-  claimBtn.classList.add('show');
-  if (celebrate) {
-    countUp(ticketAmt, amount);
-    spawnConfetti(amount >= 70 ? 28 : 16);
-  } else {
-    ticketAmt.textContent = amount;
-  }
-}
-
 // เล่น 1 รอบเต็ม: สับเลขล่อ → ยิง backend จริงทันที (กดเริ่มครั้งเดียวจบ) → หมุนวนรอผล → ชะลอไปหยุดที่ผลจริง → เฉลย
 async function playRound(milestone, requestOpen) {
   setState('play');
@@ -729,7 +739,11 @@ claimBtn.addEventListener('click', () => {
   updateStockCount();
   updateStartState();
 });
-startBtn.addEventListener('click', () => { ensureAudio(); startRound(); });
+startBtn.addEventListener('click', () => {
+  ensureAudio();
+  bgm.play().catch(() => {}); // กัน error เต็มหน้าถ้าเบราว์เซอร์ยังบล็อกอยู่ ไม่กระทบการเล่นเกม
+  startRound();
+});
 retryBtn.addEventListener('click', () => {
   manualRetryCount++;
   retryBtn.classList.add('loading');
