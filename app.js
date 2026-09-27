@@ -568,6 +568,21 @@ async function landOnAmount(amount) {
   });
 }
 
+// ตั๋วเฉลยรางวัล — เรียกตอนวงล้อหยุดแล้ว (celebrate=true) หรือตอนกู้คืนผลเก่าแบบเงียบๆ (celebrate=false)
+function presentTicket(milestone, amount, celebrate = true) {
+  ticketTier.textContent = `คูปอง ${boxNameFor(milestone)}`;
+  ticketDesc.textContent = 'ส่วนลดเข้ารอบบิลถัดไปอัตโนมัติ';
+  ticket.setAttribute('aria-label', `คูปอง ${boxNameFor(milestone)} ส่วนลดค่าเช่า ${amount} บาท`);
+  ticket.classList.add('show');
+  claimBtn.classList.add('show');
+  if (celebrate) {
+    countUp(ticketAmt, amount);
+    spawnConfetti(amount >= 70 ? 28 : 16);
+  } else {
+    ticketAmt.textContent = amount;
+  }
+}
+
 // เล่น 1 รอบเต็ม: สับเลขล่อ → ยิง backend จริงทันที (กดเริ่มครั้งเดียวจบ) → หมุนวนรอผล → ชะลอไปหยุดที่ผลจริง → เฉลย
 async function playRound(milestone, requestOpen) {
   setState('play');
