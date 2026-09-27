@@ -54,7 +54,6 @@ function applyTier(tierLabel) {
   s.setProperty('--pin', t.ink);
   s.setProperty('--tier-glow', t.accent + '38');
   s.setProperty('--tier-glow-2', t.accent + '1A');
-  refreshWheelColors();
   if (wheelCtx && wheelValues.length) drawWheel();
 }
 
@@ -151,10 +150,8 @@ const ticketTier  = document.getElementById('ticketTier');
 const ticketDesc  = document.getElementById('ticketDesc');
 const claimBtn    = document.getElementById('claimBtn');
 const startBtn    = document.getElementById('startBtn');
-const wheelSpinBtn = document.getElementById('wheelSpinBtn');
 const wheelCanvas  = document.getElementById('wheelCanvas');
 const wheelCtx     = wheelCanvas.getContext('2d');
-const stepEls     = Array.prototype.slice.call(document.querySelectorAll('#steps li'));
 
 // stock = milestone keys (string) ที่มีคูปองเปิดได้จริงตอนนี้ เรียงตามลำดับที่จะเปิด
 // lootTokens = { "7": token, "PAID": token, ... } token จริงจาก backend สำหรับแต่ละ milestone
@@ -169,13 +166,9 @@ let manualRetryCount = 0; // จำนวนครั้งที่ผู้ใ
 // ============================================================
 function setState(s) { revealCard.dataset.state = s; }
 
-// แถบ 4 ขั้น: 0 = ยังไม่เริ่ม, 1 จำ, 2 สลับ, 3 เลือก, 4 เฉลย
-function setPhase(n) {
-  stepEls.forEach((li, i) => {
-    li.classList.toggle('done', i < n - 1);
-    li.classList.toggle('active', i === n - 1);
-  });
-}
+// เดิมใช้ไฮไลต์แถบขั้นตอน (หมุน/เฉลย) — เอาแถบออกแล้วเพราะเห็นผลตอนวงล้อหยุดอยู่แล้ว
+// เก็บฟังก์ชันไว้เป็นจุดเรียกเปล่าๆ กันโค้ดจุดอื่นที่ยังเรียก setPhase(...) พัง
+function setPhase(_n) {}
 
 function setTitle(text) {
   if (titleText.textContent === text) return;
@@ -325,18 +318,63 @@ let wheelValues = [];       // ตัวเลขล่อ 7 ค่าที่�
 let wheelRotation = 0;      // มุมหมุนปัจจุบัน (เรเดียน)
 let wheelSize = 0;          // ขนาดจริง (css px) ของ canvas — คำนวณใหม่จาก .board ผ่าน layoutWheel()
 let wheelLoopHandle = null; // requestAnimationFrame handle ของช่วงหมุนวนไม่ทราบผล
-let wheelColors = { paper: '#FFFFFF', pas: '#EAF3EF', ink: '#1C2320', inkTier: '#2F6553', tier: '#4E8F78', line: 'rgba(28,35,32,.12)' };
+let wheelVelocity = 0;      // ความเร็วปัจจุบัน (เรเดียน/ms) — เก็บไว้ต่อเนื่องจังหวะตอนเข้าสู่ช่วงชะลอ
+const WHEEL_V0 = 0.011;     // ความเร็วสูงสุดตอนหมุนวน (เรเดียน/ms)
+// สีบนวงล้อ — คงที่ สนุกสนาน ไม่ผูกกับ tier ของผู้เช่า (tier ใช้แค่คำนวณโอกาส/มูลค่ารางวัลใน backend เท่านั้น)
+// 7 สี ตรงกับ 7 ช่องพอดี ตำแหน่งสีจะคงที่ทุกรอบ มีแค่ตัวเลขในแต่ละช่องที่สับใหม่
+const WHEEL_PALETTE = [
+  { bg: '#FF6B6B', ink: '#FFFFFF' },
+  { bg: '#FFD166', ink: '#4A3200' },
+  { bg: '#06D6A0', ink: '#00382C' },
+  { bg: '#4CC9F0', ink: '#00354A' },
+  { bg: '#9B5DE5', ink: '#FFFFFF' },
+  { bg: '#F15BB5', ink: '#4A0030' },
+  { bg: '#FF9F1C', ink: '#4A2600' },
+];
 
-function refreshWheelColors() {
-  const cs = getComputedStyle(document.documentElement);
-  wheelColors = {
-    paper:   cs.getPropertyValue('--paper').trim()   || wheelColors.paper,
-    pas:     cs.getPropertyValue('--pas').trim()     || wheelColors.pas,
-    ink:     cs.getPropertyValue('--ink').trim()     || wheelColors.ink,
-    inkTier: cs.getPropertyValue('--tier-ink').trim()|| wheelColors.inkTier,
-    tier:    cs.getPropertyValue('--tier').trim()    || wheelColors.tier,
-    line:    cs.getPropertyValue('--line').trim()    || wheelColors.line,
-  };
+// ============================================================
+//  เสียงประกอบ — สังเคราะห์ด้วย Web Audio API ล้วนๆ ไม่มีไฟล์เสียงภายนอก
+//  ไม่ต้องอัปโหลดไฟล์ .mp3 เข้า repo ใช้ได้ทันทีบน GitHub Pages หรือโฮสต์ไหนก็ได้
+//  ต้อง ensureAudio() หลังผู้ใช้แตะหน้าจอก่อนเสมอ (เบราว์เซอร์บล็อกเสียงที่เล่นเองโดยไม่มี user gesture)
+// ============================================================
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+  } else if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+function playTick(strength) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(520 + strength * 260, t);
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(0.16 + strength * 0.1, t + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t);
+  osc.stop(t + 0.08);
+}
+function playWin(big) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const notes = big ? [523, 659, 784, 1047, 1319] : [660, 880, 1100];
+  notes.forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, t + i * 0.09);
+    gain.gain.setValueAtTime(0.0001, t + i * 0.09);
+    gain.gain.exponentialRampToValueAtTime(big ? 0.22 : 0.18, t + i * 0.09 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.09 + (big ? 0.32 : 0.25));
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t + i * 0.09);
+    osc.stop(t + i * 0.09 + (big ? 0.34 : 0.26));
+  });
 }
 
 function shuffleArray(arr) {
@@ -383,40 +421,41 @@ function drawWheel(highlightIdx) {
   for (let i = 0; i < n; i++) {
     const start = wheelRotation + i * slice;
     const end = start + slice;
+    const c = WHEEL_PALETTE[i % WHEEL_PALETTE.length];
     ctx.beginPath();
     ctx.moveTo(center, center);
     ctx.arc(center, center, r, start, end);
     ctx.closePath();
-    ctx.fillStyle = (i % 2 === 0) ? wheelColors.paper : wheelColors.pas;
+    ctx.fillStyle = c.bg;
     ctx.fill();
 
     if (i === highlightIdx) {
       ctx.save();
-      ctx.globalAlpha = 0.3;
-      ctx.fillStyle = wheelColors.tier;
+      ctx.globalAlpha = 0.28;
+      ctx.fillStyle = '#FFFFFF';
       ctx.fill();
       ctx.restore();
     }
 
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = wheelColors.line;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,.85)';
     ctx.stroke();
 
     ctx.save();
     ctx.translate(center, center);
     ctx.rotate(start + slice / 2);
     ctx.textAlign = 'right';
-    ctx.fillStyle = (i % 2 === 0) ? wheelColors.ink : wheelColors.inkTier;
+    ctx.fillStyle = c.ink;
     const fontSize = Math.max(14, Math.min(22, wheelSize * 0.055));
-    ctx.font = '300 ' + fontSize + 'px "Anuphan","Sarabun",sans-serif';
+    ctx.font = '600 ' + fontSize + 'px "Anuphan","Sarabun",sans-serif';
     ctx.fillText(wheelValues[i] + '฿', r - 14, fontSize * 0.32);
     ctx.restore();
   }
 
   ctx.beginPath();
   ctx.arc(center, center, r, 0, Math.PI * 2);
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = wheelColors.tier;
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#FFFFFF';
   ctx.stroke();
 }
 
@@ -425,7 +464,6 @@ function buildWheelValues() {
   wheelValues = shuffleArray([...CAPSULE_NUMBERS]);
   wheelRotation = 0;
   layoutWheel();
-  refreshWheelColors();
   drawWheel();
 }
 
@@ -439,17 +477,19 @@ function showEmptySlots() {
   drawWheel();
 }
 
-// หมุนวนต่อเนื่องระหว่างที่ยังไม่รู้ผลจริงจาก backend (ไม่ทราบเป้าหมาย จึงหมุนด้วยความเร็วคงที่)
+// หมุนวนต่อเนื่องระหว่างที่ยังไม่รู้ผลจริงจาก backend (ไม่ทราบเป้าหมาย จึงเร่งขึ้นไปที่ความเร็วสูงสุดแล้วคงที่)
 function startContinuousSpin() {
   let last = null;
-  let velocity = 0;
-  const maxVel = 0.011;   // เรเดียน/ms ความเร็วสูงสุด
-  const accel = 0.00002;  // เร่งความเร็วช่วงแรก
+  wheelVelocity = 0;
+  let lastTickIdx = null;
+  const accel = 0.00004; // เร่งความเร็วช่วงแรก (ถึง WHEEL_V0 ภายใน ~275ms)
   function loop(ts) {
     if (last == null) last = ts;
     const dt = ts - last; last = ts;
-    velocity = Math.min(maxVel, velocity + accel * dt);
-    wheelRotation += velocity * dt;
+    wheelVelocity = Math.min(WHEEL_V0, wheelVelocity + accel * dt);
+    wheelRotation += wheelVelocity * dt;
+    const idx = currentSliceIndex();
+    if (idx !== lastTickIdx) { lastTickIdx = idx; playTick(1); }
     drawWheel();
     wheelLoopHandle = requestAnimationFrame(loop);
   }
@@ -460,16 +500,19 @@ function stopContinuousSpin() {
   wheelLoopHandle = null;
 }
 
-// หมุนวนรอผลจริงจาก backend อย่างน้อย MIN_SPIN_MS (กันดูเหมือนหยุดกึกทันทีถ้า backend ตอบไวเกินไป)
+// หมุนวนรอผลจริงจาก backend อย่างน้อย MIN_SPIN_MS (กันดูเหมือนหยุดกึกทันทีถ้า backend ตอบไวเกินไป
+// และให้เวลาเร่งขึ้นความเร็วสูงสุดก่อน จะได้ชะลอต่อเนื่องแบบไม่สะดุดในขั้นตอนถัดไป)
 async function spinWhileWaiting(apiPromise) {
   startContinuousSpin();
-  const MIN_SPIN_MS = 1800;
+  const MIN_SPIN_MS = 2000;
   const [result] = await Promise.all([apiPromise, wait(MIN_SPIN_MS)]);
   return result;
 }
 
-// เมื่อรู้ผลจริงแล้ว — หยุดหมุนวนแล้วเข้าสู่ช่วงชะลอไปหยุดที่ช่องตรงกับรางวัลจริง
+// เมื่อรู้ผลจริงแล้ว — ชะลอจากความเร็วปัจจุบันไปหยุดที่ช่องตรงกับรางวัลจริง ด้วยความเร่งคงที่
+// (ระยะทาง = ความเร็วเริ่มต้น x เวลาชะลอ / 2) ทำให้ต่อเนื่องจากช่วงหมุนวนพอดี ไม่มีจังหวะสะดุดเปลี่ยนความเร็วกะทันหัน
 async function landOnAmount(amount) {
+  const v0 = wheelVelocity || WHEEL_V0;
   stopContinuousSpin();
 
   let targetIndex = wheelValues.indexOf(amount);
@@ -483,22 +526,24 @@ async function landOnAmount(amount) {
   const slice = (Math.PI * 2) / n;
   const pointerAngle = -Math.PI / 2;
   const targetCenter = targetIndex * slice + slice / 2;
-  const extraSpins = 3 + Math.floor(Math.random() * 2);
+  const extraSpins = 5 + Math.floor(Math.random() * 2); // ยิ่งเยอะ ยิ่งชะลอนุ่มนวลขึ้น
   const finalRotation = pointerAngle - targetCenter + Math.PI * 2 * extraSpins;
 
   const startRotation = wheelRotation;
   const delta = finalRotation - (startRotation % (Math.PI * 2));
-  const duration = 2600;
-  const power = 4.2 + Math.random() * 0.8;
-  const easeOut = t => 1 - Math.pow(1 - t, power);
+  const decelDuration = Math.max(1800, (2 * delta) / v0); // T = 2*ระยะทาง/ความเร็วเริ่มต้น
 
+  let lastTickIdx = currentSliceIndex();
   await new Promise(resolve => {
     let startTime = null;
     function frame(ts) {
       if (!startTime) startTime = ts;
-      const t = Math.min(1, (ts - startTime) / duration);
-      wheelRotation = startRotation + delta * easeOut(t);
-      drawWheel(currentSliceIndex());
+      const t = Math.min(1, (ts - startTime) / decelDuration);
+      // ความเร็วลดลงเชิงเส้นจาก v0 ไป 0 (ความเร่งคงที่) — ระยะสะสมเป็นเส้นโค้งพาราโบลาแบบแรงเฉื่อยจริง
+      wheelRotation = startRotation + delta * (2 * t - t * t);
+      const idx = currentSliceIndex();
+      if (idx !== lastTickIdx) { lastTickIdx = idx; playTick(1 - t); } // ยิ่งใกล้หยุด เสียงยิ่งเบา/ทุ้มลง
+      drawWheel(idx);
       if (t < 1) requestAnimationFrame(frame);
       else resolve();
     }
@@ -523,41 +568,19 @@ async function landOnAmount(amount) {
   });
 }
 
-// รอผู้เล่นกดหมุน (แตะปุ่ม "หมุนเลย" หรือแตะที่ตัววงล้อเอง) ก่อนจะยิง backend จริง
-function enableSpinTap() {
-  return new Promise(resolve => {
-    wheelSpinBtn.classList.remove('hide');
-    wheelCanvas.style.cursor = 'pointer';
-    setPhase(1);
-    setTitle('พร้อมหมุนแล้ว');
-    setHint('แตะวงล้อหรือกดหมุนเพื่อลุ้นส่วนลด');
-    function commit() {
-      wheelSpinBtn.removeEventListener('click', commit);
-      wheelCanvas.removeEventListener('click', commit);
-      wheelSpinBtn.classList.add('hide');
-      wheelCanvas.style.cursor = 'default';
-      resolve();
-    }
-    wheelSpinBtn.addEventListener('click', commit, { once: true });
-    wheelCanvas.addEventListener('click', commit, { once: true });
-  });
-}
-
-// เล่น 1 รอบเต็ม: สับเลขล่อ → รอผู้เล่นกดหมุน → ยิง backend จริง → หมุนวนรอผล → ชะลอไปหยุดที่ผลจริง → เฉลย
+// เล่น 1 รอบเต็ม: สับเลขล่อ → ยิง backend จริงทันที (กดเริ่มครั้งเดียวจบ) → หมุนวนรอผล → ชะลอไปหยุดที่ผลจริง → เฉลย
 async function playRound(milestone, requestOpen) {
   setState('play');
   buildWheelValues();
   ticket.classList.remove('show');
   claimBtn.classList.remove('show');
 
-  await enableSpinTap();
-
-  // ผู้เล่นกดหมุนแล้ว — ตอนนี้เท่านั้นที่ส่งคำขอเปิดคูปองจริง
-  const apiPromise = requestOpen();
-
-  setPhase(2);
+  setPhase(1);
   setTitle('กำลังหมุน...');
   setHint('');
+
+  // ยิงคำขอเปิดคูปองจริงทันทีที่เริ่มรอบ (ผู้เล่นกดเริ่มเปิดคูปองไปแล้วครั้งเดียว ถือว่าคอมมิทแล้ว)
+  const apiPromise = requestOpen();
 
   const result = await spinWhileWaiting(apiPromise);
 
@@ -567,12 +590,14 @@ async function playRound(milestone, requestOpen) {
   }
 
   const amount = Number(result.discount_amount) || 0;
+  setPhase(2);
   await landOnAmount(amount);
 
   setTitle('มาดูกันว่าได้เท่าไหร่');
   await wait(150);
 
   screenFlash.classList.remove('go'); void screenFlash.offsetWidth; screenFlash.classList.add('go');
+  playWin(amount === Math.max(...CAPSULE_NUMBERS));
   await wait(450);
 
   setState('result');
@@ -689,7 +714,7 @@ claimBtn.addEventListener('click', () => {
   updateStockCount();
   updateStartState();
 });
-startBtn.addEventListener('click', startRound);
+startBtn.addEventListener('click', () => { ensureAudio(); startRound(); });
 retryBtn.addEventListener('click', () => {
   manualRetryCount++;
   retryBtn.classList.add('loading');

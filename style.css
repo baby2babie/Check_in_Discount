@@ -115,31 +115,6 @@ body.lock{ overflow:hidden; }
   text-wrap:balance;
 }
 
-/* ── ขั้นตอน: จำ → สลับ → เลือก → เฉลย (ลำดับจริงของเกม) ── */
-.steps{
-  display:grid; grid-template-columns:repeat(2, 1fr); gap:6px;
-  margin-top:12px;
-  transition:opacity .4s ease;
-}
-.steps li{
-  position:relative; padding-top:10px;
-  font-size:12px; line-height:1.4; color:var(--ink-2);
-  transition:color .3s ease;
-}
-.steps li::before,
-.steps li::after{
-  content:""; position:absolute; top:0; left:0; right:0; height:2px; border-radius:2px;
-}
-.steps li::before{ background:var(--line); }
-.steps li::after{
-  background:var(--ink);
-  transform:scaleX(0); transform-origin:left;
-  transition:transform .6s var(--ease);
-}
-.steps li.done::after,
-.steps li.active::after{ transform:scaleX(1); }
-.steps li.active{ color:var(--ink); font-weight:500; }
-
 /* ── stage / board ── */
 .stage{
   flex:1;
@@ -198,9 +173,6 @@ body.lock{ overflow:hidden; }
 .app[data-state="result"]  .wheel-hub,
 .app[data-state="error"]   .wheel-hub{ opacity:0; }
 
-.app[data-state="empty"] .steps,
-.app[data-state="error"] .steps{ opacity:0; visibility:hidden; }
-
 .app[data-state="error"] .stage{ opacity:.5; transition:opacity .3s ease; }
 .app[data-state="empty"] .wheel-shell{ opacity:.2; }
 
@@ -218,10 +190,9 @@ body.lock{ overflow:hidden; }
   position:absolute; top:3%; left:50%; transform:translateX(-50%);
   width:0; height:0;
   border-left:8px solid transparent; border-right:8px solid transparent;
-  border-top:15px solid var(--tier);
+  border-top:15px solid #F5A623;
   z-index:3;
   filter:drop-shadow(0 1px 1px rgba(28,35,32,.18));
-  transition:border-top-color .3s ease;
 }
 .wheel-canvas{
   width:88%; height:88%; border-radius:50%;
