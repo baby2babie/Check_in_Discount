@@ -335,54 +335,10 @@ const WHEEL_PALETTE = [
 ];
 
 // ============================================================
-//  เสียงประกอบ — สังเคราะห์ด้วย Web Audio API ล้วนๆ ไม่มีไฟล์เสียงภายนอก
-//  ไม่ต้องอัปโหลดไฟล์ .mp3 เข้า repo ใช้ได้ทันทีบน GitHub Pages หรือโฮสต์ไหนก็ได้
-//  ต้อง ensureAudio() หลังผู้ใช้แตะหน้าจอก่อนเสมอ (เบราว์เซอร์บล็อกเสียงที่เล่นเองโดยไม่มี user gesture)
-// ============================================================
-let audioCtx = null;
-function ensureAudio() {
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
-  } else if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-}
-function playTick(strength) {
-  if (!audioCtx) return;
-  const t = audioCtx.currentTime;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(520 + strength * 260, t);
-  gain.gain.setValueAtTime(0.0001, t);
-  gain.gain.exponentialRampToValueAtTime(0.16 + strength * 0.1, t + 0.005);
-  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
-  osc.connect(gain).connect(audioCtx.destination);
-  osc.start(t);
-  osc.stop(t + 0.08);
-}
-function playWin(big) {
-  if (!audioCtx) return;
-  const t = audioCtx.currentTime;
-  const notes = big ? [523, 659, 784, 1047, 1319] : [660, 880, 1100];
-  notes.forEach((freq, i) => {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq, t + i * 0.09);
-    gain.gain.setValueAtTime(0.0001, t + i * 0.09);
-    gain.gain.exponentialRampToValueAtTime(big ? 0.22 : 0.18, t + i * 0.09 + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.09 + (big ? 0.32 : 0.25));
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start(t + i * 0.09);
-    osc.stop(t + i * 0.09 + (big ? 0.34 : 0.26));
-  });
-}
-
-// ============================================================
 //  เพลงพื้นหลัง — ไฟล์จริงอยู่ assets/bgm.mp3 (ต้องนำไฟล์ไปวางเอง)
 //  เริ่มเล่นตอนกด "เริ่มเปิดคูปอง" เท่านั้น (ต้องมี user gesture เบราว์เซอร์/LIFF ถึงจะยอมให้เล่น)
 //  หยุดทันทีตอนออกจากหน้า/ปิด LIFF ผ่าน pagehide — ปุ่มลำโพงคุมแค่ mute ไม่ทำให้เพลงหยุดเล่นจริง
+//  (เอาเสียงสังเคราะห์ Web Audio ชุดเดิม — ensureAudio/playTick/playWin — ออกแล้ว เพราะเล่นทับกับเพลงนี้)
 // ============================================================
 let musicOn = localStorage.getItem('bgmOn') !== '0'; // ค่าเริ่มต้น = เปิดเสียง
 bgm.volume = 0.55;
@@ -401,6 +357,7 @@ btnMusic.addEventListener('click', () => {
 });
 
 window.addEventListener('pagehide', () => { bgm.pause(); });
+
 
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -514,7 +471,7 @@ function startContinuousSpin() {
     wheelVelocity = Math.min(WHEEL_V0, wheelVelocity + accel * dt);
     wheelRotation += wheelVelocity * dt;
     const idx = currentSliceIndex();
-    if (idx !== lastTickIdx) { lastTickIdx = idx; playTick(1); }
+    if (idx !== lastTickIdx) { lastTickIdx = idx; }
     drawWheel();
     wheelLoopHandle = requestAnimationFrame(loop);
   }
@@ -567,7 +524,7 @@ async function landOnAmount(amount) {
       // ความเร็วลดลงเชิงเส้นจาก v0 ไป 0 (ความเร่งคงที่) — ระยะสะสมเป็นเส้นโค้งพาราโบลาแบบแรงเฉื่อยจริง
       wheelRotation = startRotation + delta * (2 * t - t * t);
       const idx = currentSliceIndex();
-      if (idx !== lastTickIdx) { lastTickIdx = idx; playTick(1 - t); } // ยิ่งใกล้หยุด เสียงยิ่งเบา/ทุ้มลง
+      if (idx !== lastTickIdx) { lastTickIdx = idx; } // ยิ่งใกล้หยุด เสียงยิ่งเบา/ทุ้มลง
       drawWheel(idx);
       if (t < 1) requestAnimationFrame(frame);
       else resolve();
@@ -591,6 +548,21 @@ async function landOnAmount(amount) {
     }
     requestAnimationFrame(frame);
   });
+}
+
+// ตั๋วเฉลยรางวัล — เรียกตอนวงล้อหยุดแล้ว (celebrate=true) หรือตอนกู้คืนผลเก่าแบบเงียบๆ (celebrate=false)
+function presentTicket(milestone, amount, celebrate = true) {
+  ticketTier.textContent = `คูปอง ${boxNameFor(milestone)}`;
+  ticketDesc.textContent = 'ส่วนลดเข้ารอบบิลถัดไปอัตโนมัติ';
+  ticket.setAttribute('aria-label', `คูปอง ${boxNameFor(milestone)} ส่วนลดค่าเช่า ${amount} บาท`);
+  ticket.classList.add('show');
+  claimBtn.classList.add('show');
+  if (celebrate) {
+    countUp(ticketAmt, amount);
+    spawnConfetti(amount >= 70 ? 28 : 16);
+  } else {
+    ticketAmt.textContent = amount;
+  }
 }
 
 // เล่น 1 รอบเต็ม: สับเลขล่อ → ยิง backend จริงทันที (กดเริ่มครั้งเดียวจบ) → หมุนวนรอผล → ชะลอไปหยุดที่ผลจริง → เฉลย
@@ -622,7 +594,6 @@ async function playRound(milestone, requestOpen) {
   await wait(150);
 
   screenFlash.classList.remove('go'); void screenFlash.offsetWidth; screenFlash.classList.add('go');
-  playWin(amount === Math.max(...CAPSULE_NUMBERS));
   await wait(450);
 
   setState('result');
@@ -740,7 +711,6 @@ claimBtn.addEventListener('click', () => {
   updateStartState();
 });
 startBtn.addEventListener('click', () => {
-  ensureAudio();
   bgm.play().catch(() => {}); // กัน error เต็มหน้าถ้าเบราว์เซอร์ยังบล็อกอยู่ ไม่กระทบการเล่นเกม
   startRound();
 });
