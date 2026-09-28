@@ -187,8 +187,17 @@ body.lock{ overflow:hidden; }
 
 .app[data-state="error"] .stage{ opacity:.5; transition:opacity .3s ease; }
 .app[data-state="empty"] .wheel-shell{ opacity:.2; }
-/* ตอนเฉลยรางวัล: จางวงล้อให้ป้ายเด่น (ป้ายไม่ได้อยู่ใน .wheel-shell จึงไม่จางตาม) */
-.app[data-state="result"] .wheel-shell{ opacity:.14; filter:blur(3px); }
+/* ตอนเฉลยรางวัล: ซ่อนวงล้อ แล้วใช้แสงสีธีมหลังตั๋วแทน (ป้ายไม่ได้อยู่ใน .wheel-shell จึงไม่จางตาม) */
+.app[data-state="result"] .wheel-shell{ opacity:0; }
+.board::before{                                          /* แสงเรืองหลังตั๋ว สีตาม --tier ของผู้เช่า */
+  content:""; position:absolute; inset:-8%; border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle,
+    color-mix(in srgb, var(--tier) 40%, transparent) 0%,
+    color-mix(in srgb, var(--tier) 16%, transparent) 42%,
+    transparent 70%);
+  opacity:0; transition:opacity .5s ease;
+}
+.app[data-state="result"] .board::before{ opacity:1; }
 
 /* ============================================================
    WHEEL — วงล้อเปิดคูปอง
@@ -198,7 +207,7 @@ body.lock{ overflow:hidden; }
 .wheel-shell{
   position:absolute; inset:0;
   display:flex; align-items:center; justify-content:center;
-  transition:opacity .4s ease, filter .4s ease;
+  transition:opacity .4s ease;
 }
 .wheel-pointer{
   position:absolute; top:3%; left:50%; transform:translateX(-50%);
