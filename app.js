@@ -40,6 +40,7 @@ const THEME = {
   "Platinum": { deep:"#3E3563", accent:"#8574B5", tint:"#F0EDF7", line:"#D8D0EA", ink:"#56478A", pas:"#E0D9F3", pas2:"#C6BBE8" },
   "Diamond":  { deep:"#1F4A54", accent:"#3F98A8", tint:"#E7F3F5", line:"#BFDFE4", ink:"#1F6572", pas:"#CBE9EE", pas2:"#A3D3DC" },
   "Legend":   { deep:"#5C2530", accent:"#B5505E", tint:"#F8ECEE", line:"#E8C6CB", ink:"#86303C", pas:"#F5D5DA", pas2:"#EAB0BA" },
+  "Founder": { deep:"#5C3A1E", accent:"#B8763E", tint:"#FDF6EC", line:"#D9B382", ink:"#8A4B1F", pas:"#F3DDBF", pas2:"#E4C193" },
 };
 function applyTier(tierLabel) {
   const t = THEME[tierLabel] || THEME["Member"];
