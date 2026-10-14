@@ -40,7 +40,6 @@ const THEME = {
   "Platinum": { deep:"#3E3563", accent:"#8574B5", tint:"#F0EDF7", line:"#D8D0EA", ink:"#56478A", pas:"#E0D9F3", pas2:"#C6BBE8" },
   "Diamond":  { deep:"#1F4A54", accent:"#3F98A8", tint:"#E7F3F5", line:"#BFDFE4", ink:"#1F6572", pas:"#CBE9EE", pas2:"#A3D3DC" },
   "Legend":   { deep:"#5C2530", accent:"#B5505E", tint:"#F8ECEE", line:"#E8C6CB", ink:"#86303C", pas:"#F5D5DA", pas2:"#EAB0BA" },
-  "Founder": { deep:"#5C3A1E", accent:"#B8763E", tint:"#FDF6EC", line:"#D9B382", ink:"#8A4B1F", pas:"#F3DDBF", pas2:"#E4C193" },
 };
 function applyTier(tierLabel) {
   const t = THEME[tierLabel] || THEME["Member"];
@@ -336,11 +335,13 @@ const WHEEL_PALETTE = [
 ];
 
 // ============================================================
-//  เพลงพื้นหลัง — ไฟล์จริงอยู่ assets/bgm.mp3 (ต้องนำไฟล์ไปวางเอง)
+//  เพลงพื้นหลัง — สุ่ม 1 เพลงจาก BGM_LIST ตอนโหลดหน้า (ไฟล์อยู่ assets/ ต้องนำไปวางเอง)
 //  เริ่มเล่นตอนกด "เริ่มเปิดคูปอง" เท่านั้น (ต้องมี user gesture เบราว์เซอร์/LIFF ถึงจะยอมให้เล่น)
 //  หยุดทันทีตอนออกจากหน้า/ปิด LIFF ผ่าน pagehide — ปุ่มลำโพงคุมแค่ mute ไม่ทำให้เพลงหยุดเล่นจริง
 //  (เอาเสียงสังเคราะห์ Web Audio ชุดเดิม — ensureAudio/playTick/playWin — ออกแล้ว เพราะเล่นทับกับเพลงนี้)
 // ============================================================
+const BGM_LIST = ['assets/bgm1.mp3', 'assets/bgm2.mp3', 'assets/bgm3.mp3'];
+bgm.src = BGM_LIST[Math.floor(Math.random() * BGM_LIST.length)]; // ตั้ง src ไว้ล่วงหน้า กดเริ่มแล้วเล่นได้ทันที
 let musicOn = localStorage.getItem('bgmOn') !== '0'; // ค่าเริ่มต้น = เปิดเสียง
 bgm.volume = 0.55;
 bgm.muted = !musicOn;
@@ -917,10 +918,9 @@ function renderHistory(history) {
         </li>`;
     }).join('');
 
-    // const statusHtml = hasOpened
-    //   ? `<span class="h-status ${h.applied ? 'applied' : ''}">${h.applied ? 'ตัดบิลแล้ว' : 'รอตัดบิล'}</span>`
-    //   : '';
-    const statusHtml = `<span class="h-status ${h.applied ? 'applied' : ''}">${h.applied ? 'ตัดบิลแล้ว' : 'รอตัดบิล'}</span>`;
+    const statusHtml = hasOpened
+      ? `<span class="h-status ${h.applied ? 'applied' : ''}">${h.applied ? 'ตัดบิลแล้ว' : 'รอตัดบิล'}</span>`
+      : '';
 
     const totalHtml = hasOpened
       ? `<div class="h-total">
