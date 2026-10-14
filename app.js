@@ -918,9 +918,7 @@ function renderHistory(history) {
         </li>`;
     }).join('');
 
-    const statusHtml = hasOpened
-      ? `<span class="h-status ${h.applied ? 'applied' : ''}">${h.applied ? 'ตัดบิลแล้ว' : 'รอตัดบิล'}</span>`
-      : '';
+    const statusHtml = `<span class="h-status ${h.applied ? 'applied' : ''}">${h.applied ? 'ตัดบิลแล้ว' : 'รอตัดบิล'}</span>`;
 
     const totalHtml = hasOpened
       ? `<div class="h-total">
