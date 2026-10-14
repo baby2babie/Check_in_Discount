@@ -343,7 +343,7 @@ const WHEEL_PALETTE = [
 const BGM_LIST = ['assets/bgm1.mp3', 'assets/bgm2.mp3', 'assets/bgm3.mp3'];
 bgm.src = BGM_LIST[Math.floor(Math.random() * BGM_LIST.length)]; // ตั้ง src ไว้ล่วงหน้า กดเริ่มแล้วเล่นได้ทันที
 let musicOn = localStorage.getItem('bgmOn') !== '0'; // ค่าเริ่มต้น = เปิดเสียง
-bgm.volume = 0.55;
+bgm.volume = 0.65;
 bgm.muted = !musicOn;
 
 function setMusicBtnUI() {
