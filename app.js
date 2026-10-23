@@ -1,5 +1,5 @@
 // ============================================================
-//  คูปองส่วนลด — app.js (Minimal Premium Edition)
+//  วงล้อส่วนลด — app.js (Minimal Premium Edition)
 //  UI/UX ใหม่ทั้งหมด · โครง backend / LIFF / cache / history / ลอจิกเกม คงเดิม
 //  สถานะหน้าจอควบคุมผ่าน data-state บน #revealCard:
 //  loading | idle | play | result | empty | error
@@ -18,8 +18,8 @@ const LB_CONFIG = [
 const TIER_COLORS = { silver:'#7F93AD', gold:'#B38A38', plat:'#8574B5', legend:'#B5505E', paid:'#3F98A8' };
 
 const stockLabels = {
-  "7": "เช็คอิน 7 วัน", "14": "เช็คอิน 14 วัน", "21": "เช็คอิน 21 วัน", "28": "เช็คอิน 28 วัน",
-  "PAID": "จ่ายตรงเวลา"
+  "7": "เช็คอินครบ 7 วัน", "14": "เช็คอินครบ 14 วัน", "21": "เช็คอินครบ 21 วัน", "28": "เช็คอินครบ 28 วัน",
+  "PAID": "จ่ายบิลตรงเวลา"
 };
 
 const REDUCED_MOTION = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -94,7 +94,7 @@ function tryRenderFromCache(mode, param) {
     if (!result || Date.now() - ts > CACHE_MAX_AGE_MS) return false;
     applyRoomData(result);
     renderStateUI(); // ปุ่มเริ่มยังซ่อนอยู่ จนกว่าข้อมูลจริงจะมา (busy = true)
-    instruction.textContent = "กำลังซิงค์ข้อมูลล่าสุด...";
+    instruction.textContent = "อัปเดตข้อมูลล่าสุดอยู่...";
     removeBootMask();
     return true;
   } catch (e) {
@@ -162,7 +162,7 @@ let stock = [];
 let lootTokens = {};
 let busy = true;        // true จนกว่าจะโหลดข้อมูลจริงเสร็จ / กำลังเล่นรอบอยู่
 let loadFailed = false; // โหลดข้อมูลล่าสุดล้มเหลว (ใช้คงสถานะ error ไว้ ไม่ให้ถูกทับด้วยข้อมูลเก่า)
-let manualRetryCount = 0; // จำนวนครั้งที่ผู้ใช้กด "ลองเชื่อมต่อใหม่" แล้วยังพลาดซ้ำ — ใช้แนะนำให้เปิดลิงก์ใหม่หลังลองหลายครั้งไม่สำเร็จ
+let manualRetryCount = 0; // จำนวนครั้งที่ผู้ใช้กด "ลองอีกที" แล้วยังพลาดซ้ำ — ใช้แนะนำให้เปิดลิงก์ใหม่หลังลองหลายครั้งไม่สำเร็จ
 
 // ============================================================
 //  UI helpers
@@ -198,10 +198,10 @@ function showError(msg, retryable = false) {
   loadFailed = true;
   setState('error');
   setPhase(0);
-  setTitle('ไม่พร้อมใช้งาน');
-  // ลองเชื่อมต่อใหม่ด้วยตัวเองไม่ได้ผลติดต่อกันหลายครั้ง — session อาจหมดอายุ แนะนำให้เปิดลิงก์ใหม่แทน
+  setTitle('เชื่อมต่อไม่ติด 😵');
+  // ลองใหม่ด้วยตัวเองไม่ได้ผลติดต่อกันหลายครั้ง — session อาจหมดอายุ แนะนำให้เปิดลิงก์ใหม่แทน
   const hintText = manualRetryCount >= 2
-    ? `${msg} ลองเชื่อมต่อใหม่หลายครั้งแล้วยังไม่สำเร็จ — ลองปิดหน้านี้แล้วเปิดลิงก์เข้ามาใหม่อีกครั้ง`
+    ? `${msg} ลองหลายรอบแล้วยังไม่ได้ ปิดหน้านี้แล้วเปิดลิงก์ใหม่ดูนะ`
     : msg;
   setHint(hintText);
   instruction.textContent = '';
@@ -232,11 +232,11 @@ async function initLiff() {
 function boxNameFor(milestone) {
   if (String(milestone) === 'PAID') return 'Bonus';
   const cfg = LB_CONFIG.find(c => c.milestone === Number(milestone));
-  return cfg ? cfg.name : 'พิเศษ';
+  return cfg ? cfg.name : 'Special';
 }
 function couponSummary(milestone) {
   const reason = stockLabels[String(milestone)];
-  return reason ? `คูปอง ${boxNameFor(milestone)} จาก${reason}` : `คูปอง ${boxNameFor(milestone)}`;
+  return reason ? `รอบนี้: ${boxNameFor(milestone)} จาก${reason}` : `รอบนี้: ${boxNameFor(milestone)}`;
 }
 
 function updateStockCount() {
@@ -248,13 +248,13 @@ function renderStateUI() {
   setPhase(0);
   if (stock.length > 0) {
     setState('idle');
-    setTitle('พร้อมเปิดคูปองแล้ว');
+    setTitle('วงล้อพร้อม ไปหมุนกัน!');
     setHint(couponSummary(stock[0]));
     buildIdlePreview();
   } else {
     setState('empty');
-    setTitle('ไม่มีคูปองให้เปิดตอนนี้');
-    setHint('สิทธิ์ใหม่จะปรากฏเมื่อเช็คอินครบตามเกณฑ์หรือจ่ายบิลตรงเวลา');
+    setTitle('ยังไม่มีสปินตอนนี้');
+    setHint('เช็คอินให้ครบ หรือจ่ายบิลตรงเวลา แล้วกลับมาหมุนใหม่นะ');
     showEmptySlots();
   }
 }
@@ -337,7 +337,7 @@ const WHEEL_PALETTE = [
 
 // ============================================================
 //  เพลงพื้นหลัง — สุ่ม 1 เพลงจาก BGM_LIST ตอนโหลดหน้า (ไฟล์อยู่ assets/ ต้องนำไปวางเอง)
-//  เริ่มเล่นตอนกด "เริ่มเปิดคูปอง" เท่านั้น (ต้องมี user gesture เบราว์เซอร์/LIFF ถึงจะยอมให้เล่น)
+//  เริ่มเล่นตอนกด "หมุนเลย!" เท่านั้น (ต้องมี user gesture เบราว์เซอร์/LIFF ถึงจะยอมให้เล่น)
 //  หยุดทันทีตอนออกจากหน้า/ปิด LIFF ผ่าน pagehide — ปุ่มลำโพงคุมแค่ mute ไม่ทำให้เพลงหยุดเล่นจริง
 //  (เอาเสียงสังเคราะห์ Web Audio ชุดเดิม — ensureAudio/playTick/playWin — ออกแล้ว เพราะเล่นทับกับเพลงนี้)
 // ============================================================
@@ -555,9 +555,9 @@ async function landOnAmount(amount) {
 
 // ตั๋วเฉลยรางวัล — เรียกตอนวงล้อหยุดแล้ว (celebrate=true) หรือตอนกู้คืนผลเก่าแบบเงียบๆ (celebrate=false)
 function presentTicket(milestone, amount, celebrate = true) {
-  ticketTier.textContent = `คูปอง ${boxNameFor(milestone)}`;
-  ticketDesc.textContent = 'ส่วนลดเข้ารอบบิลถัดไปอัตโนมัติ';
-  ticket.setAttribute('aria-label', `คูปอง ${boxNameFor(milestone)} ส่วนลดค่าเช่า ${amount} บาท`);
+  ticketTier.textContent = `${boxNameFor(milestone)} Coupon`;
+  ticketDesc.textContent = 'หักจากบิลรอบหน้าให้เอง ไม่ต้องทำอะไรเพิ่ม';
+  ticket.setAttribute('aria-label', `${boxNameFor(milestone)} Coupon ลดค่าเช่า ${amount} บาท`);
   ticket.classList.add('show');
   claimBtn.classList.add('show');
   if (celebrate) {
@@ -576,10 +576,10 @@ async function playRound(milestone, requestOpen) {
   claimBtn.classList.remove('show');
 
   setPhase(1);
-  setTitle('กำลังหมุน...');
-  setHint('');
+  setTitle('ลุ้นๆๆ 🤞');
+  setHint('ขอให้เป็นเลขใหญ่นะ');
 
-  // ยิงคำขอเปิดคูปองจริงทันทีที่เริ่มรอบ (ผู้เล่นกดเริ่มเปิดคูปองไปแล้วครั้งเดียว ถือว่าคอมมิทแล้ว)
+  // ยิงคำขอเปิดคูปองจริงทันทีที่เริ่มรอบ (ผู้เล่นกดเริ่มไปแล้วครั้งเดียว ถือว่าคอมมิทแล้ว)
   const apiPromise = requestOpen();
 
   const result = await spinWhileWaiting(apiPromise);
@@ -599,7 +599,7 @@ async function playRound(milestone, requestOpen) {
   await wait(450);
 
   setState('result');
-  setTitle('คุณได้รับส่วนลด');
+  setTitle('เฮ! ได้ส่วนลดแล้ว 🎉');
   setHint('');
   presentTicket(milestone, amount);
 
@@ -611,14 +611,14 @@ function showQuickTicket(milestone, amount) {
   stopContinuousSpin();
   setState('result');
   setPhase(2);
-  setTitle('คูปองใบนี้เปิดไปแล้ว');
-  setHint('นี่คือส่วนลดที่คุณได้รับ');
+  setTitle('ใบนี้หมุนไปแล้วนะ');
+  setHint('นี่คือส่วนลดที่ได้ไปเลย');
   presentTicket(milestone, amount, false);
 }
 
 async function startRound() {
   if (busy) return; // กันกดซ้ำระหว่างรอบกำลังเล่นอยู่
-  if (stock.length === 0) { instruction.textContent = "ไม่มีคูปองให้เปิดตอนนี้"; return; }
+  if (stock.length === 0) { instruction.textContent = "ตอนนี้ยังไม่มีสปินให้หมุน"; return; }
   busy = true;
   startBtn.classList.add('hide');
   retryBtn.style.display = 'none';
@@ -627,11 +627,10 @@ async function startRound() {
   const milestone = stock[0];
   const token = lootTokens[milestone];
 
-  const HARD_TIMEOUT_MS = 30000;   // เวลารอ backend หลังผู้เล่นกดเลือกการ์ด (มิลลิวินาที) — ปรับตัวเลขนี้ได้
+  const HARD_TIMEOUT_MS = 30000;   // เวลารอ backend หลังผู้เล่นกดเริ่ม (มิลลิวินาที) — ปรับตัวเลขนี้ได้
 
-  // ส่งคำขอเปิดจริง "ตอนผู้เล่นกดเลือกการ์ด" (playRound เป็นคนเรียก)
+  // ส่งคำขอเปิดจริง "ตอนผู้เล่นกดเริ่ม" (playRound เป็นคนเรียก)
   // request ไม่ถูกยกเลิกแม้ backend จะตอบช้า (auto-resync ผ่าน HARD_TIMEOUT_MS ถ้าช้าเกินไปจริงๆ)
-  // นับเวลา HARD_TIMEOUT_MS จากตอนเลือก (แอนิเมชันหลังเลือกใช้ราว 7 วินาที ที่เหลือคือเวลารอผลจริง)
   const requestOpen = () => {
     const realPromise = callGAS('openLootBox', { token, tierLabel: currentTierLabel }, 45000).catch((err) => {
       console.error('openLootBox failed:', err);
@@ -640,7 +639,7 @@ async function startRound() {
     return withTimeout(
       realPromise,
       HARD_TIMEOUT_MS,
-      { success: false, message: 'ระบบช้าผิดปกติ กำลังซิงค์ข้อมูลใหม่ให้อัตโนมัติ', hardFail: true }
+      { success: false, message: 'ระบบอืดนิดนึง เดี๋ยวเช็คผลให้เอง ไม่ต้องกังวล', hardFail: true }
     );
   };
 
@@ -657,14 +656,14 @@ async function startRound() {
   // ── เปิดไม่สำเร็จ: sync ข้อมูลใหม่ แล้วเช็คว่าจริงๆ เปิดสำเร็จไปแล้วหรือเปล่า ──
   const result = outcome.result;
   if (result && result.hardFail) {
-    showToast('ระบบช้าผิดปกติ กำลังซิงค์ข้อมูลให้อัตโนมัติ', 'error', 4000);
+    showToast('ระบบอืดนิดนึง เดี๋ยวเช็คผลให้เอง ไม่ต้องกังวล', 'error', 4000);
   } else {
-    showToast(result?.message || 'เปิดไม่สำเร็จ', 'error', 4000);
+    showToast(result?.message || 'หมุนไม่สำเร็จ ลองใหม่อีกครั้งนะ', 'error', 4000);
   }
   setPhase(0);
-  setTitle('กำลังซิงค์ข้อมูล');
+  setTitle('กำลังเช็คให้อยู่...');
   setHint('');
-  instruction.textContent = "กำลังซิงค์ข้อมูลใหม่...";
+  instruction.textContent = "อัปเดตข้อมูลล่าสุดอยู่...";
 
   // ถ้า openLootBox ยังประมวลผลอยู่ ให้เวลาสั้น ๆ ก่อนอ่านสถานะใหม่
   // โดยไม่ยิง openLootBox ซ้ำ ป้องกันการเปิดซ้ำ/แข่งกันเขียนข้อมูล
@@ -689,12 +688,12 @@ async function startRound() {
       if (matchedItem) {
         showQuickTicket(milestone, matchedItem.amount);
       } else {
-        showToast('คูปองใบนี้เปิดสำเร็จไปแล้ว กำลังเปิดประวัติให้ดูส่วนลดที่ได้รับ', 'success', 6000);
+        showToast('ใบนี้หมุนสำเร็จไปแล้ว เดี๋ยวพาไปดูผลในประวัติ', 'success', 6000);
         openHistoryOverlay();
         updateStartState();
       }
     } catch (e) {
-      showToast('คูปองใบนี้เปิดสำเร็จไปแล้ว กำลังเปิดประวัติให้ดูส่วนลดที่ได้รับ', 'success', 6000);
+      showToast('ใบนี้หมุนสำเร็จไปแล้ว เดี๋ยวพาไปดูผลในประวัติ', 'success', 6000);
       openHistoryOverlay();
       updateStartState();
     }
@@ -719,7 +718,7 @@ startBtn.addEventListener('click', () => {
 retryBtn.addEventListener('click', () => {
   manualRetryCount++;
   retryBtn.classList.add('loading');
-  instruction.textContent = 'กำลังลองเชื่อมต่อใหม่...';
+  instruction.textContent = 'กำลังลองใหม่...';
   reloadLootBoxData().finally(() => retryBtn.classList.remove('loading'));
 });
 
@@ -774,36 +773,36 @@ async function callGASWithRetry(action, params, retries = 1, delayMs = 1200, tim
   }
 }
 
-const DATA_FETCH_TIMEOUT_MS = 10000;   // เวลารอโหลดข้อมูลคูปองต่อครั้ง (ลองใหม่อัตโนมัติ 1 รอบถ้าพลาด รวมสูงสุดราว 10+10 วินาที)
+const DATA_FETCH_TIMEOUT_MS = 10000;   // เวลารอโหลดข้อมูลต่อครั้ง (ลองใหม่อัตโนมัติ 1 รอบถ้าพลาด รวมสูงสุดราว 10+10 วินาที)
 
 async function loadLootBoxForRoom(roomNo) {
   try {
     const result = await callGASWithRetry('getLootBoxDataByRoom', { roomNo }, 1, 1200, DATA_FETCH_TIMEOUT_MS);
-    if (!result.success) { showError(result.message || 'โหลดข้อมูลไม่ได้', true); return; }
+    if (!result.success) { showError(result.message || 'โหลดไม่ขึ้น ลองใหม่อีกทีนะ', true); return; }
     renderCabinet(result);
   } catch (e) {
     console.error('loadLootBoxForRoom failed:', e);
-    showError('โหลดข้อมูลไม่ได้ กรุณาลองใหม่อีกครั้ง', true);
+    showError('โหลดไม่ขึ้น ลองใหม่อีกทีนะ', true);
   }
 }
 async function loadLootBoxByToken(token) {
   try {
     const result = await callGASWithRetry('getLootBoxData', { token }, 1, 1200, DATA_FETCH_TIMEOUT_MS);
-    if (!result.success) { showError(result.message || 'ลิงก์ไม่ถูกต้อง', true); return; }
+    if (!result.success) { showError(result.message || 'ลิงก์นี้ใช้ไม่ได้ ลองขอลิงก์ใหม่นะ', true); return; }
     renderCabinet(result);
   } catch (e) {
     console.error('loadLootBoxByToken failed:', e);
-    showError('โหลดข้อมูลไม่ได้ กรุณาลองใหม่อีกครั้ง', true);
+    showError('โหลดไม่ขึ้น ลองใหม่อีกทีนะ', true);
   }
 }
 async function loadLootBoxByUserId(userId) {
   try {
     const result = await callGASWithRetry('getLootBoxData', { userId }, 1, 1200, DATA_FETCH_TIMEOUT_MS);
-    if (!result.success) { showError(result.message || 'โหลดข้อมูลไม่ได้', true); return; }
+    if (!result.success) { showError(result.message || 'โหลดไม่ขึ้น ลองใหม่อีกทีนะ', true); return; }
     renderCabinet(result);
   } catch (e) {
     console.error('loadLootBoxByUserId failed:', e);
-    showError('โหลดข้อมูลไม่ได้ กรุณาลองใหม่อีกครั้ง', true);
+    showError('โหลดไม่ขึ้น ลองใหม่อีกทีนะ', true);
   }
 }
 
@@ -864,7 +863,7 @@ function historyMessage(title, sub, withRetry) {
     <div class="h-empty">
       <p class="h-empty-title">${esc(title)}</p>
       ${sub ? `<p>${esc(sub)}</p>` : ''}
-      ${withRetry ? '<button class="btn ghost" type="button" onclick="loadHistory()">ลองใหม่</button>' : ''}
+      ${withRetry ? '<button class="btn ghost" type="button" onclick="loadHistory()">ลองอีกที</button>' : ''}
     </div>`;
 }
 
@@ -873,19 +872,19 @@ async function loadHistory() {
   body.innerHTML = '<div class="h-skel" aria-label="กำลังโหลด"><i></i><i></i><i></i><i></i></div>';
 
   if (!currentRoomNo) {
-    body.innerHTML = historyMessage('ไม่พบข้อมูลห้อง', '', false);
+    body.innerHTML = historyMessage('หาห้องของคุณไม่เจอ', '', false);
     return;
   }
 
   try {
     const result = await callGAS('getLootHistory', { roomNo: currentRoomNo });
     if (!result.success) {
-      body.innerHTML = historyMessage('โหลดประวัติไม่ได้', result.message || '', true);
+      body.innerHTML = historyMessage('โหลดประวัติไม่ขึ้น', result.message || '', true);
       return;
     }
     renderHistory(result.history || []);
   } catch (e) {
-    body.innerHTML = historyMessage('โหลดข้อมูลไม่ได้', 'กรุณาลองใหม่อีกครั้ง', true);
+    body.innerHTML = historyMessage('โหลดประวัติไม่ขึ้น', 'ลองใหม่อีกทีนะ', true);
   }
 }
 
@@ -893,7 +892,7 @@ function renderHistory(history) {
   const body = document.getElementById('history-body');
 
   if (!history.length) {
-    body.innerHTML = historyMessage('ยังไม่มีประวัติการเปิดคูปอง', 'คูปองที่เปิดแล้วจะแสดงที่นี่', false);
+    body.innerHTML = historyMessage('ยังไม่เคยหมุนเลย', 'หมุนแล้วผลจะมาโชว์ตรงนี้', false);
     return;
   }
 
@@ -905,7 +904,7 @@ function renderHistory(history) {
       const meta = getTierMeta(it.tier);
       const amountHtml = it.opened
         ? `<span class="h-amount">฿${Number(it.amount).toLocaleString()}</span>`
-        : `<span class="h-amount is-muted">ไม่ได้เปิด</span>`;
+        : `<span class="h-amount is-muted">ยังไม่ได้หมุน</span>`;
       return `
         <li class="h-row">
           <span class="h-tier" style="--tier-color:${meta.color}">
@@ -919,11 +918,11 @@ function renderHistory(history) {
         </li>`;
     }).join('');
 
-    const statusHtml = `<span class="h-status ${h.applied ? 'applied' : ''}">${h.applied ? 'ตัดบิลแล้ว' : 'รอตัดบิล'}</span>`;
+    const statusHtml = `<span class="h-status ${h.applied ? 'applied' : ''}">${h.applied ? 'หักบิลแล้ว ✓' : 'รอหักบิล'}</span>`;
 
     const totalHtml = hasOpened
       ? `<div class="h-total">
-           <span class="h-total-label">รวมส่วนลด</span>
+           <span class="h-total-label">รวมที่ได้เดือนนี้</span>
            <span class="h-total-amount">฿${total.toLocaleString()}</span>
          </div>`
       : '';
@@ -978,7 +977,7 @@ async function init() {
       tryRenderFromCache('userId', liffProfile.userId);
       await loadLootBoxByUserId(liffProfile.userId);
     } else {
-      showError('ไม่พบข้อมูลห้อง');
+      showError('หาห้องของคุณไม่เจอ');
     }
   }
 
@@ -993,7 +992,7 @@ async function reloadLootBoxData() {
   if (bootMode === 'room') await loadLootBoxForRoom(bootParam);
   else if (bootMode === 'token') await loadLootBoxByToken(bootParam);
   else if (bootMode === 'userId') await loadLootBoxByUserId(bootParam);
-  else showError('ไม่พบข้อมูลห้อง');
+  else showError('หาห้องของคุณไม่เจอ');
 }
 
 init();
