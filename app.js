@@ -557,7 +557,7 @@ async function landOnAmount(amount) {
 function presentTicket(milestone, amount, celebrate = true) {
   ticketTier.textContent = `${boxNameFor(milestone)} Coupon`;
   ticketDesc.textContent = 'ส่วนลดเข้ารอบบิลถัดไปอัตโนมัติ';
-  ticket.setAttribute('aria-label', `${boxNameFor(milestone)} Coupon ลดค่าเช่า ${amount} บาท`);
+  ticket.setAttribute('aria-label', `${boxNameFor(milestone)} Coupon ส่วนลดค่าเช่า ${amount} บาท`);
   ticket.classList.add('show');
   claimBtn.classList.add('show');
   if (celebrate) {
@@ -576,8 +576,8 @@ async function playRound(milestone, requestOpen) {
   claimBtn.classList.remove('show');
 
   setPhase(1);
-  setTitle('ลุ้นๆๆ 🤞');
-  setHint('ขอให้เป็นเลขใหญ่นะ');
+  setTitle('ลุ้นๆๆ...');
+  setHint('ขอให้เป็นรางวัลใหญ่นะ');
 
   // ยิงคำขอเปิดคูปองจริงทันทีที่เริ่มรอบ (ผู้เล่นกดเริ่มไปแล้วครั้งเดียว ถือว่าคอมมิทแล้ว)
   const apiPromise = requestOpen();
