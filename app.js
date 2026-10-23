@@ -904,7 +904,7 @@ function renderHistory(history) {
       const meta = getTierMeta(it.tier);
       const amountHtml = it.opened
         ? `<span class="h-amount">฿${Number(it.amount).toLocaleString()}</span>`
-        : `<span class="h-amount is-muted">ยังไม่ได้หมุน</span>`;
+        : `<span class="h-amount is-muted">ไม่ได้หมุน</span>`;
       return `
         <li class="h-row">
           <span class="h-tier" style="--tier-color:${meta.color}">
