@@ -236,7 +236,7 @@ function boxNameFor(milestone) {
 }
 function couponSummary(milestone) {
   const reason = stockLabels[String(milestone)];
-  return reason ? `สปิน ${boxNameFor(milestone)} จาก${reason}` : `สปิน ${boxNameFor(milestone)}`;
+  return reason ? `รอบนี้: ${boxNameFor(milestone)} จาก${reason}` : `รอบนี้: ${boxNameFor(milestone)}`;
 }
 
 function updateStockCount() {
@@ -555,9 +555,9 @@ async function landOnAmount(amount) {
 
 // ตั๋วเฉลยรางวัล — เรียกตอนวงล้อหยุดแล้ว (celebrate=true) หรือตอนกู้คืนผลเก่าแบบเงียบๆ (celebrate=false)
 function presentTicket(milestone, amount, celebrate = true) {
-  ticketTier.textContent = `คูปอง ${boxNameFor(milestone)}`;
-  ticketDesc.textContent = 'ส่วนลดเข้ารอบบิลถัดไปอัตโนมัติ';
-  ticket.setAttribute('aria-label', `คูปอง ${boxNameFor(milestone)} ส่วนลดค่าเช่า ${amount} บาท`);
+  ticketTier.textContent = `${boxNameFor(milestone)} Coupon`;
+  ticketDesc.textContent = 'หักจากบิลรอบหน้าให้เอง ไม่ต้องทำอะไรเพิ่ม';
+  ticket.setAttribute('aria-label', `${boxNameFor(milestone)} Coupon ลดค่าเช่า ${amount} บาท`);
   ticket.classList.add('show');
   claimBtn.classList.add('show');
   if (celebrate) {
@@ -576,8 +576,8 @@ async function playRound(milestone, requestOpen) {
   claimBtn.classList.remove('show');
 
   setPhase(1);
-  setTitle('ลุ้นๆๆ...');
-  setHint('ขอให้เป็นรางวัลใหญ่นะ');
+  setTitle('ลุ้นๆๆ 🤞');
+  setHint('ขอให้เป็นเลขใหญ่นะ');
 
   // ยิงคำขอเปิดคูปองจริงทันทีที่เริ่มรอบ (ผู้เล่นกดเริ่มไปแล้วครั้งเดียว ถือว่าคอมมิทแล้ว)
   const apiPromise = requestOpen();
@@ -904,7 +904,7 @@ function renderHistory(history) {
       const meta = getTierMeta(it.tier);
       const amountHtml = it.opened
         ? `<span class="h-amount">฿${Number(it.amount).toLocaleString()}</span>`
-        : `<span class="h-amount is-muted">ไม่ได้หมุน</span>`;
+        : `<span class="h-amount is-muted">ยังไม่ได้หมุน</span>`;
       return `
         <li class="h-row">
           <span class="h-tier" style="--tier-color:${meta.color}">
