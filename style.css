@@ -1,16 +1,24 @@
 /* ============================================================
-   คูปองส่วนลด — style.css (Minimal Premium)
-   พื้นหลังแร่อ่อนแบบเรียบ · ตัวอักษรบางเบา · สีเน้นมาจาก tier ของผู้เช่าเท่านั้น
+   วงล้อส่วนลด — style.css (Red & Gold)
+   พื้นหลังงาช้างอุ่น · ปุ่ม/การ์ด/กรอบวงล้อโทนแดง-ทอง · สีระดับผู้เช่า (--tier-*) ใช้เป็นจุดเน้นบนตั๋ว
    ตัวแปร --tier-* ถูกตั้งค่าตอน runtime โดย applyTier() ใน app.js
    ============================================================ */
 
 :root{
-  --page:#F0F1EF;            /* พื้นหลังเรียบ — รอยบากตั๋วใช้การ mask จึงไม่ต้องพึ่งสีนี้ */
+  --page:#FBF4EE;            /* พื้นหลังงาช้างอุ่น — รอยบากตั๋วใช้การ mask จึงไม่ต้องพึ่งสีนี้ */
   --paper:#FFFFFF;
-  --ink:#1C2320;
-  --ink-2:#5E6864;           /* ข้อความรอง (contrast ~5:1 บนพื้นหลัง) */
-  --line:rgba(28,35,32,.12);
-  --line-2:rgba(28,35,32,.07);
+  --ink:#2B1A1A;
+  --ink-2:#7A5F5C;           /* ข้อความรอง (contrast ~5:1 บนพื้นหลัง) */
+  --line:rgba(43,26,26,.14);
+  --line-2:rgba(43,26,26,.08);
+
+  /* ธีมแดง-ทอง */
+  --red:#C8202E;
+  --red-deep:#6E0A12;
+  --maroon:#3A0C12;
+  --gold:#E8B94A;
+  --gold-light:#FFE9A8;
+  --gold-deep:#A87A1E;
   --ok:#3B8A6E;
   --warn:#B27A1E;
   --err:#D2685C;
@@ -50,7 +58,11 @@ html{ -webkit-text-size-adjust:100%; }
 body{
   margin:0;
   min-height:100vh; min-height:100dvh;
-  background:var(--page);
+  background:
+    radial-gradient(120% 55% at 50% 0%, #FFE4D2 0%, rgba(255,228,210,0) 68%),
+    radial-gradient(90% 40% at 50% 100%, #FFEFD0 0%, rgba(255,239,208,0) 70%),
+    var(--page);
+  background-attachment:fixed;
   color:var(--ink);
   font-family:'Anuphan','Sarabun',system-ui,-apple-system,'Segoe UI','Noto Sans Thai',sans-serif;
   font-size:15px;
@@ -116,8 +128,9 @@ body.lock{ overflow:hidden; }
 .status{ margin-top:28px; }
 .title{
   font-size:clamp(22px, 7vw, 28px);
-  font-weight:300; line-height:1.45;
+  font-weight:400; line-height:1.45;
   min-height:1.45em;
+  color:var(--red-deep);
 }
 .title.swap{ animation:textIn .35s ease; }
 @keyframes textIn{ from{ opacity:0; } to{ opacity:1; } }
@@ -160,11 +173,28 @@ body.lock{ overflow:hidden; }
   font-size:16px; font-weight:500; cursor:pointer;
   transition:transform .2s var(--ease), background-color .2s ease, opacity .2s ease;
 }
-.btn.primary{ background:var(--ink); color:#fff; }
-.btn.primary:hover{ background:#2A3430; }
+/* ปุ่มหลัก: แดงเงานูน ขอบทอง ทรงแคปซูล */
+.btn.primary{
+  width:min(78%, 300px); margin:0 auto;                    /* ปุ่มสั้นตรงกลาง เหมือนในภาพต้นแบบ */
+  height:58px; border-radius:999px;
+  font-weight:600; letter-spacing:.01em;
+  color:#FFF6DA; text-shadow:0 1px 0 rgba(60,0,8,.45);
+  background:linear-gradient(180deg, #E0303D 0%, #B3121F 52%, #86101A 100%);
+  box-shadow:
+    inset 0 0 0 2px var(--gold),
+    inset 0 3px 0 rgba(255,255,255,.28),
+    inset 0 -4px 6px rgba(60,0,8,.25),
+    0 10px 20px -8px rgba(134,16,26,.6);
+}
+.btn.primary:hover{ filter:brightness(1.07); }
+#startBtn::before{                                       /* ไอคอนเล่น (สามเหลี่ยม) หน้าข้อความ */
+  content:""; display:inline-block; vertical-align:-1px; margin-right:10px;
+  border-left:11px solid currentColor;
+  border-top:7px solid transparent; border-bottom:7px solid transparent;
+}
 .btn:active{ transform:scale(.985); }
 .btn.ghost{ background:transparent; box-shadow:inset 0 0 0 1px var(--line); margin-top:10px; }
-.btn.ghost:hover{ background:rgba(28,35,32,.04); }
+.btn.ghost:hover{ background:rgba(43,26,26,.04); }
 .btn.ghost.loading{ opacity:.55; pointer-events:none; }
 .btn.hide{ display:none; }
 .btn.claim{ display:none; }                              /* โชว์เฉพาะตอนเฉลยเสร็จ (.show) */
@@ -192,8 +222,8 @@ body.lock{ overflow:hidden; }
 .board::before{                                          /* แสงเรืองหลังตั๋ว สีตาม --tier ของผู้เช่า */
   content:""; position:absolute; inset:-8%; border-radius:50%; pointer-events:none;
   background:radial-gradient(circle,
-    color-mix(in srgb, var(--tier) 40%, transparent) 0%,
-    color-mix(in srgb, var(--tier) 16%, transparent) 42%,
+    color-mix(in srgb, var(--gold) 55%, transparent) 0%,
+    color-mix(in srgb, var(--gold) 20%, transparent) 42%,
     transparent 70%);
   opacity:0; transition:opacity .5s ease;
 }
@@ -210,28 +240,28 @@ body.lock{ overflow:hidden; }
   transition:opacity .4s ease;
 }
 .wheel-pointer{
-  position:absolute; top:3%; left:50%; transform:translateX(-50%);
+  position:absolute; top:3.5%; left:50%; transform:translateX(-50%);
   width:0; height:0;
-  border-left:8px solid transparent; border-right:8px solid transparent;
-  border-top:15px solid #F5A623;
+  border-left:10px solid transparent; border-right:10px solid transparent;
+  border-top:20px solid var(--red);
   z-index:3;
-  filter:drop-shadow(0 1px 1px rgba(28,35,32,.18));
+  filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 3px 3px rgba(58,12,18,.35));
 }
 .wheel-canvas{
   width:88%; height:88%; border-radius:50%;
-  filter:drop-shadow(0 10px 22px rgba(28,35,32,.14));
+  filter:drop-shadow(0 12px 22px rgba(110,10,18,.3));
 }
 .wheel-hub{
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   width:27%; aspect-ratio:1; border-radius:50%;
-  background:var(--paper);
-  box-shadow:0 0 0 1px var(--line), 0 6px 16px rgba(28,35,32,.10);
+  background:radial-gradient(circle at 35% 28%, #FFF3C9 0%, #F1C65B 48%, #BF8A22 100%);
+  box-shadow:0 0 0 3px rgba(255,255,255,.7), 0 0 0 5px #8E1019, 0 8px 18px rgba(58,12,18,.4);
   pointer-events:none;
   transition:opacity .4s ease;
 }
-.wheel-hub-num{ font-size:26px; font-weight:200; line-height:1.1; font-variant-numeric:tabular-nums; color:var(--ink); }
-.wheel-hub-label{ font-size:9.5px; color:var(--ink-2); margin-top:2px; text-align:center; padding:0 6px; line-height:1.3; }
+.wheel-hub-num{ font-size:26px; font-weight:600; line-height:1.1; font-variant-numeric:tabular-nums; color:#4A0E14; }
+.wheel-hub-label{ font-size:9.5px; font-weight:500; color:#5A1A12; margin-top:2px; text-align:center; padding:0 6px; line-height:1.3; }
 
 /* ============================================================
    TICKET — ตั๋วเฉลยรางวัล (จุดเดียวที่ทุ่มดีไซน์)
