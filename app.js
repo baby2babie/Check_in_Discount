@@ -324,17 +324,17 @@ let wheelSize = 0;          // ขนาดจริง (css px) ของ canva
 let wheelLoopHandle = null; // requestAnimationFrame handle ของช่วงหมุนวนไม่ทราบผล
 let wheelVelocity = 0;      // ความเร็วปัจจุบัน (เรเดียน/ms) — เก็บไว้ต่อเนื่องจังหวะตอนเข้าสู่ช่วงชะลอ
 const WHEEL_V0 = 0.011;     // ความเร็วสูงสุดตอนหมุนวน (เรเดียน/ms)
-// สีบนวงล้อ — แดงสลับครีม ช่องที่ 7 เป็นทอง (7 ช่องเป็นเลขคี่ เลยต้องมีสีที่สามกันช่องแดงชนกันตรงรอยต่อ)
-// ไม่ผูกกับ tier ของผู้เช่า ตำแหน่งสีคงที่ทุกรอบ มีแค่ตัวเลขในแต่ละช่องที่สับใหม่
-const WHEEL_PALETTE = [
-  { bg: '#C8202E', ink: '#FFF4D6' },
-  { bg: '#FFF1DC', ink: '#8E1019' },
-  { bg: '#C8202E', ink: '#FFF4D6' },
-  { bg: '#FFF1DC', ink: '#8E1019' },
-  { bg: '#C8202E', ink: '#FFF4D6' },
-  { bg: '#FFF1DC', ink: '#8E1019' },
-  { bg: '#E8B94A', ink: '#4A0E14' },
-];
+// สีบนวงล้อ — ช่องที่มีค่ามากที่สุดเป็นสีทองเสมอ ที่เหลือสลับแดง/ครีมเริ่มจากช่องถัดจากทองตามเข็มนาฬิกา
+// (7 ช่อง = ทอง 1 + แดง/ครีมอย่างละ 3 จึงไม่มีสีซ้ำชิดกัน) ไม่ผูกกับ tier ของผู้เช่า
+// ตัวเลขสับตำแหน่งใหม่ทุกรอบ ทองจึงย้ายตามเลขสูงสุดไปด้วย
+const SLICE_RED   = { bg: '#C8202E', ink: '#FFF4D6' };
+const SLICE_CREAM = { bg: '#FFF1DC', ink: '#8E1019' };
+const SLICE_GOLD  = { bg: '#E8B94A', ink: '#4A0E14' };
+function sliceStyle(i, n, goldIdx) {
+  if (i === goldIdx) return SLICE_GOLD;
+  const k = (i - goldIdx - 1 + n) % n;   // ลำดับตั้งแต่ช่องหลังทองเป็นต้นไป
+  return k % 2 === 0 ? SLICE_RED : SLICE_CREAM;
+}
 const RIM_BULBS = 20; // จำนวนหลอดไฟบนกรอบทอง
 
 // ============================================================
@@ -423,11 +423,12 @@ function drawWheel(highlightIdx) {
   ctx.fillStyle = '#5A0E16';
   ctx.fill();
 
-  // ช่องรางวัล
+  // ช่องรางวัล (ช่องที่มีเลขสูงสุดเป็นสีทอง)
+  const goldIdx = wheelValues.indexOf(Math.max(...wheelValues));
   for (let i = 0; i < n; i++) {
     const start = wheelRotation + i * slice;
     const end = start + slice;
-    const c = WHEEL_PALETTE[i % WHEEL_PALETTE.length];
+    const c = sliceStyle(i, n, goldIdx);
     ctx.beginPath();
     ctx.moveTo(center, center);
     ctx.arc(center, center, r, start, end);
