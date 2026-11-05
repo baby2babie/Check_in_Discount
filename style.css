@@ -331,15 +331,17 @@ body.lock{ overflow:hidden; }
 .ticket-label{ margin-top:6px; font-size:14px; color:var(--ink-2); }
 
 .ticket-perf{
-  position:absolute; left:16px; right:16px; top:var(--perf);
-  border-top:1.5px dashed rgba(28,35,32,.32);
+  position:absolute; left:14px; right:14px; top:var(--perf);
+  height:4px;                                              /* รอยปรุเป็นจุดกลมสีตามระดับ เรียงแถว */
+  background:radial-gradient(circle, var(--tier) 1.5px, transparent 1.8px) 0 50% / 9px 4px repeat-x;
+  opacity:.85;
   transform:translateY(-50%);
 }
 .ticket-bottom{
   position:absolute; left:0; right:0; bottom:0; top:var(--perf);
   display:flex; align-items:center;
   padding:0 22px;
-  background:var(--tier-soft);
+  background:var(--paper);                               /* ขาวเหมือนส่วนบน — ไม่กลืนพื้นหลังงาช้างเหมือนสีอ่อนตามระดับ */
   font-size:13px; line-height:1.5; color:var(--tier-ink);
 }
 
