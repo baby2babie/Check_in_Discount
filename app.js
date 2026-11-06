@@ -1032,6 +1032,7 @@ async function init() {
   }
 
   removeBootMask();
+  bgm.load(); // เริ่มโหลดเพลงหลังหน้า/วงล้อขึ้นแล้ว
 }
 
 async function reloadLootBoxData() {
