@@ -306,6 +306,12 @@ body.lock{ overflow:hidden; }
 }
 @keyframes sheen{ to{ transform:translateX(120%); } }
 
+/* ขนาดตัวเลข/ลายน้ำ ฿ ตามความกว้างตั๋วจริง (เบราว์เซอร์เก่าที่ไม่รองรับ cqw ใช้ 84px เดิม) */
+@supports (width:1cqw){
+  .ticket-paper{ container-type:inline-size; }
+  :root{ --amt-fs:46cqw; }
+}
+
 .ticket-top{
   position:absolute; top:0; left:0; right:0; bottom:calc(100% - var(--perf));
   display:flex; flex-direction:column;
@@ -325,8 +331,21 @@ body.lock{ overflow:hidden; }
   font-size:var(--amt-fs); font-weight:200; line-height:1;
   font-variant-numeric:tabular-nums; white-space:nowrap;
 }
+/* ตัวเลขรางวัล: ไล่สีแดงเข้มแบบเหรียญ ขนาดผูกกับความกว้างตั๋ว (ตั๋วโตตามวงล้อ ตัวเลขโตตาม) */
+#ticketAmount{
+  font-weight:500;
+  background:linear-gradient(180deg, #E0303D 0%, #B3121F 48%, #7A0C16 100%);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
+  filter:drop-shadow(0 2px 0 rgba(168,122,30,.35));
+  padding-right:.04em;                                     /* กันขอบขวาของเลขโดนตัดตอน clip ด้วยพื้นหลัง */
+}
+.ticket.jackpot #ticketAmount{
+  background:linear-gradient(180deg, #FFE9A8 0%, #E8B94A 45%, #A87A1E 100%);
+  -webkit-background-clip:text; background-clip:text;
+}
 .ticket-amount small{
-  font-size:.3em; font-weight:400; color:var(--tier-ink);
+  font-size:.3em; font-weight:500; color:var(--gold-deep);
   margin:.22em 0 0 .1em;
 }
 .ticket-label{ margin-top:6px; font-size:14px; color:var(--ink-2); }
