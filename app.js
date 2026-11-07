@@ -352,7 +352,7 @@ const RIM_BULBS = 20; // จำนวนหลอดไฟบนกรอบท�
 //  หยุดทันทีตอนออกจากหน้า/ปิด LIFF ผ่าน pagehide — ปุ่มลำโพงคุมแค่ mute ไม่ทำให้เพลงหยุดเล่นจริง
 //  (เอาเสียงสังเคราะห์ Web Audio ชุดเดิม — ensureAudio/playTick/playWin — ออกแล้ว เพราะเล่นทับกับเพลงนี้)
 // ============================================================
-const BGM_LIST = ['assets/bgm1.mp3', 'assets/bgm2.mp3', 'assets/bgm3.mp3', 'assets/bgm4.mp3', 'assets/bgm5.mp3'];
+const BGM_LIST = ['assets/bgm1.mp3', 'assets/bgm2.mp3', 'assets/bgm3.mp3', 'assets/bgm2.mp4', 'assets/bgm5.mp3'];
 bgm.src = BGM_LIST[Math.floor(Math.random() * BGM_LIST.length)]; // ตั้ง src ไว้ล่วงหน้า กดเริ่มแล้วเล่นได้ทันที
 function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -392,7 +392,19 @@ function shuffleArray(arr) {
 }
 
 // ขนาด canvas ผูกกับความกว้างจริงของบอร์ด (รองรับ retina ผ่าน devicePixelRatio) — เรียกตอน build และตอน resize
+// ปรับขนาดกรอบวงล้อให้เต็มพื้นที่ว่างจริงของ .stage (ทั้งกว้างและสูง) — ไม่ต้องเลื่อนจอ ใหญ่สุดเท่าที่จอให้
+function fitBoard() {
+  const stage = board.parentElement;
+  if (!stage) return;
+  const cs = getComputedStyle(stage);
+  const h = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const w = stage.clientWidth;
+  const size = Math.floor(Math.min(w, h, 420));
+  if (size >= 200) board.style.width = size + 'px';
+}
+
 function layoutWheel() {
+  fitBoard();
   const size = board.clientWidth * 0.92; // ตรงกับ width 92% ใน .wheel-canvas
   if (!size) return;
   wheelSize = size;
@@ -404,6 +416,8 @@ function layoutWheel() {
   wheelCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 window.addEventListener('resize', () => { layoutWheel(); drawWheel(); });
+// พื้นที่ว่างเปลี่ยน (แถบ LINE ซ่อน/แสดง, หมุนจอ, ฟอนต์โหลดเสร็จ) — คำนวณขนาดและวาดใหม่ให้ตรงเสมอ
+if (window.ResizeObserver) new ResizeObserver(() => { layoutWheel(); drawWheel(); }).observe(board.parentElement);
 
 function currentSliceIndex() {
   const n = wheelValues.length;
