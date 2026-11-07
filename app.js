@@ -1063,7 +1063,6 @@ async function bootLoad() {
   } else {
     await initLiff();
     if (liffReady && !liff.isLoggedIn()) return;   // กำลังพาไปหน้า login ของ LINE ไม่ต้องโชว์ error
-    removeBootMask();                               // LIFF พร้อมแล้ว — เปิดหน้าให้เห็นทันที ไม่ต้องรอข้อมูล
     if (liffReady && liffProfile) {
       bootMode = 'userId'; bootParam = liffProfile.userId;
       if (!tryRenderFromCache('userId', liffProfile.userId)) instruction.textContent = 'กำลังโหลดข้อมูล...';
@@ -1080,7 +1079,11 @@ async function init() {
   buildWheelValues();   // วาดวงล้อรอไว้ทันที (ตัวเลขล่อ) ไม่ให้เป็นวงกลมว่างระหว่างรอข้อมูล
 
   const params = new URLSearchParams(window.location.search);
-  if (params.get('room') || params.get('token')) removeBootMask(); // ไม่ต้องรอ LIFF จึงเปิดหน้าได้ทันที
+  // คงหน้ารอไว้จนข้อมูลพร้อม (รอครั้งเดียว เข้าวงล้อแล้วกดได้เลย) — ถ้ารอนานผิดปกติให้ข้อความบอก
+  setTimeout(() => {
+    const t = document.querySelector('#boot-mask .boot-text');
+    if (t) t.textContent = 'กำลังเชื่อมต่อ ใช้เวลานานกว่าปกติเล็กน้อย';
+  }, 6000);
 
   await bootLoad();
 
