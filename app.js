@@ -503,7 +503,7 @@ function drawWheel(highlightIdx) {
 if (!REDUCED_MOTION) {
   setInterval(() => {
     const s = revealCard.dataset.state;
-    if (document.hidden || (s !== 'idle' && s !== 'empty')) return;
+    if (document.hidden || (s !== 'idle' && s !== 'empty' && s !== 'loading')) return;
     drawWheel();
   }, 420);
 }
@@ -1077,6 +1077,7 @@ async function bootLoad() {
 async function init() {
   applyTier('Member'); // ค่าเริ่มต้นก่อนรู้ tier จริง
   startBtn.classList.add('hide'); // ปิดจนกว่าจะโหลดข้อมูลจริงเสร็จ
+  buildWheelValues();   // วาดวงล้อรอไว้ทันที (ตัวเลขล่อ) ไม่ให้เป็นวงกลมว่างระหว่างรอข้อมูล
 
   const params = new URLSearchParams(window.location.search);
   if (params.get('room') || params.get('token')) removeBootMask(); // ไม่ต้องรอ LIFF จึงเปิดหน้าได้ทันที
