@@ -249,7 +249,7 @@ body.lock{ overflow:hidden; }
 }
 .wheel-canvas{
   width:88%; height:88%; border-radius:50%;
-  filter:drop-shadow(0 12px 22px rgba(110,10,18,.3));
+  box-shadow:0 12px 22px rgba(110,10,18,.3);   /* เบากว่า filter:drop-shadow บน canvas ที่วาดใหม่ทุกเฟรม */
 }
 .wheel-hub{
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
