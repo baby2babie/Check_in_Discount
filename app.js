@@ -393,7 +393,7 @@ function shuffleArray(arr) {
 
 // ขนาด canvas ผูกกับความกว้างจริงของบอร์ด (รองรับ retina ผ่าน devicePixelRatio) — เรียกตอน build และตอน resize
 function layoutWheel() {
-  const size = board.clientWidth * 0.88; // ตรงกับ width 88% ใน .wheel-canvas
+  const size = board.clientWidth * 0.92; // ตรงกับ width 92% ใน .wheel-canvas
   if (!size) return;
   wheelSize = size;
   const dpr = window.devicePixelRatio || 1;
@@ -472,7 +472,7 @@ function drawWheel(highlightIdx) {
     ctx.rotate(start + slice / 2);
     ctx.textAlign = 'right';
     ctx.fillStyle = c.ink;
-    const fontSize = Math.max(14, Math.min(22, wheelSize * 0.055));
+    const fontSize = Math.max(14, Math.min(26, wheelSize * 0.06));
     ctx.font = '600 ' + fontSize + 'px "Anuphan","Sarabun",sans-serif';
     ctx.fillText(wheelValues[i] + '฿', r - 14, fontSize * 0.32);
     ctx.restore();

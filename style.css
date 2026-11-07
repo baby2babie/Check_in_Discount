@@ -36,7 +36,7 @@
   --pin:#2F6553;             /* ตัวอักษร/วงกลมบนพาสเทล */
 
   --ease:cubic-bezier(.22,.8,.24,1);
-  --board:clamp(264px, calc(100vh - 400px), 372px);   /* ขนาดบอร์ดปรับตามความสูงจอ */
+  --board:clamp(264px, calc(100vh - 400px), 420px);   /* ขนาดบอร์ดปรับตามความสูงจอ */
 
   --cap-w:94px;
   --cap-h:60px;
@@ -45,7 +45,7 @@
   color-scheme:light;
 }
 @supports (height:100dvh){
-  :root{ --board:clamp(264px, calc(100dvh - 400px), 372px); }
+  :root{ --board:clamp(264px, calc(100dvh - 400px), 420px); }
 }
 
 *,*::before,*::after{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -145,6 +145,7 @@ body.lock{ overflow:hidden; }
   flex:1;
   display:flex; align-items:center; justify-content:center;
   padding:12px 0;
+  margin:0 -10px;                                        /* ให้กรอบวงล้อใช้ความกว้างเพิ่มข้างละ 10px */
 }
 .board{
   position:relative;
@@ -240,7 +241,7 @@ body.lock{ overflow:hidden; }
   transition:opacity .4s ease;
 }
 .wheel-pointer{
-  position:absolute; top:3.5%; left:50%; transform:translateX(-50%);
+  position:absolute; top:1%; left:50%; transform:translateX(-50%);
   width:0; height:0;
   border-left:10px solid transparent; border-right:10px solid transparent;
   border-top:20px solid var(--red);
@@ -248,7 +249,7 @@ body.lock{ overflow:hidden; }
   filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 3px 3px rgba(58,12,18,.35));
 }
 .wheel-canvas{
-  width:88%; height:88%; border-radius:50%;
+  width:92%; height:92%; border-radius:50%;
   box-shadow:0 12px 22px rgba(110,10,18,.3);   /* เบากว่า filter:drop-shadow บน canvas ที่วาดใหม่ทุกเฟรม */
 }
 .wheel-hub{
