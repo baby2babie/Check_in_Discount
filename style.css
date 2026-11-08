@@ -310,6 +310,12 @@ body.lock{ overflow:hidden; }
 @supports (width:1cqw){
   .ticket-paper{ container-type:inline-size; }
   :root{ --amt-fs:46cqw; }
+  /* ข้อความอื่นในตั๋วโตตามความกว้างตั๋วด้วย ให้สมดุลกับตัวเลข */
+  .ticket-top{ padding:9cqw 10cqw 7cqw; }
+  .ticket-tier{ font-size:6.4cqw; gap:3.4cqw; }
+  .ticket-dot{ width:3.2cqw; height:3.2cqw; }
+  .ticket-label{ font-size:6.8cqw; margin-top:2.4cqw; }
+  .ticket-bottom{ font-size:6.4cqw; padding:0 7cqw; }
 }
 
 .ticket-top{
@@ -345,9 +351,10 @@ body.lock{ overflow:hidden; }
   -webkit-background-clip:text; background-clip:text;
 }
 .ticket-amount small{
-  font-size:.3em; font-weight:500; color:var(--gold-deep);
+  font-size:.3em; font-weight:500; color:#B3121F;          /* โทนแดงเดียวกับตัวเลข */
   margin:.22em 0 0 .1em;
 }
+.ticket.jackpot .ticket-amount small{ color:var(--gold-deep); }
 .ticket-label{ margin-top:6px; font-size:14px; color:var(--ink-2); }
 
 .ticket-perf{
@@ -359,8 +366,8 @@ body.lock{ overflow:hidden; }
 }
 .ticket-bottom{
   position:absolute; left:0; right:0; bottom:0; top:var(--perf);
-  display:flex; align-items:center;
-  padding:0 22px;
+  display:flex; align-items:center; justify-content:center;
+  padding:0 14px; text-align:center; text-wrap:balance;
   background:var(--paper);                               /* ขาวเหมือนส่วนบน — ไม่กลืนพื้นหลังงาช้างเหมือนสีอ่อนตามระดับ */
   font-size:13px; line-height:1.5; color:var(--tier-ink);
 }
