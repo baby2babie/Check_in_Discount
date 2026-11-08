@@ -33,7 +33,8 @@
   --tier-glow-2:#4E8F781A;
   --pas:#CFE9DE;             /* หลังการ์ด: พาสเทลของ tier */
   --pas2:#A9D6C4;
-  --pin:#2F6553;             /* ตัวอักษร/วงกลมบนพาสเทล */
+  --pin:#2F6553;
+  --amt-1:#3CB88F; --amt-2:#1F8A66; --amt-3:#0C5740; --amt-sh:#0C574044;   /* ค่าเริ่มต้น = Member */             /* ตัวอักษร/วงกลมบนพาสเทล */
 
   --ease:cubic-bezier(.22,.8,.24,1);
   --board:clamp(264px, calc(100vh - 400px), 420px);   /* ขนาดบอร์ดปรับตามความสูงจอ */
@@ -337,13 +338,13 @@ body.lock{ overflow:hidden; }
   font-size:var(--amt-fs); font-weight:200; line-height:1;
   font-variant-numeric:tabular-nums; white-space:nowrap;
 }
-/* ตัวเลขรางวัล: ไล่สีแดงเข้มแบบเหรียญ ขนาดผูกกับความกว้างตั๋ว (ตั๋วโตตามวงล้อ ตัวเลขโตตาม) */
+/* ตัวเลขรางวัล: ไล่เฉดสดตามระดับ (tier) ของผู้เช่า — ชุดสี --amt-* ตั้งค่าโดย applyTier() ใน app.js ขนาดผูกกับความกว้างตั๋ว (ตั๋วโตตามวงล้อ ตัวเลขโตตาม) */
 #ticketAmount{
-  font-weight:500;
-  background:linear-gradient(180deg, #E0303D 0%, #B3121F 48%, #7A0C16 100%);
+  font-weight:600;
+  background:linear-gradient(180deg, var(--amt-1) 0%, var(--amt-2) 48%, var(--amt-3) 100%);
   -webkit-background-clip:text; background-clip:text;
   -webkit-text-fill-color:transparent; color:transparent;
-  filter:drop-shadow(0 2px 0 rgba(168,122,30,.35));
+  filter:drop-shadow(0 2px 0 var(--amt-sh));
   padding-right:.04em;                                     /* กันขอบขวาของเลขโดนตัดตอน clip ด้วยพื้นหลัง */
 }
 .ticket.jackpot #ticketAmount{
@@ -351,10 +352,11 @@ body.lock{ overflow:hidden; }
   -webkit-background-clip:text; background-clip:text;
 }
 .ticket-amount small{
-  font-size:.3em; font-weight:500; color:#B3121F;          /* โทนแดงเดียวกับตัวเลข */
+  font-size:.3em; font-weight:500; color:var(--amt-2);     /* เฉดกลางของระดับเดียวกับตัวเลข */
   margin:.22em 0 0 .1em;
 }
 .ticket.jackpot .ticket-amount small{ color:var(--gold-deep); }
+.ticket.jackpot .ticket-amount{ font-size:calc(var(--amt-fs) * .76); }   /* เลข 3 หลัก (100) ย่อลงให้พอดีตั๋ว */
 .ticket-label{ margin-top:6px; font-size:14px; color:var(--ink-2); }
 
 .ticket-perf{

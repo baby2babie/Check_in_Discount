@@ -34,13 +34,13 @@ let currentTierLabel = null;
 //  pas/pas2 = พื้นหลังการ์ด (พาสเทล) · ink = ตัวอักษรบนพาสเทล · accent = แถบ/จุด/วงแหวน · tint = พื้นส่วนล่างตั๋ว
 // ============================================================
 const THEME = {
-  "Member":   { deep:"#25453A", accent:"#4E8F78", tint:"#EAF3EF", line:"#C5DDD3", ink:"#2F6553", pas:"#CFE9DE", pas2:"#A9D6C4" },
-  "Silver":   { deep:"#2D3B52", accent:"#6F86A6", tint:"#ECF0F6", line:"#CAD5E4", ink:"#3D5677", pas:"#D6E2F1", pas2:"#B4C8E2" },
-  "Gold":     { deep:"#5A4419", accent:"#B38A38", tint:"#F6F0E2", line:"#E3D2A8", ink:"#7A5C1D", pas:"#F6E6BE", pas2:"#EBCF8E" },
-  "Platinum": { deep:"#3E3563", accent:"#8574B5", tint:"#F0EDF7", line:"#D8D0EA", ink:"#56478A", pas:"#E0D9F3", pas2:"#C6BBE8" },
-  "Diamond":  { deep:"#1F4A54", accent:"#3F98A8", tint:"#E7F3F5", line:"#BFDFE4", ink:"#1F6572", pas:"#CBE9EE", pas2:"#A3D3DC" },
-  "Legend":   { deep:"#5C2530", accent:"#B5505E", tint:"#F8ECEE", line:"#E8C6CB", ink:"#86303C", pas:"#F5D5DA", pas2:"#EAB0BA" },
-  "Founder":  { deep:"#5C3A1E", accent:"#B8763E", tint:"#FDF6EC", line:"#D9B382", ink:"#8A4B1F", pas:"#F3DDBF", pas2:"#E4C193" },
+  "Member":   { deep:"#25453A", accent:"#4E8F78", tint:"#EAF3EF", line:"#C5DDD3", ink:"#2F6553", pas:"#CFE9DE", pas2:"#A9D6C4", a1:"#3CB88F", a2:"#1F8A66", a3:"#0C5740" },
+  "Silver":   { deep:"#2D3B52", accent:"#6F86A6", tint:"#ECF0F6", line:"#CAD5E4", ink:"#3D5677", pas:"#D6E2F1", pas2:"#B4C8E2", a1:"#6B97E0", a2:"#3A66B5", a3:"#1B3B7E" },
+  "Gold":     { deep:"#5A4419", accent:"#B38A38", tint:"#F6F0E2", line:"#E3D2A8", ink:"#7A5C1D", pas:"#F6E6BE", pas2:"#EBCF8E", a1:"#F7BE2E", a2:"#CC8A08", a3:"#84540A" },
+  "Platinum": { deep:"#3E3563", accent:"#8574B5", tint:"#F0EDF7", line:"#D8D0EA", ink:"#56478A", pas:"#E0D9F3", pas2:"#C6BBE8", a1:"#A275EA", a2:"#7440C2", a3:"#451F8A" },
+  "Diamond":  { deep:"#1F4A54", accent:"#3F98A8", tint:"#E7F3F5", line:"#BFDFE4", ink:"#1F6572", pas:"#CBE9EE", pas2:"#A3D3DC", a1:"#1DBFD8", a2:"#0E8CA3", a3:"#095A6B" },
+  "Legend":   { deep:"#5C2530", accent:"#B5505E", tint:"#F8ECEE", line:"#E8C6CB", ink:"#86303C", pas:"#F5D5DA", pas2:"#EAB0BA", a1:"#EE4D68", a2:"#C21F3E", a3:"#7A0E26" },
+  "Founder":  { deep:"#5C3A1E", accent:"#B8763E", tint:"#FDF6EC", line:"#D9B382", ink:"#8A4B1F", pas:"#F3DDBF", pas2:"#E4C193", a1:"#F29A41", a2:"#C46A18", a3:"#7A3B0A" },
 };
 function applyTier(tierLabel) {
   const t = THEME[tierLabel] || THEME["Member"];
@@ -53,6 +53,11 @@ function applyTier(tierLabel) {
   s.setProperty('--pas', t.pas);
   s.setProperty('--pas2', t.pas2);
   s.setProperty('--pin', t.ink);
+  // สีตัวเลขรางวัลบนตั๋ว: ชุด 3 เฉดสดของแต่ละระดับ (สว่าง / กลาง / เข้ม)
+  s.setProperty('--amt-1', t.a1);
+  s.setProperty('--amt-2', t.a2);
+  s.setProperty('--amt-3', t.a3);
+  s.setProperty('--amt-sh', t.a3 + '44');
   s.setProperty('--tier-glow', t.accent + '38');
   s.setProperty('--tier-glow-2', t.accent + '1A');
   if (wheelCtx && wheelValues.length) drawWheel();
@@ -352,7 +357,7 @@ const RIM_BULBS = 20; // จำนวนหลอดไฟบนกรอบท�
 //  หยุดทันทีตอนออกจากหน้า/ปิด LIFF ผ่าน pagehide — ปุ่มลำโพงคุมแค่ mute ไม่ทำให้เพลงหยุดเล่นจริง
 //  (เอาเสียงสังเคราะห์ Web Audio ชุดเดิม — ensureAudio/playTick/playWin — ออกแล้ว เพราะเล่นทับกับเพลงนี้)
 // ============================================================
-const BGM_LIST = ['assets/bgm1.mp3', 'assets/bgm2.mp3', 'assets/bgm3.mp3', 'assets/bgm4.mp3', 'assets/bgm5.mp3'];
+const BGM_LIST = ['assets/bgm1.mp3', 'assets/bgm2.mp3', 'assets/bgm3.mp3'];
 bgm.src = BGM_LIST[Math.floor(Math.random() * BGM_LIST.length)]; // ตั้ง src ไว้ล่วงหน้า กดเริ่มแล้วเล่นได้ทันที
 function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
