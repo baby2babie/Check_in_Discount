@@ -610,7 +610,7 @@ async function landOnAmount(amount) {
       if (!startTime) startTime = ts;
       const t = Math.min(1, (ts - startTime) / decelDuration);
       wheelRotation = startRotation + delta * (1 - Math.pow(1 - t, 3));
-      drawWheel(currentSliceIndex());
+      drawWheel();                                          // ไม่ไฮไลต์ช่องระหว่างชะลอ — ผู้เล่นจะได้ไม่รู้ผลก่อนวงล้อหยุด
       if (t < 1) requestAnimationFrame(frame);
       else resolve();
     }
@@ -627,9 +627,9 @@ async function landOnAmount(amount) {
       const t = Math.min(1, (ts - t0) / dur);
       const decay = Math.pow(1 - t, 2);
       wheelRotation = base + Math.sin(t * Math.PI * 3) * 0.045 * decay;
-      drawWheel(targetIndex);
+      drawWheel();                                          // ช่วงส่ายก่อนหยุดก็ยังไม่ไฮไลต์
       if (t < 1) requestAnimationFrame(frame);
-      else { wheelRotation = base; drawWheel(targetIndex); resolve(); }
+      else { wheelRotation = base; drawWheel(targetIndex); resolve(); }   // ไฮไลต์ช่องที่ได้ ตอนหยุดสนิทแล้วเท่านั้น
     }
     requestAnimationFrame(frame);
   });
