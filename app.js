@@ -68,8 +68,8 @@ function applyTier(tierLabel) {
 // จะเป็นหนึ่งใน 7 ค่านี้เสมอ — ค่าสูงสุดจะเป็นช่องสีทองโดยอัตโนมัติ
 // เปิดใช้ Jackpot: เพิ่ม 100 ต่อท้ายรายการ (ต้องเพิ่มแถวในชีท LOOT_BOX + รัน SQL ก่อน)
 const JACKPOT_AMOUNT = 100;
-const CAPSULE_NUMBERS = [5, 10, 15, 20, 25, 30, 50];
-const N_CAPS = 7;
+const CAPSULE_NUMBERS = [5, 10, 15, 20, 25, 30, 50, 100];
+const N_CAPS = 8;
 
 // ============================================================
 //  CACHE (sessionStorage) — stale-while-revalidate
