@@ -629,7 +629,7 @@ async function landOnAmount(amount) {
       wheelRotation = base + Math.sin(t * Math.PI * 3) * 0.045 * decay;
       drawWheel();                                          // ช่วงส่ายก่อนหยุดก็ยังไม่ไฮไลต์
       if (t < 1) requestAnimationFrame(frame);
-      else { wheelRotation = base; drawWheel(targetIndex); resolve(); }   // ไฮไลต์ช่องที่ได้ ตอนหยุดสนิทแล้วเท่านั้น
+      else { wheelRotation = base; drawWheel(); resolve(); }   // หยุดสนิท ไม่ไฮไลต์ช่อง
     }
     requestAnimationFrame(frame);
   });
@@ -677,10 +677,7 @@ async function playRound(milestone, requestOpen) {
   setPhase(2);
   await landOnAmount(amount);
 
-  await wait(600); // ให้วงล้อนิ่งสนิทและเห็นช่องที่หยุดก่อน flash
-
-  screenFlash.classList.remove('go'); void screenFlash.offsetWidth; screenFlash.classList.add('go');
-  await wait(450);
+  await wait(500); // ให้วงล้อนิ่งสนิทและเห็นช่องที่หยุดสักครู่ แล้วขึ้นตั๋วเลย (ตัดแฟลชหน้าจอออกแล้ว)
 
   setState('result');
   const jackpot = amount >= JACKPOT_AMOUNT;

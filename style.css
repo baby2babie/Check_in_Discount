@@ -220,7 +220,7 @@ body.lock{ overflow:hidden; }
 .app[data-state="error"] .stage{ opacity:.5; transition:opacity .3s ease; }
 .app[data-state="empty"] .wheel-shell{ opacity:.2; }
 /* ตอนเฉลยรางวัล: ซ่อนวงล้อ แล้วใช้แสงสีธีมหลังตั๋วแทน (ป้ายไม่ได้อยู่ใน .wheel-shell จึงไม่จางตาม) */
-.app[data-state="result"] .wheel-shell{ opacity:0; }
+.app[data-state="result"] .wheel-shell{ opacity:0; transform:scale(.78); }   /* วงล้อย่อเล็กลงพร้อมจางหาย ตั๋วเด้งขึ้นมาแทนที่ตรงกลาง */
 .board::before{                                          /* แสงเรืองหลังตั๋ว สีตาม --tier ของผู้เช่า */
   content:""; position:absolute; inset:-8%; border-radius:50%; pointer-events:none;
   background:radial-gradient(circle,
@@ -239,7 +239,7 @@ body.lock{ overflow:hidden; }
 .wheel-shell{
   position:absolute; inset:0;
   display:flex; align-items:center; justify-content:center;
-  transition:opacity .4s ease;
+  transition:opacity .4s ease, transform .5s var(--ease);
 }
 .wheel-pointer{
   position:absolute; top:1%; left:50%; transform:translateX(-50%);
@@ -272,7 +272,7 @@ body.lock{ overflow:hidden; }
 .ticket{
   position:absolute; left:50%; top:50%;
   width:min(74%, 260px);
-  transform:translate(-50%, -46%) scale(.94);
+  transform:translate(-50%, -50%) scale(.55);
   opacity:0; visibility:hidden; pointer-events:none;
   z-index:5;
   filter:drop-shadow(0 1px 1px rgba(28,35,32,.06)) drop-shadow(0 22px 26px rgba(28,35,32,.16));
@@ -281,7 +281,7 @@ body.lock{ overflow:hidden; }
 .ticket.show{
   opacity:1; visibility:visible; pointer-events:auto;
   transform:translate(-50%, -50%) scale(1);
-  transition:transform .7s var(--ease), opacity .45s ease, visibility 0s;
+  transition:transform .6s cubic-bezier(.34,1.45,.64,1), opacity .3s ease, visibility 0s;   /* เด้งเกินเล็กน้อยแล้วนิ่ง */
 }
 
 .ticket-paper{
