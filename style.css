@@ -375,6 +375,68 @@ body.lock{ overflow:hidden; }
 }
 
 /* ============================================================
+   JACKPOT TICKET — ตั๋วรางวัลใหญ่สุด: พื้นดำทองเข้ม + ฟอยล์ทอง ไม่ใช้สีตามระดับ (tier) ให้ต่างจากตั๋วทั่วไปชัดเจน
+   ============================================================ */
+.ticket.jackpot{
+  width:min(78%, 276px);
+  animation:jpGlow 2.6s ease-in-out .9s infinite;
+}
+@keyframes jpGlow{
+  0%,100%{ filter:drop-shadow(0 1px 1px rgba(0,0,0,.25)) drop-shadow(0 22px 28px rgba(60,38,0,.38)) drop-shadow(0 0 10px rgba(232,185,74,.35)); }
+  50%    { filter:drop-shadow(0 1px 1px rgba(0,0,0,.25)) drop-shadow(0 22px 28px rgba(60,38,0,.38)) drop-shadow(0 0 26px rgba(255,214,102,.75)); }
+}
+.ticket.jackpot .ticket-paper{
+  background:
+    radial-gradient(120% 70% at 50% 0%, #4A3410 0%, rgba(74,52,16,0) 60%),
+    linear-gradient(170deg, #20170A 0%, #130E05 55%, #1B1307 100%);
+}
+.ticket.jackpot .ticket-paper::before{                  /* กรอบทองด้านในแทนแถบสีบางๆ */
+  inset:7px; height:auto; background:none; border-radius:12px;
+  border:1.5px solid #E8B94A99;
+  box-shadow:inset 0 0 0 3px rgba(232,185,74,.10), inset 0 0 18px rgba(232,185,74,.12);
+  pointer-events:none; z-index:1;
+}
+.ticket.jackpot.show .ticket-paper::after{              /* แสงวิ่งผ่านทอง วนซ้ำเบาๆ */
+  background:linear-gradient(105deg, transparent 36%, rgba(255,233,168,.55) 50%, transparent 64%);
+  animation:sheen 1.2s var(--ease) .35s 1 forwards, jpSheen 4.2s ease-in-out 2.4s infinite;
+  z-index:2;
+}
+@keyframes jpSheen{ 0%{ transform:translateX(-120%); } 38%,100%{ transform:translateX(120%); } }
+.ticket.jackpot .ticket-top::before{ color:#E8B94A; opacity:.10; }   /* ลายน้ำ ฿ ทองจาง */
+.ticket.jackpot .ticket-tier{
+  color:#FFE9A8; font-weight:700; letter-spacing:.32em; text-transform:uppercase; padding-left:1.5cqw;
+}
+.ticket.jackpot .ticket-dot{                            /* จุดกลม → ดาวทอง */
+  width:4.6cqw; height:4.6cqw; border-radius:0; background:linear-gradient(180deg,#FFF1C2,#E8B94A);
+  clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+}
+.ticket.jackpot #ticketAmount{
+  font-weight:700;
+  background:linear-gradient(180deg,#FFF6D6 0%,#FFD966 22%,#E8B94A 45%,#B8841F 70%,#FFE08A 100%);
+  background-size:100% 200%; background-position:0 0;
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(232,185,74,.45));
+  animation:jpFoil 3.4s ease-in-out infinite alternate;
+}
+@keyframes jpFoil{ to{ background-position:0 100%; } }
+.ticket.jackpot .ticket-amount small{ color:#FFD966; }
+.ticket.jackpot .ticket-label{ color:#F3DFA6; font-weight:600; letter-spacing:.04em; }
+.ticket.jackpot .ticket-perf{
+  background:radial-gradient(circle, #E8B94A 1.5px, transparent 1.8px) 0 50% / 9px 4px repeat-x; opacity:.9;
+}
+.ticket.jackpot .ticket-bottom{ background:transparent; color:#E9D49A; z-index:1; }
+.ticket.jackpot .ticket-top::after{                     /* ประกายดาว */
+  content:"✦"; position:absolute; right:9cqw; top:8cqw; font-size:8cqw; color:#FFE9A8;
+  text-shadow:0 0 8px #FFD966; animation:jpTwinkle 1.8s ease-in-out infinite;
+}
+@keyframes jpTwinkle{ 0%,100%{ opacity:.25; transform:scale(.7) rotate(0); } 50%{ opacity:1; transform:scale(1.15) rotate(20deg); } }
+@media (prefers-reduced-motion: reduce){
+  .ticket.jackpot, .ticket.jackpot #ticketAmount, .ticket.jackpot .ticket-top::after,
+  .ticket.jackpot.show .ticket-paper::after{ animation:none; }
+}
+
+/* ============================================================
    REVEAL FX — แสงนุ่มสี tier + เศษกระดาษละเอียด (แทนริบบิ้นหลายสีเดิม)
    ============================================================ */
 .screen-flash{
