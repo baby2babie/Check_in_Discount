@@ -577,3 +577,114 @@ body.lock{ overflow:hidden; }
   }
   .confetti-layer{ display:none; }
 }
+/* ============================================================
+   ธีมเทศกาล — ใช้เมื่อ <html data-fest="ชื่อธีม"> (valentine / songkran / loykrathong / christmas)
+   ธีมปกติไม่แสดงของตกแต่งเหล่านี้ เลเยอร์ตกแต่งอยู่หลังเนื้อหา (z-index:-1) ไม่บังปุ่ม/ข้อความ
+   ============================================================ */
+.fest-banner, .fest-particles, .fest-bottom{ display:none; }
+html[data-fest] .app{ position:relative; z-index:1; padding-bottom:max(64px, env(safe-area-inset-bottom)); }
+html[data-fest] .fest-particles{ display:block; position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden; }
+html[data-fest] .fest-bottom{ position:fixed; left:0; right:0; bottom:0; height:58px; pointer-events:none; z-index:-1; }
+.fest-bottom svg{ width:100%; height:100%; display:block; }
+html[data-fest="valentine"] .fest-bottom[data-for="valentine"], html[data-fest="songkran"] .fest-bottom[data-for="songkran"],
+html[data-fest="loykrathong"] .fest-bottom[data-for="loykrathong"], html[data-fest="christmas"] .fest-bottom[data-for="christmas"]{ display:block; }
+html[data-fest] .fest-bottom{ display:none; }
+html[data-fest="valentine"] .fest-bottom[data-for="valentine"], html[data-fest="songkran"] .fest-bottom[data-for="songkran"],
+html[data-fest="loykrathong"] .fest-bottom[data-for="loykrathong"], html[data-fest="christmas"] .fest-bottom[data-for="christmas"]{ display:block; }
+html[data-fest] .fest-banner{
+  display:flex; align-items:center; justify-content:center; gap:8px; margin:10px auto 0; width:max-content; max-width:100%;
+  padding:5px 16px; border-radius:999px; font-size:13px; font-weight:500; letter-spacing:.02em;
+}
+.fb-ic{ width:17px; height:17px; background:center/contain no-repeat; flex:none; }
+/* อนุภาคลอยตก/ลอยขึ้น */
+.fest-particles i{ position:absolute; top:-24px; animation:festFall linear infinite; opacity:0; }
+.fest-particles i:nth-child(1){ left:6%;  animation-duration:9s;    animation-delay:0s; }
+.fest-particles i:nth-child(2){ left:17%; animation-duration:12s;   animation-delay:2s; }
+.fest-particles i:nth-child(3){ left:28%; animation-duration:10s;   animation-delay:4s; }
+.fest-particles i:nth-child(4){ left:39%; animation-duration:13s;   animation-delay:1s; }
+.fest-particles i:nth-child(5){ left:50%; animation-duration:9.5s;  animation-delay:3s; }
+.fest-particles i:nth-child(6){ left:61%; animation-duration:11s;   animation-delay:5s; }
+.fest-particles i:nth-child(7){ left:72%; animation-duration:10.5s; animation-delay:.5s; }
+.fest-particles i:nth-child(8){ left:83%; animation-duration:12.5s; animation-delay:6s; }
+.fest-particles i:nth-child(9){ left:91%; animation-duration:9.8s;  animation-delay:2.6s; }
+.fest-particles i:nth-child(10){ left:96%; animation-duration:11.5s; animation-delay:4.4s; }
+@keyframes festFall{ 0%{ transform:translate(0,0) rotate(0); opacity:0; } 8%{ opacity:1; } 92%{ opacity:.85; } 100%{ transform:translate(14px,105vh) rotate(40deg); opacity:0; } }
+@keyframes festRise{ 0%{ transform:translate(0,0); opacity:0; } 10%{ opacity:1; } 90%{ opacity:.85; } 100%{ transform:translate(-18px,-108vh); opacity:0; } }
+@media (prefers-reduced-motion: reduce){ .fest-particles i{ animation:none; display:none; } }
+/* ผลเฉลย: ชิ้นกระดาษ → รูปทรงตามเทศกาล */
+.confetti-piece.shape-drop{ border-radius:50% 50% 50% 50% / 62% 62% 38% 38%; box-shadow:inset -1.5px -1.5px 0 rgba(255,255,255,.6); }
+.confetti-piece.shape-snow{ border-radius:50%; }
+.confetti-piece.shape-heart{ -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath d='M12 21C3 14 0 10 0 6.5A6 6 0 0 1 12 4a6 6 0 0 1 12 2.5C24 10 21 14 12 21z'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath d='M12 21C3 14 0 10 0 6.5A6 6 0 0 1 12 4a6 6 0 0 1 12 2.5C24 10 21 14 12 21z'/%3E%3C/svg%3E") center/contain no-repeat; border-radius:0; }
+.confetti-piece.shape-spark{ clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%); border-radius:0; }
+
+/* ---------- วาเลนไทน์ (ก.พ.) ---------- */
+html[data-fest="valentine"]{ --page:#FFF0F4; --red:#E0315B; --red-deep:#A31342; --ink-2:#8E4B63; --line:rgba(120,30,60,.18); }
+html[data-fest="valentine"] body{ background:radial-gradient(120% 55% at 50% 0%, #FFD0DF 0%, rgba(255,208,223,0) 68%), radial-gradient(90% 40% at 50% 100%, #FFD9E5 0%, rgba(255,217,229,0) 70%), #FFF0F4; }
+html[data-fest="valentine"] .fest-banner{ color:#A31342; background:linear-gradient(180deg,#FFFFFF,#FFE0EA); box-shadow:inset 0 0 0 1.5px #F28FB0, 0 2px 6px rgba(224,49,91,.2); }
+html[data-fest="valentine"] .fb-ic{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath d='M12 21C3 14 0 10 0 6.5A6 6 0 0 1 12 4a6 6 0 0 1 12 2.5C24 10 21 14 12 21z' fill='%23E0315B'/%3E%3C/svg%3E"); }
+html[data-fest="valentine"] .btn.primary{ background:linear-gradient(180deg,#FF7BA2 0%,#E0315B 52%,#B01E4A 100%); }
+html[data-fest="valentine"] .fest-particles i{ width:15px; height:14px; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath d='M12 21C3 14 0 10 0 6.5A6 6 0 0 1 12 4a6 6 0 0 1 12 2.5C24 10 21 14 12 21z'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath d='M12 21C3 14 0 10 0 6.5A6 6 0 0 1 12 4a6 6 0 0 1 12 2.5C24 10 21 14 12 21z'/%3E%3C/svg%3E") center/contain no-repeat; background:#FF7FA5; }
+html[data-fest="valentine"] .fest-particles i:nth-child(even){ background:#FFB3C7; width:11px; height:10px; }
+html[data-fest="valentine"] .fest-particles i:nth-child(3n){ background:#E0315B; }
+
+/* ---------- สงกรานต์ (เม.ย.) ---------- */
+html[data-fest="songkran"]{ --page:#EAF8FC; --ink-2:#4F7C8C; --red:#F26B21; --red-deep:#065A7A; --gold:#FFC94D; --line:rgba(11,58,76,.16); }
+html[data-fest="songkran"] body{ background:radial-gradient(120% 55% at 50% 0%, #BDEBFA 0%, rgba(189,235,250,0) 68%), radial-gradient(90% 40% at 50% 100%, #CFF1FA 0%, rgba(207,241,250,0) 70%), #EAF8FC; }
+html[data-fest="songkran"] .fest-banner{ color:#065A7A; background:linear-gradient(180deg,#FFFFFF,#D7F3FC); box-shadow:inset 0 0 0 1.5px #52C6E8, 0 2px 6px rgba(21,151,194,.2); }
+html[data-fest="songkran"] .fb-l{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg fill='%23FFB000'%3E%3Ccircle cx='10' cy='4' r='3.2'/%3E%3Ccircle cx='15.2' cy='7' r='3.2'/%3E%3Ccircle cx='15.2' cy='13' r='3.2'/%3E%3Ccircle cx='10' cy='16' r='3.2'/%3E%3Ccircle cx='4.8' cy='13' r='3.2'/%3E%3Ccircle cx='4.8' cy='7' r='3.2'/%3E%3C/g%3E%3Ccircle cx='10' cy='10' r='3' fill='%23C45A00'/%3E%3C/svg%3E"); } html[data-fest="songkran"] .fb-r{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 18'%3E%3Cpath d='M7 1C7 1 1 8 1 12a6 6 0 0 0 12 0C13 8 7 1 7 1z' fill='%233FC3EC' stroke='%23fff' stroke-width='1.2'/%3E%3C/svg%3E"); }
+html[data-fest="songkran"] .btn.primary{ background:linear-gradient(180deg,#3FC3EC 0%,#1597C2 52%,#0B6F94 100%); }
+html[data-fest="songkran"] .fest-particles i{ width:9px; height:13px; border-radius:50% 50% 50% 50% / 62% 62% 38% 38%; background:rgba(82,198,232,.6); box-shadow:inset -1.5px -1.5px 0 rgba(255,255,255,.55); }
+html[data-fest="songkran"] .fest-particles i:nth-child(even){ width:7px; height:10px; }
+
+/* ---------- ลอยกระทง (พ.ย.) ---------- */
+html[data-fest="loykrathong"]{ --red:#FFD36A; --gold:#E8B94A; --line:rgba(244,236,210,.28); }
+html[data-fest="loykrathong"] body{ background:
+  radial-gradient(circle at 86% 9%, #FFF6D0 0 13px, rgba(255,240,190,.55) 14px 24px, rgba(255,240,190,.16) 25px 58px, rgba(255,240,190,0) 59px),
+  radial-gradient(120% 55% at 50% 0%, #25468F 0%, rgba(37,70,143,0) 68%), radial-gradient(90% 40% at 50% 100%, #3A2A12 0%, rgba(58,42,18,0) 70%), #0B1B3A; }
+html[data-fest="loykrathong"] .fest-banner{ color:#FFE08A; background:rgba(255,255,255,.08); box-shadow:inset 0 0 0 1.5px #E8B94A, 0 2px 10px rgba(255,170,40,.25); }
+html[data-fest="loykrathong"] .fb-ic{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 18'%3E%3Cpath d='M7 1c3 4 5 6 5 9.5a5 5 0 0 1-10 0C2 7 4 5 7 1z' fill='%23FFB62E'/%3E%3Cpath d='M7 8c1.4 2 2 3 2 4.4a2 2 0 0 1-4 0C5 11 5.6 10 7 8z' fill='%23FFF3C4'/%3E%3C/svg%3E"); }
+html[data-fest="loykrathong"] .btn.primary{ background:linear-gradient(180deg,#FFE08A 0%,#F2B93B 52%,#B97F1C 100%); color:#2A1A00; text-shadow:0 1px 0 rgba(255,255,255,.4); }
+html[data-fest="loykrathong"] .fest-particles i{ top:auto; bottom:-24px; width:11px; height:15px; border-radius:45% 45% 40% 40%; animation-name:festRise; animation-duration:16s;
+  background:radial-gradient(circle at 50% 70%, #FFF3C4 0%, #FFB62E 55%, #FF8A1F 100%); box-shadow:0 0 12px 3px rgba(255,170,40,.65); }
+html[data-fest="loykrathong"] .fest-particles i:nth-child(odd){ animation-duration:19s; }
+html[data-fest="loykrathong"] .fest-particles i:nth-child(3n){ width:8px; height:11px; }
+
+/* ---------- คริสต์มาส (ธ.ค.) ---------- */
+html[data-fest="christmas"]{ --red:#FFD84A; --gold:#F2C14E; --line:rgba(255,255,255,.3); }
+html[data-fest="christmas"] body{ background:radial-gradient(120% 55% at 50% 0%, #1E7A52 0%, rgba(30,122,82,0) 68%), radial-gradient(90% 40% at 50% 100%, #0A2A1E 0%, rgba(10,42,30,0) 70%), #0F3B2A; }
+html[data-fest="christmas"] .fest-banner{ color:#B01E2D; background:linear-gradient(180deg,#FFFFFF,#FFF1D0); box-shadow:inset 0 0 0 1.5px #D4A937, 0 2px 8px rgba(0,0,0,.25); }
+html[data-fest="christmas"] .fb-l{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 22'%3E%3Cpath d='M10 1 4 9h3L2 16h16l-5-7h3z' fill='%2314653A'/%3E%3Crect x='9' y='16' width='2' height='4' fill='%236B4226'/%3E%3Ccircle cx='7' cy='13' r='1.1' fill='%23E0303D'/%3E%3Ccircle cx='12' cy='10' r='1' fill='%23FFD84A'/%3E%3C/svg%3E"); } html[data-fest="christmas"] .fb-r{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 1l2.6 5.8 6.3.6-4.7 4.2 1.4 6.2L10 14.6 4.4 17.8l1.4-6.2L1.1 7.4l6.3-.6z' fill='%23F2C14E' stroke='%23fff' stroke-width='.8'/%3E%3C/svg%3E"); }
+html[data-fest="christmas"] .fest-particles i{ width:6px; height:6px; border-radius:50%; background:#fff; box-shadow:0 0 5px rgba(255,255,255,.9); }
+html[data-fest="christmas"] .fest-particles i:nth-child(even){ width:4px; height:4px; }
+html[data-fest="christmas"] .fest-particles i:nth-child(3n){ width:8px; height:8px; }
+
+/* ธีมมืด (ลอยกระทง/คริสต์มาส): ข้อความหน้าหลักเป็นสีอ่อน — ไม่แตะตั๋วและหน้าประวัติ */
+html[data-fest="loykrathong"] .brand h1, html[data-fest="christmas"] .brand h1{ color:#F7F0DA; }
+html[data-fest="loykrathong"] .room, html[data-fest="loykrathong"] .hint, html[data-fest="loykrathong"] .footnote, html[data-fest="loykrathong"] .notice, html[data-fest="loykrathong"] .icon-btn, html[data-fest="loykrathong"] .pill-btn{ color:#C9D2EA; }
+html[data-fest="christmas"] .room, html[data-fest="christmas"] .hint, html[data-fest="christmas"] .footnote, html[data-fest="christmas"] .notice, html[data-fest="christmas"] .icon-btn, html[data-fest="christmas"] .pill-btn{ color:#D5EBDD; }
+html[data-fest="loykrathong"] .title{ color:#FFE08A; } html[data-fest="christmas"] .title{ color:#FFE9A8; }
+html[data-fest="loykrathong"] .app .btn.ghost, html[data-fest="christmas"] .app .btn.ghost{ color:#F7F0DA; }
+html[data-fest="loykrathong"] .icon-btn:hover, html[data-fest="christmas"] .icon-btn:hover{ background:rgba(255,255,255,.1); }
+
+/* ---------- จุดกลางวงล้อ แยกตามธีม ---------- */
+html[data-fest] .wheel-hub::before{ content:""; position:absolute; left:50%; top:-9px; transform:translateX(-50%); width:20px; height:18px; background:center/contain no-repeat; }
+/* วาเลนไทน์: ปุ่มกลางสีกุหลาบ ขอบขาว มีหัวใจเล็กเกาะด้านบน */
+html[data-fest="valentine"] .wheel-hub{ background:radial-gradient(circle at 35% 28%, #FF9DBA 0%, #E0315B 55%, #A31342 100%); box-shadow:0 0 0 3px #FFFFFF, 0 0 0 5px #F28FB0, 0 8px 18px rgba(120,20,50,.4); }
+html[data-fest="valentine"] .wheel-hub-num{ color:#FFFFFF; text-shadow:0 1px 2px rgba(120,10,40,.5); }
+html[data-fest="valentine"] .wheel-hub-label{ color:#FFE3EC; }
+html[data-fest="valentine"] .wheel-hub::before{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath d='M12 21C3 14 0 10 0 6.5A6 6 0 0 1 12 4a6 6 0 0 1 12 2.5C24 10 21 14 12 21z' fill='%23FFFFFF' stroke='%23E0315B' stroke-width='1.4'/%3E%3C/svg%3E"); width:24px; height:22px; top:-13px; filter:drop-shadow(0 1px 2px rgba(120,10,40,.45)); }
+/* สงกรานต์: ขันน้ำสีฟ้าใส ขอบดาวเรืองสีส้ม มีดอกดาวเรืองเกาะด้านบน */
+html[data-fest="songkran"] .wheel-hub{ background:radial-gradient(circle at 35% 28%, #FFFFFF 0%, #BFEFFF 50%, #52C6E8 100%); box-shadow:0 0 0 3px #FFFFFF, 0 0 0 6px #FFB000, 0 8px 18px rgba(11,58,76,.4); }
+html[data-fest="songkran"] .wheel-hub-num{ color:#065A7A; }
+html[data-fest="songkran"] .wheel-hub-label{ color:#0B6F94; }
+html[data-fest="songkran"] .wheel-hub::before{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg fill='%23FFB000' stroke='%23fff' stroke-width='.7'%3E%3Ccircle cx='10' cy='4' r='3.2'/%3E%3Ccircle cx='15.2' cy='7' r='3.2'/%3E%3Ccircle cx='15.2' cy='13' r='3.2'/%3E%3Ccircle cx='10' cy='16' r='3.2'/%3E%3Ccircle cx='4.8' cy='13' r='3.2'/%3E%3Ccircle cx='4.8' cy='7' r='3.2'/%3E%3C/g%3E%3Ccircle cx='10' cy='10' r='3' fill='%23C45A00'/%3E%3C/svg%3E"); width:24px; height:24px; top:-14px; }
+/* ลอยกระทง: กระทงเรืองแสง พื้นน้ำเงินเข้ม ตัวเลขสีทอง มีเปลวเทียนด้านบน */
+html[data-fest="loykrathong"] .wheel-hub{ background:radial-gradient(circle at 50% 38%, #2B4FA6 0%, #14297A 60%, #0A1740 100%); box-shadow:0 0 0 3px #FFE08A, 0 0 0 5px #B97F1C, 0 0 22px 4px rgba(255,170,40,.55), 0 8px 18px rgba(0,0,0,.5); }
+html[data-fest="loykrathong"] .wheel-hub-num{ color:#FFD36A; text-shadow:0 0 8px rgba(255,170,40,.8); }
+html[data-fest="loykrathong"] .wheel-hub-label{ color:#E7D9A8; }
+html[data-fest="loykrathong"] .wheel-hub::before{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 18'%3E%3Cpath d='M7 1c3 4 5 6 5 9.5a5 5 0 0 1-10 0C2 7 4 5 7 1z' fill='%23FFB62E'/%3E%3Cpath d='M7 8c1.4 2 2 3 2 4.4a2 2 0 0 1-4 0C5 11 5.6 10 7 8z' fill='%23FFF3C4'/%3E%3C/svg%3E"); width:16px; height:22px; top:-17px; filter:drop-shadow(0 0 6px rgba(255,170,40,.9)); }
+/* คริสต์มาส: ลูกบอลประดับต้นคริสต์มาสสีแดง มีฝาทองด้านบน */
+html[data-fest="christmas"] .wheel-hub{ background:radial-gradient(circle at 35% 28%, #FF8A8A 0%, #C21F2E 52%, #7E0F1B 100%); box-shadow:0 0 0 3px #F2C14E, 0 0 0 5px #FFFFFF, 0 8px 18px rgba(0,0,0,.5); }
+html[data-fest="christmas"] .wheel-hub-num{ color:#FFFFFF; text-shadow:0 1px 2px rgba(60,0,10,.5); }
+html[data-fest="christmas"] .wheel-hub-label{ color:#FFE9E9; }
+html[data-fest="christmas"] .wheel-hub::before{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 12'%3E%3Crect x='2' y='3' width='12' height='9' rx='1.5' fill='%23F2C14E'/%3E%3Cpath d='M5 3V1.5a3 3 0 0 1 6 0V3' fill='none' stroke='%23B97F1C' stroke-width='1.5'/%3E%3C/svg%3E"); width:16px; height:12px; top:-14px; border-radius:2px; }

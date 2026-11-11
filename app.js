@@ -294,14 +294,15 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 // ============================================================
 function spawnConfetti(count) {
   if (REDUCED_MOTION) return;
-  const colors = ['#E8B94A', '#F6D77C', '#C8202E', 'var(--tier)'];
+  const colors = PAL.drops || ['#E8B94A', '#F6D77C', '#C8202E', 'var(--tier)'];
+  const shape = PAL.shape;
   for (let i = 0; i < count; i++) {
     const p = document.createElement('div');
     p.className = 'confetti-piece';
     const w = 3 + Math.random() * 3;
     const h = w * (2 + Math.random() * 1.5);
-    p.style.width = w + 'px';
-    p.style.height = h + 'px';
+    if (shape) { const sz = w * (shape === 'snow' ? 1.8 : shape === 'drop' ? 2.2 : 3.2); p.style.width = sz + 'px'; p.style.height = (shape === 'drop' ? sz * 1.35 : sz) + 'px'; p.classList.add('shape-' + shape); }
+    else { p.style.width = w + 'px'; p.style.height = h + 'px'; }
     p.style.left = (Math.random() * 100) + 'vw';
     p.style.background = colors[Math.floor(Math.random() * colors.length)];
     p.style.animationDuration = (2.6 + Math.random() * 1.6) + 's';
@@ -341,13 +342,52 @@ const DECEL_MIN_MS = 5000;  // ช่วงชะลอจนหยุดอย�
 // สีบนวงล้อ — ช่องที่มีค่ามากที่สุดเป็นสีทองเสมอ ที่เหลือสลับแดง/ครีมเริ่มจากช่องถัดจากทองตามเข็มนาฬิกา
 // (7 ช่อง = ทอง 1 + แดง/ครีมอย่างละ 3 จึงไม่มีสีซ้ำชิดกัน) ไม่ผูกกับ tier ของผู้เช่า
 // ตัวเลขสับตำแหน่งใหม่ทุกรอบ ทองจึงย้ายตามเลขสูงสุดไปด้วย
+// ============================================================
+//  ธีมเทศกาล — เลือกอัตโนมัติจากเดือน (FEST_PERIODS) เดือนที่ไม่อยู่ในตาราง = วงล้อปกติแดงทองเดิม
+//  เพิ่มธีมใหม่ = เพิ่มชุดสีใน PALS + แถวใน FEST_PERIODS + ข้อความใน FEST_TEXT + สไตล์ใน style.css (html[data-fest="ชื่อ"])
+//  ลองดูธีมนอกช่วงเดือนได้โดยต่อท้ายลิงก์ ?fest=songkran (ผู้ใช้ทั่วไปไม่เห็น)
+// ============================================================
+const PALS = {
+  normal: { red:{bg:'#C8202E',ink:'#FFF4D6'}, cream:{bg:'#FFF1DC',ink:'#8E1019'}, gold:{bg:'#E8B94A',ink:'#4A0E14'},
+            rim:['#FFE9A8','#E8B94A','#B97F1C','#F6D77C'], groove:'#5A0E16', stroke:'rgba(255,233,168,.9)', bulbOn:'#FFFBE6', bulbGlow:'rgba(255,226,140,.95)', bulbOff:'#C98E22', deco:'bulb', drops:null, shape:null },
+  valentine: { red:{bg:'#D8315B',ink:'#FFFFFF'}, cream:{bg:'#FFEAF0',ink:'#B01E4A'}, gold:{bg:'#F6C26B',ink:'#6A1530'},
+            rim:['#FFE0EA','#F28FB0','#C2466F','#FFC2D6'], groove:'#7A1237', stroke:'rgba(255,255,255,.95)', bulbOn:'#FFFFFF', bulbGlow:'rgba(255,140,185,.95)', bulbOff:'#E07AA0', deco:'heart', drops:['#FF5C8A','#FFB3C7','#FFFFFF','#E0315B'], shape:'heart' },
+  songkran: { red:{bg:'#1597C2',ink:'#FFFFFF'}, cream:{bg:'#E8F9FD',ink:'#0A6A8E'}, gold:{bg:'#FFC94D',ink:'#6A3B00'},
+            rim:['#BFEFFF','#52C6E8','#1A8DB5','#A7E6F7'], groove:'#0B5878', stroke:'rgba(255,255,255,.95)', bulbOn:'#FFB000', bulbGlow:'rgba(255,190,40,.9)', bulbOff:'#F08A00', deco:'flower', drops:['#58C8EE','#BFEFFF','#FFFFFF','#FFB000'], shape:'drop' },
+  loykrathong: { red:{bg:'#1E3F8F',ink:'#FFE9A8'}, cream:{bg:'#FFF0D2',ink:'#1B2F6E'}, gold:{bg:'#FFB62E',ink:'#3A1A00'},
+            rim:['#FFE9A8','#E8B94A','#9C6B12','#FFE08A'], groove:'#0A1740', stroke:'rgba(255,233,168,.9)', bulbOn:'#FFD36A', bulbGlow:'rgba(255,165,40,.95)', bulbOff:'#9C6B12', deco:'flame', drops:['#FFB62E','#FFD36A','#FFF3C4','#FF8A1F'], shape:'spark' },
+  christmas: { red:{bg:'#C21F2E',ink:'#FFFFFF'}, cream:{bg:'#FFFFFF',ink:'#1E6B3C'}, gold:{bg:'#F2C14E',ink:'#4A0E14'},
+            rim:['#8EDDA9','#2E9A5A','#14653A','#6CC48E'], groove:'#0B3A22', stroke:'rgba(255,255,255,.95)', bulbOn:'#FFFFFF', bulbGlow:'rgba(255,255,255,.9)', bulbOff:'#7FA890', deco:'light', drops:['#FFFFFF','#E4F2FF','#FFFFFF','#C9E6FF'], shape:'snow' }
+};
+const FEST_PERIODS = [   // เดือน-วัน (เวลาไทย) ใช้ทั้งเดือน
+  { name: 'valentine',   from: '02-01', to: '02-29' },
+  { name: 'songkran',    from: '04-01', to: '04-30' },
+  { name: 'loykrathong', from: '11-01', to: '11-30' },
+  { name: 'christmas',   from: '12-01', to: '12-31' }
+];
+const FEST_TEXT = { valentine: 'สุขสันต์วันวาเลนไทน์', songkran: 'สุขสันต์วันสงกรานต์', loykrathong: 'สุขสันต์วันลอยกระทง', christmas: 'Merry Christmas' };
+let PAL = PALS.normal;
+function currentFest() {
+  const q = new URLSearchParams(location.search).get('fest');
+  if (q && PALS[q]) return q;
+  const md = new Date(Date.now() + 7 * 3600e3).toISOString().slice(5, 10);
+  const hit = FEST_PERIODS.find(f => md >= f.from && md <= f.to);
+  return hit ? hit.name : null;
+}
+function setFest(name) {
+  PAL = PALS[name] || PALS.normal;
+  const t = document.getElementById('festBannerText');
+  if (name && PALS[name]) { document.documentElement.dataset.fest = name; if (t) t.textContent = FEST_TEXT[name] || ''; }
+  else delete document.documentElement.dataset.fest;
+  if (typeof wheelValues !== 'undefined' && wheelValues.length) drawWheel();
+}
 const SLICE_RED   = { bg: '#C8202E', ink: '#FFF4D6' };
 const SLICE_CREAM = { bg: '#FFF1DC', ink: '#8E1019' };
 const SLICE_GOLD  = { bg: '#E8B94A', ink: '#4A0E14' };
 function sliceStyle(i, n, goldIdx) {
-  if (i === goldIdx) return SLICE_GOLD;
+  if (i === goldIdx) return PAL.gold;
   const k = (i - goldIdx - 1 + n) % n;   // ลำดับตั้งแต่ช่องหลังทองเป็นต้นไป
-  return k % 2 === 0 ? SLICE_RED : SLICE_CREAM;
+  return k % 2 === 0 ? PAL.red : PAL.cream;
 }
 const RIM_BULBS = 20; // จำนวนหลอดไฟบนกรอบทอง
 
@@ -448,17 +488,17 @@ function drawWheel(highlightIdx) {
 
   // กรอบทอง (ไม่หมุนตามช่อง) + ร่องแดงเข้มด้านใน
   const rim = ctx.createLinearGradient(0, 0, wheelSize, wheelSize);
-  rim.addColorStop(0, '#FFE9A8');
-  rim.addColorStop(0.35, '#E8B94A');
-  rim.addColorStop(0.65, '#B97F1C');
-  rim.addColorStop(1, '#F6D77C');
+  rim.addColorStop(0, PAL.rim[0]);
+  rim.addColorStop(0.35, PAL.rim[1]);
+  rim.addColorStop(0.65, PAL.rim[2]);
+  rim.addColorStop(1, PAL.rim[3]);
   ctx.beginPath();
   ctx.arc(center, center, R, 0, Math.PI * 2);
   ctx.fillStyle = rim;
   ctx.fill();
   ctx.beginPath();
   ctx.arc(center, center, r + 1.5, 0, Math.PI * 2);
-  ctx.fillStyle = '#5A0E16';
+  ctx.fillStyle = PAL.groove;
   ctx.fill();
 
   // ช่องรางวัล (ช่องที่มีเลขสูงสุดเป็นสีทอง)
@@ -483,7 +523,7 @@ function drawWheel(highlightIdx) {
     }
 
     ctx.lineWidth = 1.5;
-    ctx.strokeStyle = 'rgba(255,233,168,.9)';
+    ctx.strokeStyle = PAL.stroke;
     ctx.stroke();
 
     ctx.save();
@@ -503,17 +543,32 @@ function drawWheel(highlightIdx) {
   for (let i = 0; i < RIM_BULBS; i++) {
     const ang = (i / RIM_BULBS) * Math.PI * 2 - Math.PI / 2;
     const on = (i + phase) % 2 === 0;
+    const bx = center + Math.cos(ang) * rb, by = center + Math.sin(ang) * rb, R = rimW * 0.27;
+    ctx.save();
+    let fill = on ? PAL.bulbOn : PAL.bulbOff;
+    if (PAL.deco === 'light') fill = (on ? ['#FF4A4A', '#FFD84A', '#FFFFFF', '#5CE08A'] : ['#A33B3B', '#A88A22', '#9DB5A5', '#2E8A52'])[i % 4];   // ไฟคริสต์มาสสลับสี
+    if (on) { ctx.shadowColor = (PAL.deco === 'light') ? fill : PAL.bulbGlow; ctx.shadowBlur = 8; }
+    ctx.fillStyle = fill;
     ctx.beginPath();
-    ctx.arc(center + Math.cos(ang) * rb, center + Math.sin(ang) * rb, rimW * 0.27, 0, Math.PI * 2);
-    if (on) {
-      ctx.fillStyle = '#FFFBE6';
-      ctx.shadowColor = 'rgba(255,226,140,.95)';
-      ctx.shadowBlur = 8;
+    if (PAL.deco === 'heart') {                         // หัวใจ
+      const s = R * 1.55;
+      ctx.moveTo(bx, by + s * 0.5);
+      ctx.bezierCurveTo(bx - s * 1.1, by - s * 0.1, bx - s * 0.5, by - s * 0.85, bx, by - s * 0.32);
+      ctx.bezierCurveTo(bx + s * 0.5, by - s * 0.85, bx + s * 1.1, by - s * 0.1, bx, by + s * 0.5);
+    } else if (PAL.deco === 'flame') {                  // เปลวเทียนกระทง
+      const s = R * 1.7;
+      ctx.moveTo(bx, by - s * 0.95);
+      ctx.bezierCurveTo(bx + s * 0.85, by - s * 0.2, bx + s * 0.7, by + s * 0.6, bx, by + s * 0.6);
+      ctx.bezierCurveTo(bx - s * 0.7, by + s * 0.6, bx - s * 0.85, by - s * 0.2, bx, by - s * 0.95);
     } else {
-      ctx.fillStyle = '#C98E22';
-      ctx.shadowBlur = 0;
+      ctx.arc(bx, by, R, 0, Math.PI * 2);
     }
     ctx.fill();
+    ctx.restore();
+    if (PAL.deco === 'flower') {                       // ดอกดาวเรือง (พวงมาลัยรอบวงล้อ): กลีบรอบวง + เกสรกลาง
+      for (let q = 0; q < 6; q++) { const a = q * Math.PI / 3; ctx.beginPath(); ctx.arc(bx + Math.cos(a) * rimW * 0.2, by + Math.sin(a) * rimW * 0.2, rimW * 0.15, 0, Math.PI * 2); ctx.fillStyle = on ? '#FFC21A' : '#F28C00'; ctx.fill(); }
+      ctx.beginPath(); ctx.arc(bx, by, rimW * 0.12, 0, Math.PI * 2); ctx.fillStyle = '#C45A00'; ctx.fill();
+    }
   }
   ctx.shadowBlur = 0;
 }
@@ -1091,6 +1146,7 @@ async function bootLoad() {
 }
 
 async function init() {
+  setFest(currentFest());   // เลือกธีมเทศกาลตามเดือน
   applyTier('Member'); // ค่าเริ่มต้นก่อนรู้ tier จริง
   startBtn.classList.add('hide'); // ปิดจนกว่าจะโหลดข้อมูลจริงเสร็จ
   buildWheelValues();   // วาดวงล้อรอไว้ทันที (ตัวเลขล่อ) ไม่ให้เป็นวงกลมว่างระหว่างรอข้อมูล
