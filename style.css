@@ -582,9 +582,9 @@ body.lock{ overflow:hidden; }
    ธีมปกติไม่แสดงของตกแต่งเหล่านี้ เลเยอร์ตกแต่งอยู่หลังเนื้อหา (z-index:-1) ไม่บังปุ่ม/ข้อความ
    ============================================================ */
 .fest-banner, .fest-particles, .fest-bottom{ display:none; }
-html[data-fest] .app{ position:relative; z-index:1; padding-bottom:max(64px, env(safe-area-inset-bottom)); }
+html[data-fest] .app{ position:relative; z-index:1; padding-bottom:max(40px, env(safe-area-inset-bottom)); }
 html[data-fest] .fest-particles{ display:block; position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden; }
-html[data-fest] .fest-bottom{ position:fixed; left:0; right:0; bottom:0; height:58px; pointer-events:none; z-index:-1; }
+html[data-fest] .fest-bottom{ position:fixed; left:0; right:0; bottom:0; height:44px; pointer-events:none; z-index:-1; }
 .fest-bottom svg{ width:100%; height:100%; display:block; }
 html[data-fest="valentine"] .fest-bottom[data-for="valentine"], html[data-fest="songkran"] .fest-bottom[data-for="songkran"],
 html[data-fest="loykrathong"] .fest-bottom[data-for="loykrathong"], html[data-fest="christmas"] .fest-bottom[data-for="christmas"]{ display:block; }
@@ -592,10 +592,11 @@ html[data-fest] .fest-bottom{ display:none; }
 html[data-fest="valentine"] .fest-bottom[data-for="valentine"], html[data-fest="songkran"] .fest-bottom[data-for="songkran"],
 html[data-fest="loykrathong"] .fest-bottom[data-for="loykrathong"], html[data-fest="christmas"] .fest-bottom[data-for="christmas"]{ display:block; }
 html[data-fest] .fest-banner{
-  display:flex; align-items:center; justify-content:center; gap:8px; margin:10px auto 0; width:max-content; max-width:100%;
-  padding:5px 16px; border-radius:999px; font-size:13px; font-weight:500; letter-spacing:.02em;
+  position:fixed; top:4px; left:50%; transform:translateX(-50%); z-index:2; pointer-events:none;   /* ลอยเหนือหัวหน้า ไม่กินพื้นที่วงล้อ */
+  display:flex; align-items:center; justify-content:center; gap:6px; width:max-content; max-width:100%;
+  padding:2px 12px; border-radius:999px; font-size:11.5px; font-weight:500; letter-spacing:.02em; line-height:1.5;
 }
-.fb-ic{ width:17px; height:17px; background:center/contain no-repeat; flex:none; }
+.fb-ic{ width:13px; height:13px; background:center/contain no-repeat; flex:none; }
 /* อนุภาคลอยตก/ลอยขึ้น */
 .fest-particles i{ position:absolute; top:-24px; animation:festFall linear infinite; opacity:0; }
 .fest-particles i:nth-child(1){ left:6%;  animation-duration:9s;    animation-delay:0s; }
