@@ -357,7 +357,7 @@ const RIM_BULBS = 20; // จำนวนหลอดไฟบนกรอบท�
 //  หยุดทันทีตอนออกจากหน้า/ปิด LIFF ผ่าน pagehide — ปุ่มลำโพงคุมแค่ mute ไม่ทำให้เพลงหยุดเล่นจริง
 //  (เอาเสียงสังเคราะห์ Web Audio ชุดเดิม — ensureAudio/playTick/playWin — ออกแล้ว เพราะเล่นทับกับเพลงนี้)
 // ============================================================
-const BGM_LIST = ['assets/bgm1.mp3', 'assets/bgm2.mp3', 'assets/bgm3.mp3', 'assets/bgm4.mp3', 'assets/bgm5.mp3'];
+const BGM_LIST = ['assets/bgm1.mp3', 'assets/bgm2.mp3', 'assets/bgm3.mp3'];
 bgm.src = BGM_LIST[Math.floor(Math.random() * BGM_LIST.length)]; // ตั้ง src ไว้ล่วงหน้า กดเริ่มแล้วเล่นได้ทันที
 function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -423,6 +423,25 @@ function layoutWheel() {
 window.addEventListener('resize', () => { layoutWheel(); drawWheel(); });
 // พื้นที่ว่างเปลี่ยน (แถบ LINE ซ่อน/แสดง, หมุนจอ, ฟอนต์โหลดเสร็จ) — คำนวณขนาดและวาดใหม่ให้ตรงเสมอ
 if (window.ResizeObserver) new ResizeObserver(() => { layoutWheel(); drawWheel(); }).observe(board.parentElement);
+
+// ลูกศรสะบัดทุกครั้งที่ผ่านขอบช่อง (ไม่ไฮไลต์ช่อง จึงไม่บอกผลล่วงหน้า) — ช้าลง → สะบัดกว้างและนานขึ้น
+const pointerEl = document.querySelector('.wheel-pointer');
+let lastFlick = 0;
+function flickPointer(speed) {                     // speed = rad/ms ปัจจุบัน
+  if (REDUCED_MOTION || !pointerEl || !pointerEl.animate) return;
+  const now = performance.now();
+  if (now - lastFlick < 40) return;                 // วงล้อเร็วมากจะข้ามบางช่อง ไม่สะบัดถี่เกินไป
+  lastFlick = now;
+  const s = Math.max(0.25, Math.min(1, speed / WHEEL_V0));
+  const deg = 14 + 16 * (1 - s);
+  const dur = 70 + 150 * (1 - s);
+  pointerEl.animate(
+    [{ transform: 'translateX(-50%) rotate(' + (-deg) + 'deg)' }, { transform: 'translateX(-50%) rotate(0deg)' }],
+    { duration: dur, easing: 'cubic-bezier(.2,.9,.3,1.3)' }
+  );
+}
+// สั่นเบา ๆ (รองรับเฉพาะบางเครื่อง เช่น Android — iPhone ไม่สั่น แต่ไม่มีผลเสีย)
+function buzz(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {} }
 
 function currentSliceIndex() {
   const n = wheelValues.length;
@@ -557,7 +576,7 @@ function startContinuousSpin() {
     wheelVelocity = Math.min(WHEEL_V0, wheelVelocity + accel * dt);
     wheelRotation += wheelVelocity * dt;
     const idx = currentSliceIndex();
-    if (idx !== lastTickIdx) { lastTickIdx = idx; }
+    if (idx !== lastTickIdx) { if (lastTickIdx !== null) flickPointer(wheelVelocity); lastTickIdx = idx; }
     drawWheel();
     wheelLoopHandle = requestAnimationFrame(loop);
   }
@@ -606,10 +625,13 @@ async function landOnAmount(amount) {
 
   await new Promise(resolve => {
     let startTime = null;
+    let lastIdx = currentSliceIndex();
     function frame(ts) {
       if (!startTime) startTime = ts;
       const t = Math.min(1, (ts - startTime) / decelDuration);
       wheelRotation = startRotation + delta * (1 - Math.pow(1 - t, 3));
+      const ni = currentSliceIndex();
+      if (ni !== lastIdx) { lastIdx = ni; flickPointer(v0 * Math.pow(1 - t, 2)); }
       drawWheel();                                          // ไม่ไฮไลต์ช่องระหว่างชะลอ — ผู้เล่นจะได้ไม่รู้ผลก่อนวงล้อหยุด
       if (t < 1) requestAnimationFrame(frame);
       else resolve();
@@ -643,6 +665,7 @@ function presentTicket(milestone, amount, celebrate = true) {
   ticketDesc.textContent = 'หักจากบิลรอบถัดไปโดยอัตโนมัติ';
   ticket.setAttribute('aria-label', `${boxNameFor(milestone)} Coupon ส่วนลดค่าเช่า ${amount} บาท`);
   ticket.classList.add('show');
+  if (celebrate) buzz(isJackpot ? [40, 70, 40, 70, 160] : [28]);   // สั่นเบา ๆ ตอนได้รางวัล
   claimBtn.classList.add('show');
   if (celebrate) {
     countUp(ticketAmt, amount);
