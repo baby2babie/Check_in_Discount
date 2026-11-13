@@ -312,6 +312,27 @@ function spawnConfetti(count) {
   }
 }
 
+// ---------- Jackpot Celebration ----------
+// ฝนเหรียญ/ดาวทอง 3 ระลอก (ไม่ใช้แฟลชเต็มจอ) — ใช้เฉพาะตอนได้ Jackpot
+function spawnGoldShower() {
+  if (REDUCED_MOTION) return;
+  const wave = (n) => {
+    for (let i = 0; i < n; i++) {
+      const p = document.createElement('div');
+      const star = Math.random() < 0.35;
+      p.className = 'confetti-piece gold' + (star ? ' star' : '');
+      const s = 7 + Math.random() * 7;
+      p.style.width = s + 'px'; p.style.height = s + 'px';
+      p.style.left = (Math.random() * 100) + 'vw';
+      p.style.animationDuration = (2.4 + Math.random() * 1.8) + 's';
+      p.style.animationDelay = (Math.random() * 0.5) + 's';
+      confettiLayer.appendChild(p);
+      setTimeout(() => p.remove(), 5200);
+    }
+  };
+  wave(34); setTimeout(() => wave(26), 700); setTimeout(() => wave(20), 1500);
+}
+
 // ตัวเลขนับขึ้นจาก 0 ตอนเฉลย
 function countUp(el, to, dur = 900) {
   if (REDUCED_MOTION || to <= 0) { el.textContent = to; return; }
@@ -359,13 +380,7 @@ const PALS = {
   christmas: { red:{bg:'#C21F2E',ink:'#FFFFFF'}, cream:{bg:'#FFFFFF',ink:'#1E6B3C'}, gold:{bg:'#F2C14E',ink:'#4A0E14'},
             rim:['#8EDDA9','#2E9A5A','#14653A','#6CC48E'], groove:'#0B3A22', stroke:'rgba(255,255,255,.95)', bulbOn:'#FFFFFF', bulbGlow:'rgba(255,255,255,.9)', bulbOff:'#7FA890', deco:'light', drops:['#FFFFFF','#E4F2FF','#FFFFFF','#C9E6FF'], shape:'snow' }
 };
-const FEST_PERIODS = [   // เดือน-วัน (เวลาไทย) ใช้ทั้งเดือน
-  { name: 'valentine',   from: '02-01', to: '02-29' },
-  { name: 'songkran',    from: '04-01', to: '04-30' },
-  { name: 'loykrathong', from: '11-01', to: '11-30' },
-  { name: 'christmas',   from: '12-01', to: '12-31' }
-];
-const FEST_TEXT = { valentine: 'สุขสันต์วันวาเลนไทน์', songkran: 'สุขสันต์วันสงกรานต์', loykrathong: 'สุขสันต์วันลอยกระทง', christmas: 'Merry Christmas' };
+const FEST_PERIODS = window.FEST_PERIODS || [];   // ตารางเดือนอยู่ใน <head> ของ index.html
 let PAL = PALS.normal;
 function currentFest() {
   const q = new URLSearchParams(location.search).get('fest');
@@ -376,8 +391,9 @@ function currentFest() {
 }
 function setFest(name) {
   PAL = PALS[name] || PALS.normal;
-  const t = document.getElementById('festBannerText');
-  if (name && PALS[name]) { document.documentElement.dataset.fest = name; if (t) t.textContent = FEST_TEXT[name] || ''; }
+  if (name && PALS[name]) document.documentElement.dataset.fest = name;
+  const hg = document.getElementById('histGarland');   // พวงตกแต่งหัวหน้าประวัติ = สำเนาพวงด้านบนของธีมนั้น
+  if (hg) { hg.innerHTML = ''; const src = name && document.querySelector('.fest-top svg[data-for="' + name + '"]'); if (src) hg.appendChild(src.cloneNode(true)); }
   else delete document.documentElement.dataset.fest;
   if (typeof wheelValues !== 'undefined' && wheelValues.length) drawWheel();
 }
@@ -695,13 +711,15 @@ function presentTicket(milestone, amount, celebrate = true) {
   const isJackpot = Number(amount) >= JACKPOT_AMOUNT;
   ticketTier.textContent = isJackpot ? 'Jackpot' : `${boxNameFor(milestone)} Coupon`;
   ticket.classList.toggle('jackpot', isJackpot);
+  revealCard.dataset.jp = isJackpot ? '1' : '0';   // เปิดแสงรัศมีทองหลังตั๋วผ่าน CSS
   ticketDesc.textContent = 'หักจากบิลรอบถัดไปโดยอัตโนมัติ';
   ticket.setAttribute('aria-label', `${boxNameFor(milestone)} Coupon ส่วนลดค่าเช่า ${amount} บาท`);
   ticket.classList.add('show');
   claimBtn.classList.add('show');
   if (celebrate) {
     countUp(ticketAmt, amount);
-    spawnConfetti(isJackpot ? 60 : 16);
+    if (isJackpot) spawnGoldShower();
+    else spawnConfetti(16);
   } else {
     ticketAmt.textContent = amount;
   }
@@ -710,6 +728,7 @@ function presentTicket(milestone, amount, celebrate = true) {
 // เล่น 1 รอบเต็ม: สับเลขล่อ → ยิง backend จริงทันที (กดเริ่มครั้งเดียวจบ) → หมุนวนรอผล → ชะลอไปหยุดที่ผลจริง → เฉลย
 async function playRound(milestone, requestOpen) {
   setState('play');
+  revealCard.dataset.jp = '0';
   buildWheelValues();
   ticket.classList.remove('show');
   claimBtn.classList.remove('show');
@@ -737,7 +756,7 @@ async function playRound(milestone, requestOpen) {
   setState('result');
   const jackpot = amount >= JACKPOT_AMOUNT;
   setTitle(jackpot ? 'JACKPOT! ยินดีด้วย' : 'ขอแสดงความยินดี');
-  setHint('คุณได้รับส่วนลดค่าเช่า');
+  setHint(jackpot ? 'รางวัลพิเศษประจำเดือนนี้ เป็นของคุณ' : 'คุณได้รับส่วนลดค่าเช่า');
   presentTicket(milestone, amount);
 
   return { success: true, result };

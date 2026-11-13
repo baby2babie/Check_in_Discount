@@ -683,3 +683,48 @@ html[data-fest="christmas"] .wheel-hub::before{ background-image:url("data:image
 /* ลอยกระทง: ฉากล่างสูงขึ้นเล็กน้อยให้เห็นกระทงเต็มดวง */
 html[data-fest="loykrathong"] .fest-bottom{ height:58px; }
 html[data-fest="loykrathong"] .app{ padding-bottom:max(48px, env(safe-area-inset-bottom)); }
+
+/* ---------- หน้าประวัติ: พวงตกแต่งหัวแผ่น + สีหัวข้อตามธีม (เนื้อหาด้านล่างคงเดิมเพื่อให้อ่านตัวเลขง่าย) ---------- */
+.hist-garland{ display:none; }
+html[data-fest] .hist-garland{ display:block; flex:none; height:22px; overflow:hidden; }
+.hist-garland svg{ display:block; width:100%; height:100%; }
+html[data-fest="valentine"] .history-title{ color:#A31342; } html[data-fest="valentine"] .sheet-grip{ background:#F28FB0; }
+html[data-fest="songkran"] .history-title{ color:#065A7A; } html[data-fest="songkran"] .sheet-grip{ background:#52C6E8; }
+html[data-fest="loykrathong"] .history-title{ color:#1B2F6E; } html[data-fest="loykrathong"] .sheet-grip{ background:#E8B94A; }
+html[data-fest="christmas"] .history-title{ color:#14653A; } html[data-fest="christmas"] .sheet-grip{ background:#2E9A5A; }
+html[data-fest="loykrathong"] .history-header .icon-btn, html[data-fest="christmas"] .history-header .icon-btn{ color:var(--ink-2); }
+
+/* ============================================================
+   JACKPOT CELEBRATION — รัศมีทองหมุนช้าหลังตั๋ว + ฝนเหรียญ/ดาวทอง + หัวข้อทองวิบวับ
+   ใช้เมื่อ #revealCard[data-jp="1"] (ตั้งใน presentTicket) — ไม่มีแฟลชเต็มจอ
+   ============================================================ */
+.app[data-jp="1"][data-state="result"] .board::before{
+  inset:-30%; opacity:1;
+  background:
+    radial-gradient(circle, rgba(255,226,140,.7) 0%, rgba(255,214,102,.25) 34%, transparent 62%),
+    repeating-conic-gradient(from 0deg, rgba(255,214,102,.5) 0 7deg, transparent 7deg 22.5deg);
+  -webkit-mask:radial-gradient(circle, #000 0 30%, transparent 68%); mask:radial-gradient(circle, #000 0 30%, transparent 68%);
+  animation:jpRays 26s linear infinite;
+}
+@keyframes jpRays{ to{ transform:rotate(360deg); } }
+.app[data-jp="1"][data-state="result"] .title{
+  background:linear-gradient(90deg,#7A4E05 0%,#B97F0C 30%,#E0A21C 50%,#B97F0C 70%,#7A4E05 100%);   /* ทองเข้ม อ่านชัดบนพื้นสว่าง */
+  background-size:220% 100%; -webkit-background-clip:text; background-clip:text;
+  color:transparent; -webkit-text-fill-color:transparent;
+  animation:jpShine 2.6s ease-in-out infinite;
+}
+@keyframes jpShine{ 0%{ background-position:100% 0; } 100%{ background-position:-120% 0; } }
+.confetti-piece.gold{
+  background:radial-gradient(circle at 35% 30%, #FFF3C4 0%, #FFC93C 55%, #B97F1C 100%);
+  border-radius:50%; box-shadow:0 0 6px rgba(255,201,60,.7); opacity:1;
+}
+.confetti-piece.gold.star{
+  clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+  border-radius:0; box-shadow:none; background:#FFD966;
+}
+@media (prefers-reduced-motion: reduce){
+  .app[data-jp="1"][data-state="result"] .board::before, .app[data-jp="1"][data-state="result"] .title{ animation:none; }
+}
+html[data-fest="loykrathong"] .app[data-jp="1"][data-state="result"] .title, html[data-fest="christmas"] .app[data-jp="1"][data-state="result"] .title{
+  background-image:linear-gradient(90deg,#E0A21C 0%,#FFD966 30%,#FFF3C4 50%,#FFD966 70%,#E0A21C 100%);   /* พื้นมืด ใช้ทองสว่าง */
+}
