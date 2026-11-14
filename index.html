@@ -164,8 +164,24 @@
   <div class="dock">
     <p class="notice" id="instruction" aria-live="polite"></p>
     <button class="btn primary hide" id="startBtn" type="button">ลุ้นรางวัล</button>
-    <button class="btn primary claim" id="claimBtn" type="button">ตกลง</button>
+    <div class="claim-row" id="claimRow">
+      <button class="btn ghost respin" id="respinBtn" type="button" style="display:none;"></button>
+      <button class="btn primary claim" id="claimBtn" type="button">ตกลง</button>
+    </div>
     <button class="btn ghost" id="retryBtn" type="button" style="display:none;">ลองอีกครั้ง</button>
+  </div>
+
+  <!-- หน้ายืนยันหมุนใหม่ -->
+  <div class="respin-sheet" id="respinSheet" hidden>
+    <div class="respin-card" role="dialog" aria-modal="true" aria-labelledby="respinTitle">
+      <h3 id="respinTitle">ใช้ <span id="respinCost">–</span> แต้มเช็คอิน ลุ้นอีกครั้งไหม?</h3>
+      <p>ตอนนี้คุณได้ส่วนลด <b><span id="respinOld">–</span> บาท</b></p>
+      <p>ถ้าลุ้นอีกครั้ง ส่วนลดใหม่จะ<b>แทนที่ส่วนลดเดิม</b><br>อาจได้ <b>เท่าเดิมหรือมากกว่า</b> ไม่ต่ำกว่าเดิมแน่นอน<br>แต้มที่ใช้แล้ว<b>ไม่คืน</b> แม้ได้เท่าเดิม</p>
+      <div class="respin-row">
+        <button type="button" class="respin-no" id="respinNo">ไม่ลุ้น</button>
+        <button type="button" class="respin-yes" id="respinYes">ลุ้นอีกครั้ง · <span id="respinCost2">–</span> แต้ม</button>
+      </div>
+    </div>
   </div>
 
 

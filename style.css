@@ -728,3 +728,53 @@ html[data-fest="loykrathong"] .history-header .icon-btn, html[data-fest="christm
 html[data-fest="loykrathong"] .app[data-jp="1"][data-state="result"] .title, html[data-fest="christmas"] .app[data-jp="1"][data-state="result"] .title{
   background-image:linear-gradient(90deg,#E0A21C 0%,#FFD966 30%,#FFF3C4 50%,#FFD966 70%,#E0A21C 100%);   /* พื้นมืด ใช้ทองสว่าง */
 }
+
+/* ============================================================
+   หมุนใหม่ด้วยแต้ม — ปุ่มรองใต้ "ตกลง" + หน้ายืนยัน
+   ============================================================ */
+/* ปุ่มคู่ (ตอนมีสิทธิ์ลุ้นอีกครั้ง): ลุ้นอีกครั้ง (ซ้าย รอง) + ตกลง (ขวา หลัก) — ไม่มีสิทธิ์ = ปุ่มตกลงเต็มเหมือนเดิม */
+.claim-row{ display:contents; }
+.claim-row.two{ display:flex; gap:10px; align-items:stretch; width:min(92%,340px); margin:0 auto; }
+.claim-row.two .btn.primary.claim{ flex:1 1 0; width:auto; margin:0; height:58px; display:flex; align-items:center; justify-content:center; }
+.btn.ghost.respin{
+  --rs-fg:var(--red-deep); --rs-bd:var(--gold-deep);
+  --rs-bg:linear-gradient(180deg,#FFFBEA 0%,#FFEFC0 100%);
+  flex:1 1 0; width:auto; margin:0; height:58px; border-radius:999px; padding:0 10px;
+  display:flex; align-items:center; justify-content:center; gap:7px; white-space:nowrap;
+  font-size:15px; font-weight:600; letter-spacing:.01em; color:var(--rs-fg);
+  background:var(--rs-bg);
+  box-shadow:inset 0 0 0 1.5px var(--rs-bd), inset 0 2px 0 rgba(255,255,255,.7), 0 8px 16px -10px rgba(0,0,0,.35);
+}
+.btn.ghost.respin:hover{ background:var(--rs-bg); filter:brightness(1.03); }
+/* ไอคอนลูกศรวนกลับ บอกว่า "ลองอีกครั้ง" (ต่างจากปุ่มตกลงที่ไม่มีไอคอน) */
+.btn.ghost.respin::before{
+  content:""; flex:none; width:18px; height:18px; background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 12a8 8 0 1 1-2.6-5.9'/%3E%3Cpath d='M20 4v5h-5'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 12a8 8 0 1 1-2.6-5.9'/%3E%3Cpath d='M20 4v5h-5'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+html[data-fest="valentine"] .btn.ghost.respin{ --rs-fg:#A31342; --rs-bd:#E0315B; --rs-bg:linear-gradient(180deg,#FFF5F8 0%,#FFD9E4 100%); }
+html[data-fest="songkran"] .btn.ghost.respin{ --rs-fg:#065A7A; --rs-bd:#1597C2; --rs-bg:linear-gradient(180deg,#F4FCFF 0%,#CDEFFA 100%); }
+html[data-fest="loykrathong"] .btn.ghost.respin{ --rs-fg:#FFE08A; --rs-bd:#E8B94A; --rs-bg:linear-gradient(180deg,rgba(255,224,138,.16) 0%,rgba(255,224,138,.07) 100%); }
+html[data-fest="christmas"] .btn.ghost.respin{ --rs-fg:#FFE9A8; --rs-bd:#F2C14E; --rs-bg:linear-gradient(180deg,rgba(255,233,168,.16) 0%,rgba(255,233,168,.07) 100%); }
+.respin-sheet{ position:fixed; inset:0; z-index:300; display:flex; align-items:flex-end; justify-content:center;
+  background:rgba(28,35,32,.45); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+.respin-sheet[hidden]{ display:none; }
+.respin-card{ width:100%; max-width:440px; background:#fff; color:#2B1A1A; text-align:center;
+  border-radius:24px 24px 0 0; padding:26px 24px max(28px, env(safe-area-inset-bottom)); animation:respinUp .28s ease-out; }
+@keyframes respinUp{ from{ transform:translateY(24px); opacity:0; } to{ transform:none; opacity:1; } }
+.respin-card h3{ margin:0 0 8px; font-size:17px; font-weight:600; }
+.respin-card p{ margin:0 0 6px; font-size:14px; line-height:1.65; color:#6B5A5A; }
+.respin-card b{ color:#B3121F; }
+.respin-card .muted{ color:#8A7B7B; }
+.respin-row{ display:flex; gap:10px; margin-top:18px; }
+.respin-row button{ flex:1; height:48px; border-radius:999px; border:0; font:500 15px inherit; font-family:inherit; cursor:pointer; }
+.respin-no{ background:#F1ECE8; color:#2B1A1A; }
+.respin-yes{ background:linear-gradient(180deg,#E0303D,#86101A); color:#FFF6DA; }
+@media (prefers-reduced-motion: reduce){ .respin-card{ animation:none; } }
+
+/* ปุ่มลุ้นอีกครั้ง: เลื่อนเข้าเบาๆ แล้วลูกศรหมุนครบรอบเดียว (ไม่วนซ้ำ) */
+.btn.ghost.respin.in{ animation:rsIn .45s cubic-bezier(.2,.8,.2,1) both; }
+.btn.ghost.respin.in::before{ animation:rsSpin .9s cubic-bezier(.45,0,.2,1) .45s 1 both; }
+@keyframes rsIn{ from{ opacity:0; transform:translateX(-12px) scale(.94); } to{ opacity:1; transform:none; } }
+@keyframes rsSpin{ from{ transform:rotate(0); } to{ transform:rotate(-360deg); } }
+@media (prefers-reduced-motion: reduce){ .btn.ghost.respin.in, .btn.ghost.respin.in::before{ animation:none; } }

@@ -148,6 +148,9 @@ const revealCard    = document.getElementById('revealCard');   // .app — ถ�
 const instruction   = document.getElementById('instruction');
 const stockCount    = document.getElementById('stockCount');
 const retryBtn      = document.getElementById('retryBtn');
+const respinBtn     = document.getElementById('respinBtn');
+const respinSheet   = document.getElementById('respinSheet');
+const claimRow      = document.getElementById('claimRow');
 const cabRoomBadge  = document.getElementById('cabRoomBadge');
 const screenFlash   = document.getElementById('screenFlash');
 const confettiLayer = document.getElementById('confettiLayer');
@@ -726,7 +729,7 @@ function presentTicket(milestone, amount, celebrate = true) {
 }
 
 // เล่น 1 รอบเต็ม: สับเลขล่อ → ยิง backend จริงทันที (กดเริ่มครั้งเดียวจบ) → หมุนวนรอผล → ชะลอไปหยุดที่ผลจริง → เฉลย
-async function playRound(milestone, requestOpen) {
+async function playRound(milestone, requestOpen, spinText) {
   setState('play');
   revealCard.dataset.jp = '0';
   buildWheelValues();
@@ -734,8 +737,8 @@ async function playRound(milestone, requestOpen) {
   claimBtn.classList.remove('show');
 
   setPhase(1);
-  setTitle('กำลังลุ้นรางวัล');
-  setHint('กรุณารอสักครู่');
+  setTitle((spinText && spinText.title) || 'กำลังลุ้นรางวัล');
+  setHint((spinText && spinText.hint) || 'กรุณารอสักครู่');
 
   // ยิงคำขอเปิดคูปองจริงทันทีที่เริ่มรอบ (ผู้เล่นกดเริ่มไปแล้วครั้งเดียว ถือว่าคอมมิทแล้ว)
   const apiPromise = requestOpen();
@@ -772,10 +775,103 @@ function showQuickTicket(milestone, amount) {
   presentTicket(milestone, amount, false);
 }
 
+// ============================================================
+//  ลุ้นอีกครั้งด้วยแต้มเช็คอิน (กล่อง 7/14/21/28 เท่านั้น — ไม่รวม PAID) — ปุ่มขึ้นเฉพาะตอนได้รางวัลต่ำสุดของกล่อง
+//  ฝั่ง backend ตัดสินทุกอย่าง (สิทธิ์ ราคา เวลา แต้ม) — ฝั่งนี้แค่ถามสิทธิ์แล้วแสดงปุ่ม
+// ============================================================
+let lastOpen = null;       // { milestone, token, amount } ของกล่องที่เพิ่งเปิด
+let respinInfo = null;     // { cost, points } ที่ backend ตอบล่าสุด
+let respinTimer = null;
+const RESPIN_WINDOW_MS = 10 * 60 * 1000 - 20000;   // ซ่อนปุ่มก่อน backend ตัดเวลา (10 นาที) เล็กน้อย
+
+function hideRespin() {
+  clearTimeout(respinTimer);
+  respinBtn.style.display = 'none';
+  claimRow.classList.remove('two');
+  respinSheet.hidden = true;
+  respinInfo = null;
+}
+
+async function offerRespin(open) {
+  if (!open || open.milestone === 'PAID') return;
+  try {
+    const r = await callGAS('respinInfo', { token: open.token }, 8000);
+    if (lastOpen !== open || revealCard.dataset.state !== 'result') return;   // ผู้ใช้กดตกลงหรือเริ่มรอบใหม่ไปแล้ว
+    if (!r || !r.success || !r.eligible) return;
+    respinInfo = { cost: Number(r.cost) || 0, points: Number(r.points) || 0 };
+    respinBtn.innerHTML = 'ลุ้นอีกครั้ง';
+    respinBtn.style.display = 'flex';
+    respinBtn.classList.remove('in'); void respinBtn.offsetWidth; respinBtn.classList.add('in');
+    claimRow.classList.add('two');
+    clearTimeout(respinTimer);
+    respinTimer = setTimeout(hideRespin, RESPIN_WINDOW_MS);
+  } catch (e) { /* ไม่ได้ข้อมูล = ไม่แสดงปุ่ม ไม่กระทบการใช้งานปกติ */ }
+}
+
+respinBtn.addEventListener('click', () => {
+  if (!lastOpen || !respinInfo) return;
+  document.getElementById('respinCost').textContent = respinInfo.cost;
+  document.getElementById('respinCost2').textContent = respinInfo.cost;
+  document.getElementById('respinOld').textContent = lastOpen.amount;
+  respinSheet.hidden = false;
+});
+function showRespinResult(oldAmt, newAmt) {
+  if (newAmt > oldAmt) {
+    setTitle('เพิ่มขึ้นแล้ว!');
+    setHint(`เพิ่มจาก ${oldAmt} เป็น ${newAmt} บาท`);
+  } else {
+    setTitle('เท่าเดิม แต่คุณลองแล้ว');
+    setHint(`ส่วนลด ${newAmt} บาท เป็นอันสุดท้ายของกล่องนี้`);
+  }
+}
+document.getElementById('respinNo').addEventListener('click', () => { respinSheet.hidden = true; });
+
+document.getElementById('respinYes').addEventListener('click', async () => {
+  if (busy || !lastOpen) return;
+  const open = lastOpen;
+  hideRespin();
+  busy = true;
+  claimBtn.classList.remove('show');
+
+  const call = () => callGAS('respinLootBox', { token: open.token }, 30000)
+    .catch(() => ({ success: false, hardFail: true }));
+  const outcome = await playRound(open.milestone, () => withTimeout(call(), 30000, { success: false, hardFail: true }),
+    { title: 'ลองอีกสักตั้ง!', hint: 'กำลังหมุน...' });
+
+  if (outcome.success) {
+    const newAmt = Number(outcome.result.discount_amount) || 0;
+    lastOpen = null;
+    showRespinResult(open.amount, newAmt);
+    busy = false;
+    return;
+  }
+
+  // ไม่สำเร็จ: ถ้าไม่รู้ผล (เน็ตสะดุด) ลองถามซ้ำ 1 ครั้ง — ฝั่ง backend ส่งซ้ำได้อย่างปลอดภัย (คืนผลเดิม ไม่หักแต้มซ้ำ)
+  let r = outcome.result;
+  if (r && r.hardFail) { await wait(1500); r = await call(); }
+  if (r && r.success) {
+    const newAmt = Number(r.discount_amount) || 0;
+    setState('result');
+    showRespinResult(open.amount, newAmt);
+    presentTicket(open.milestone, newAmt, false);
+    lastOpen = null;
+  } else {
+    // กลับไปแสดงตั๋วใบเดิม (ผลเดิมยังอยู่ ไม่เสียแต้มถ้า backend ไม่ได้หัก)
+    setState('result');
+    setTitle('ขอแสดงความยินดี');
+    setHint('คุณได้รับส่วนลดค่าเช่า');
+    presentTicket(open.milestone, open.amount, false);
+    showToast((r && !r.hardFail && r.message) || 'ยังไม่ทราบผล กรุณาตรวจสอบในประวัติ', 'error', 5000);
+    lastOpen = null;
+  }
+  busy = false;
+});
+
 async function startRound() {
   if (busy) return; // กันกดซ้ำระหว่างรอบกำลังเล่นอยู่
   if (stock.length === 0) { instruction.textContent = "ขณะนี้ไม่มีสิทธิ์ให้ใช้"; return; }
   busy = true;
+  hideRespin();
   startBtn.classList.add('hide');
   retryBtn.style.display = 'none';
   instruction.textContent = "";
@@ -804,6 +900,8 @@ async function startRound() {
   if (outcome.success) {
     stock.shift();
     delete lootTokens[milestone];
+    lastOpen = { milestone, token, amount: Number(outcome.result.discount_amount) || 0 };
+    offerRespin(lastOpen);          // ไม่รอผล — ปุ่มโผล่ทีหลังถ้ามีสิทธิ์ (เรียกเฉพาะกล่อง 7/14/21/28)
     updateStockCount();
     clearCacheSnapshot();   // กันหน้าเปิดรอบหน้าโชว์สิทธิ์เก่าที่เพิ่งใช้ไป
     busy = false;
@@ -870,6 +968,8 @@ async function startRound() {
 }
 
 claimBtn.addEventListener('click', () => {
+  hideRespin();
+  lastOpen = null;
   ticket.classList.remove('show');
   claimBtn.classList.remove('show');
   updateStockCount();
