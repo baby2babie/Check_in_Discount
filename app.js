@@ -729,7 +729,7 @@ function presentTicket(milestone, amount, celebrate = true) {
 }
 
 // เล่น 1 รอบเต็ม: สับเลขล่อ → ยิง backend จริงทันที (กดเริ่มครั้งเดียวจบ) → หมุนวนรอผล → ชะลอไปหยุดที่ผลจริง → เฉลย
-async function playRound(milestone, requestOpen, spinText) {
+async function playRound(milestone, requestOpen, spinText, respinToken) {
   setState('play');
   revealCard.dataset.jp = '0';
   buildWheelValues();
@@ -751,15 +751,22 @@ async function playRound(milestone, requestOpen, spinText) {
   }
 
   const amount = Number(result.discount_amount) || 0;
+  // ถามสิทธิ์ลุ้นอีกครั้งตั้งแต่ได้ผล (ระหว่างวงล้อกำลังหยุด) เพื่อให้ปุ่มคู่ขึ้นพร้อมตั๋วในจังหวะเดียว ไม่ขยับทีหลัง
+  const respinPre = (respinToken && milestone !== 'PAID')
+    ? callGAS('respinInfo', { token: respinToken }, 8000).catch(() => null)
+    : null;
   setPhase(2);
   await landOnAmount(amount);
 
   await wait(500); // ให้วงล้อนิ่งสนิทและเห็นช่องที่หยุดสักครู่ แล้วขึ้นตั๋วเลย (ตัดแฟลชหน้าจอออกแล้ว)
 
+  const offer = respinPre ? await withTimeout(respinPre, 1500, null) : null;   // ปกติตอบแล้วก่อนถึงตรงนี้ ไม่เสียเวลา
+
   setState('result');
   const jackpot = amount >= JACKPOT_AMOUNT;
   setTitle(jackpot ? 'JACKPOT! ยินดีด้วย' : 'ขอแสดงความยินดี');
   setHint(jackpot ? 'รางวัลพิเศษประจำเดือนนี้ เป็นของคุณ' : 'คุณได้รับส่วนลดค่าเช่า');
+  applyRespinOffer(offer);          // จัดแถวปุ่มก่อน แล้วค่อยโชว์ตั๋ว+ปุ่ม พร้อมกัน
   presentTicket(milestone, amount);
 
   return { success: true, result };
@@ -792,20 +799,15 @@ function hideRespin() {
   respinInfo = null;
 }
 
-async function offerRespin(open) {
-  if (!open || open.milestone === 'PAID') return;
-  try {
-    const r = await callGAS('respinInfo', { token: open.token }, 8000);
-    if (lastOpen !== open || revealCard.dataset.state !== 'result') return;   // ผู้ใช้กดตกลงหรือเริ่มรอบใหม่ไปแล้ว
-    if (!r || !r.success || !r.eligible) return;
-    respinInfo = { cost: Number(r.cost) || 0, points: Number(r.points) || 0 };
-    respinBtn.innerHTML = 'ลุ้นอีกครั้ง';
-    respinBtn.style.display = 'flex';
-    respinBtn.classList.remove('in'); void respinBtn.offsetWidth; respinBtn.classList.add('in');
-    claimRow.classList.add('two');
-    clearTimeout(respinTimer);
-    respinTimer = setTimeout(hideRespin, RESPIN_WINDOW_MS);
-  } catch (e) { /* ไม่ได้ข้อมูล = ไม่แสดงปุ่ม ไม่กระทบการใช้งานปกติ */ }
+function applyRespinOffer(r) {
+  if (!r || !r.success || !r.eligible) return;
+  respinInfo = { cost: Number(r.cost) || 0, points: Number(r.points) || 0 };
+  respinBtn.innerHTML = 'ลุ้นอีกครั้ง';
+  respinBtn.style.display = 'flex';
+  respinBtn.classList.remove('in'); void respinBtn.offsetWidth; respinBtn.classList.add('in');
+  claimRow.classList.add('two');
+  clearTimeout(respinTimer);
+  respinTimer = setTimeout(hideRespin, RESPIN_WINDOW_MS);
 }
 
 respinBtn.addEventListener('click', () => {
@@ -895,13 +897,12 @@ async function startRound() {
     );
   };
 
-  const outcome = await playRound(milestone, requestOpen);
+  const outcome = await playRound(milestone, requestOpen, null, token);
 
   if (outcome.success) {
     stock.shift();
     delete lootTokens[milestone];
     lastOpen = { milestone, token, amount: Number(outcome.result.discount_amount) || 0 };
-    offerRespin(lastOpen);          // ไม่รอผล — ปุ่มโผล่ทีหลังถ้ามีสิทธิ์ (เรียกเฉพาะกล่อง 7/14/21/28)
     updateStockCount();
     clearCacheSnapshot();   // กันหน้าเปิดรอบหน้าโชว์สิทธิ์เก่าที่เพิ่งใช้ไป
     busy = false;
