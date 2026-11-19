@@ -64,12 +64,13 @@ function applyTier(tierLabel) {
 }
 
 // ตัวเลขล่อ (decoy) โชว์บนวงล้อระหว่างหมุน — คือชุดค่า discount_amount ที่ไม่ซ้ำกันทั้งหมดจากชีท LOOT_BOX จริง
-// (ครบทุก tier/milestone พอดี 7 ค่า = จำนวนช่องบนวงล้อพอดี) การันตีว่ารางวัลจริงที่ backend ส่งมาตอนจบ
-// จะเป็นหนึ่งใน 7 ค่านี้เสมอ — ค่าสูงสุดจะเป็นช่องสีทองโดยอัตโนมัติ
+// (LOOT_BOX v5: 5 รางวัลต่อกล่อง + กล่อง PAID + Jackpot รวมค่าที่ไม่ซ้ำ 12 ค่า = จำนวนช่องบนวงล้อพอดี)
+// การันตีว่ารางวัลจริงที่ backend ส่งมาตอนจบจะเป็นหนึ่งในค่านี้เสมอ — ค่าสูงสุดจะเป็นช่องสีทองโดยอัตโนมัติ
+// แก้ตารางรางวัลแล้วมีค่าใหม่ → เพิ่มค่านั้นในรายการนี้ด้วย (ค่านอกรายการยังโชว์ได้ตอนวงล้อหยุด แต่ไม่ถูกแสดงตอนหมุน)
 // เปิดใช้ Jackpot: เพิ่ม 100 ต่อท้ายรายการ (ต้องเพิ่มแถวในชีท LOOT_BOX + รัน SQL ก่อน)
 const JACKPOT_AMOUNT = 100;
-const CAPSULE_NUMBERS = [5, 10, 15, 20, 25, 30, 50, 100];
-const N_CAPS = 8;
+const CAPSULE_NUMBERS = [5, 7, 8, 10, 12, 15, 18, 20, 25, 30, 50, 100];
+const N_CAPS = 12;
 
 // ============================================================
 //  CACHE (sessionStorage) — stale-while-revalidate
@@ -355,7 +356,7 @@ function countUp(el, to, dur = 900) {
 //  ถ้าผู้เล่นยังไม่กดหมุน/ปิดหน้าไปก่อน คูปองจะยังไม่ถูกใช้ กลับมาเล่นใหม่ได้
 //  ตัวเลขบนวงล้อระหว่างหมุนเป็นแค่ตัวล่อ (CAPSULE_NUMBERS) รางวัลจริงเฉลยจาก backend ตอนวงล้อหยุดเท่านั้น
 // ============================================================
-let wheelValues = [];       // ตัวเลขล่อ 7 ค่าที่สับตำแหน่งไว้บนวงล้อรอบนี้
+let wheelValues = [];       // ตัวเลขล่อ 12 ค่าที่สับตำแหน่งไว้บนวงล้อรอบนี้
 let wheelRotation = 0;      // มุมหมุนปัจจุบัน (เรเดียน)
 let wheelSize = 0;          // ขนาดจริง (css px) ของ canvas — คำนวณใหม่จาก .board ผ่าน layoutWheel()
 let wheelLoopHandle = null; // requestAnimationFrame handle ของช่วงหมุนวนไม่ทราบผล
@@ -364,7 +365,7 @@ const WHEEL_V0 = 0.011;     // ความเร็วสูงสุดตอ�
 const MIN_SPIN_MS  = 2500;  // หมุนเร็วคงที่อย่างน้อยกี่ ms ก่อนเริ่มชะลอ
 const DECEL_MIN_MS = 5000;  // ช่วงชะลอจนหยุดอย่างน้อยกี่ ms — ปรับตัวเลขนี้ได้ (แนะนำ 5000–6000)
 // สีบนวงล้อ — ช่องที่มีค่ามากที่สุดเป็นสีทองเสมอ ที่เหลือสลับแดง/ครีมเริ่มจากช่องถัดจากทองตามเข็มนาฬิกา
-// (7 ช่อง = ทอง 1 + แดง/ครีมอย่างละ 3 จึงไม่มีสีซ้ำชิดกัน) ไม่ผูกกับ tier ของผู้เช่า
+// (12 ช่อง = ทอง 1 + แดง/ครีมสลับกัน 11 ช่อง จึงไม่มีสีซ้ำชิดกัน) ไม่ผูกกับ tier ของผู้เช่า
 // ตัวเลขสับตำแหน่งใหม่ทุกรอบ ทองจึงย้ายตามเลขสูงสุดไปด้วย
 // ============================================================
 //  ธีมเทศกาล — เลือกอัตโนมัติจากเดือน (FEST_PERIODS) เดือนที่ไม่อยู่ในตาราง = วงล้อปกติแดงทองเดิม
@@ -550,7 +551,7 @@ function drawWheel(highlightIdx) {
     ctx.rotate(start + slice / 2);
     ctx.textAlign = 'right';
     ctx.fillStyle = c.ink;
-    const fontSize = Math.max(14, Math.min(26, wheelSize * 0.06));
+    const fontSize = Math.max(13, Math.min(26, wheelSize * (n > 8 ? 0.052 : 0.06)));
     ctx.font = '600 ' + fontSize + 'px "Anuphan","Sarabun",sans-serif';
     ctx.fillText(wheelValues[i] + '฿', r - 14, fontSize * 0.32);
     ctx.restore();
@@ -1187,7 +1188,7 @@ function renderHistory(history) {
       const meta = getTierMeta(it.tier);
       const amountHtml = it.opened
         ? `<span class="h-amount">฿${Number(it.amount).toLocaleString()}</span>`
-        : `<span class="h-amount is-muted">ยังไม่ได้ใช้สิทธิ์</span>`;
+        : `<span class="h-amount is-muted">ไม่ใช้สิทธิ์</span>`;
       return `
         <li class="h-row">
           <span class="h-tier" style="--tier-color:${meta.color}">
