@@ -782,6 +782,8 @@ html[data-fest="christmas"] .btn.ghost.respin{ --rs-fg:#FFE9A8; --rs-bd:#F2C14E;
 /* ===== ตัวช่วยก่อนลุ้น ===== */
 .start-row{ display:flex; gap:10px; align-items:stretch; width:min(92%,340px); margin:0 auto; }
 .start-row .btn.primary{ flex:1 1 0; width:auto; margin:0; height:58px; display:flex; align-items:center; justify-content:center; }
+.start-row .btn.primary.hide{ display:none; }   /* ต้องมี: กฎด้านบนเฉพาะเจาะจงกว่า .btn.hide จึงทำให้ปุ่มไม่ซ่อน */
+.start-row:has(.btn.primary.hide){ display:none; }
 .start-row .btn.ghost.respin.helper{ flex:0 0 auto; min-width:118px; padding:0 16px; }
 .start-row .btn.ghost.respin.helper::before{
   -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M12 2l2.2 6.3L20.5 10l-6.3 1.7L12 18l-2.2-6.3L3.5 10l6.3-1.7z'/%3E%3Cpath d='M19 15l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z'/%3E%3C/svg%3E") center/contain no-repeat;
