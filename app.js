@@ -284,10 +284,10 @@ function renderStateUI() {
 //  ฝั่งนี้แค่ถามตัวเลือก (helperInfo) แล้วส่งชื่อตัวช่วยไปพร้อมคำขอเปิดกล่อง (openLootBox + helper)
 // ============================================================
 const HELPER_META = {
-  boost: { name: 'เพิ่มโอกาสรางวัลสูง', short: 'เพิ่มโอกาส', desc: 'โอกาสได้ส่วนลดสูงขึ้นกว่าปกติ' },
-  floor: { name: 'การันตีไม่ได้ต่ำสุด', short: 'การันตี',   desc: 'รอบนี้จะไม่ได้ส่วนลดต่ำสุดของกล่องแน่นอน' },
-  up:    { name: 'อัปเกรดกล่อง',         short: 'อัปเกรด',   desc: 'ลุ้นด้วยรางวัลของกล่องระดับถัดไป' },
-  two:   { name: 'ลุ้น 2 ครั้ง เลือกอันที่ดี', short: 'ลุ้น 2 ครั้ง', desc: 'หมุน 2 ครั้ง ได้ส่วนลดที่สูงกว่า' }
+  boost: { name: 'BOOSTER', short: 'BOOSTER', desc: 'โอกาสได้ส่วนลดสูงขึ้นกว่าปกติ' },
+  floor: { name: 'SAFE+',   short: 'SAFE+',   desc: 'รอบนี้จะไม่ได้ส่วนลดต่ำสุดของกล่องแน่นอน' },
+  up:    { name: 'UPGRADE', short: 'UPGRADE', desc: 'ลุ้นด้วยรางวัลของกล่องระดับถัดไป' },
+  two:   { name: 'TWIN',    short: 'TWIN',    desc: 'หมุน 2 ครั้ง ได้ส่วนลดที่สูงกว่า' }
 };
 let helperData = null;       // { token, points, options:[{key,price,affordable}] }
 let helperLoading = null;    // promise ระหว่างโหลด
@@ -335,6 +335,20 @@ new MutationObserver(syncHelperBtn).observe(startBtn, { attributes: true, attrib
 
 // เริ่มดึงตัวช่วยของกล่องใบถัดไปทันทีที่ backend ตอบว่าเปิดกล่องสำเร็จ (แต้มถูกหักแล้ว) — ระหว่างที่วงล้อยังหมุนไปหยุดอยู่
 // พอถึงตาใบถัดไป ข้อมูลมาถึงตั้งนานแล้ว กดตัวช่วยจึงขึ้นทันที
+let pendingHint = null;      // ข้อความใต้หัวข้อตอนขึ้นผล (ตัวช่วย TWIN/UPGRADE บอกผลที่เกิดขึ้น)
+function setHelperHint(res, fromMilestone) {
+  pendingHint = null;
+  if (!res || !res.success || res.already) return;
+  const amt = Number(res.discount_amount) || 0;
+  if (res.helper_used === 'two' && res.draws) {
+    const p = String(res.draws).split(',').map(Number);
+    if (p.length === 2 && p[0] !== p[1]) pendingHint = `TWIN ได้ ${p[0]} กับ ${p[1]} บาท เลือก ${amt} บาทให้`;
+    else if (p.length === 2) pendingHint = `TWIN ได้ ${amt} บาททั้งสองครั้ง`;
+  } else if (res.helper_used === 'up') {
+    const n = NEXT_BOX[fromMilestone];
+    if (n) pendingHint = `UPGRADE ลุ้นด้วยรางวัลของกล่อง ${n} วัน`;
+  }
+}
 let helperNext = null;       // { token, p: promise, data }
 function prefetchNextHelper() {
   const t2 = stock.length > 1 ? lootTokens[stock[1]] : null;
@@ -370,6 +384,12 @@ function refreshHelperInfo() {
   if (stock.length && stock[0] !== 'PAID') loadHelperInfo();
 }
 
+const NEXT_BOX = { '7': '14', '14': '21', '21': '28' };
+function upgradeDesc() {
+  const n = NEXT_BOX[stock[0]];
+  return n ? `ลุ้นด้วยรางวัลของกล่อง ${n} วัน` : HELPER_META.up.desc;
+}
+
 function renderHelperSheet() {
   const d = helperData;
   document.getElementById('hsPoints').textContent = d ? d.points : 0;
@@ -383,7 +403,7 @@ function renderHelperSheet() {
     b.className = 'hs-opt' + (off ? ' off' : '') + (helperPick === o.key ? ' sel' : '');
     b.innerHTML = '<span class="hs-radio"></span><span class="hs-txt"><span class="hs-name"></span><span class="hs-desc"></span></span><span class="hs-price"></span>';
     b.querySelector('.hs-name').textContent = meta.name;
-    b.querySelector('.hs-desc').textContent = off ? 'แต้มไม่พอ' : meta.desc;
+    b.querySelector('.hs-desc').textContent = off ? 'แต้มไม่พอ' : (o.key === 'up' ? upgradeDesc() : meta.desc);
     b.querySelector('.hs-price').textContent = o.price + ' แต้ม';
     if (!off) b.addEventListener('click', () => { helperPick = o.key; renderHelperSheet(); });
     list.appendChild(b);
@@ -919,7 +939,8 @@ async function playRound(milestone, requestOpen, spinText, respinToken) {
   setState('result');
   const jackpot = amount >= JACKPOT_AMOUNT;
   setTitle(jackpot ? 'JACKPOT! ยินดีด้วย' : 'ขอแสดงความยินดี');
-  setHint(jackpot ? 'รางวัลพิเศษประจำเดือนนี้ เป็นของคุณ' : 'คุณได้รับส่วนลดค่าเช่า');
+  setHint(jackpot ? 'รางวัลพิเศษประจำเดือนนี้ เป็นของคุณ' : (pendingHint || 'คุณได้รับส่วนลดค่าเช่า'));
+  pendingHint = null;
   applyRespinOffer(offer);          // จัดแถวปุ่มก่อน แล้วค่อยโชว์ตั๋ว+ปุ่ม พร้อมกัน
   presentTicket(milestone, amount);
 
@@ -1048,7 +1069,7 @@ async function startRound() {
       console.error('openLootBox failed:', err);
       return { success: false, message: 'เชื่อมต่อกับระบบไม่สำเร็จ' };
     });
-    realPromise.then((res) => { if (res && res.success && !res.already) prefetchNextHelper(); });
+    realPromise.then((res) => { setHelperHint(res, milestone); if (res && res.success && !res.already) prefetchNextHelper(); });
     return withTimeout(
       realPromise,
       HARD_TIMEOUT_MS,
