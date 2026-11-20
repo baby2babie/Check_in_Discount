@@ -333,6 +333,37 @@ function syncHelperBtn() {
 }
 new MutationObserver(syncHelperBtn).observe(startBtn, { attributes: true, attributeFilter: ['class'] });
 
+// เริ่มดึงตัวช่วยของกล่องใบถัดไปทันทีที่ backend ตอบว่าเปิดกล่องสำเร็จ (แต้มถูกหักแล้ว) — ระหว่างที่วงล้อยังหมุนไปหยุดอยู่
+// พอถึงตาใบถัดไป ข้อมูลมาถึงตั้งนานแล้ว กดตัวช่วยจึงขึ้นทันที
+let helperNext = null;       // { token, p: promise, data }
+function prefetchNextHelper() {
+  const t2 = stock.length > 1 ? lootTokens[stock[1]] : null;
+  if (!t2 || stock[1] === 'PAID') { helperNext = null; return; }
+  const slot = { token: t2, data: null };
+  slot.p = callGAS('helperInfo', { token: t2 }, 8000).then((r) => {
+    if (r && r.success) {
+      slot.data = { token: t2, points: Number(r.points) || 0,
+                    options: (r.eligible && Array.isArray(r.options)) ? r.options : [] };
+    }
+    return slot.data;
+  }).catch(() => null);
+  helperNext = slot;
+}
+function adoptNextHelper() {
+  const slot = helperNext; helperNext = null;
+  helperData = null; helperLoading = null;
+  if (slot && slot.token === currentToken()) {
+    if (slot.data) { helperData = slot.data; syncHelperBtn(); return; }
+    helperLoading = slot.p.then((d) => {
+      helperLoading = null;
+      if (d) { helperData = d; syncHelperBtn(); }
+      return helperData;
+    });
+    return;
+  }
+  refreshHelperInfo();
+}
+
 // ดึงตัวช่วย/แต้มล่าสุดของกล่องใบถัดไปไว้ล่วงหน้า (หลังเปิดกล่องหรือหลังลุ้นอีกครั้ง แต้มเปลี่ยน) เพื่อให้กดปุ่มตัวช่วยแล้วขึ้นทันที
 function refreshHelperInfo() {
   helperData = null; helperLoading = null;
@@ -1017,6 +1048,7 @@ async function startRound() {
       console.error('openLootBox failed:', err);
       return { success: false, message: 'เชื่อมต่อกับระบบไม่สำเร็จ' };
     });
+    realPromise.then((res) => { if (res && res.success && !res.already) prefetchNextHelper(); });
     return withTimeout(
       realPromise,
       HARD_TIMEOUT_MS,
@@ -1030,7 +1062,7 @@ async function startRound() {
   if (outcome.success) {
     stock.shift();
     delete lootTokens[milestone];
-    refreshHelperInfo();   // กล่องใบถัดไป (ถ้ามี) โหลดตัวช่วยรอไว้เลย
+    adoptNextHelper();   // กล่องใบถัดไป (ถ้ามี): ใช้ข้อมูลที่ดึงรอไว้แล้วตั้งแต่ backend ตอบ (ไม่มี = ดึงใหม่)
     lastOpen = { milestone, token, amount: Number(outcome.result.discount_amount) || 0 };
     updateStockCount();
     clearCacheSnapshot();   // กันหน้าเปิดรอบหน้าโชว์สิทธิ์เก่าที่เพิ่งใช้ไป
