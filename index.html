@@ -163,12 +163,29 @@
 
   <div class="dock">
     <p class="notice" id="instruction" aria-live="polite"></p>
-    <button class="btn primary hide" id="startBtn" type="button">ลุ้นรางวัล</button>
+    <div class="start-row" id="startRow">
+      <button class="btn ghost respin helper" id="helperBtn" type="button"><span id="helperBtnText">ตัวช่วย</span></button>
+      <button class="btn primary hide" id="startBtn" type="button">ลุ้นรางวัล</button>
+    </div>
     <div class="claim-row" id="claimRow">
       <button class="btn ghost respin" id="respinBtn" type="button" style="display:none;"></button>
       <button class="btn primary claim" id="claimBtn" type="button">ตกลง</button>
     </div>
     <button class="btn ghost" id="retryBtn" type="button" style="display:none;">ลองอีกครั้ง</button>
+  </div>
+
+
+  <!-- แผ่นเลือกตัวช่วย (MOCK) -->
+  <div class="respin-sheet" id="helperSheet" hidden>
+    <div class="respin-card helper-card" role="dialog" aria-modal="true">
+      <h3>เลือกตัวช่วย</h3>
+      <p class="hs-sub">แต้มเช็คอินคงเหลือ <b id="hsPoints">20</b> แต้ม · ใช้ได้ 1 ตัวต่อกล่อง</p>
+      <div class="hs-list" id="hsList"></div>
+      <div class="respin-row">
+        <button type="button" class="respin-no" id="hsNo">ไม่ใช้ตัวช่วย</button>
+        <button type="button" class="respin-yes" id="hsYes" disabled>เลือกตัวช่วย</button>
+      </div>
+    </div>
   </div>
 
   <!-- หน้ายืนยันหมุนใหม่ -->

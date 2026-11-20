@@ -166,6 +166,8 @@ const ticketTier  = document.getElementById('ticketTier');
 const ticketDesc  = document.getElementById('ticketDesc');
 const claimBtn    = document.getElementById('claimBtn');
 const startBtn    = document.getElementById('startBtn');
+const helperBtn   = document.getElementById('helperBtn');
+const helperSheet = document.getElementById('helperSheet');
 const bgm         = document.getElementById('bgm');
 const btnMusic    = document.getElementById('btn-music');
 const wheelCanvas  = document.getElementById('wheelCanvas');
@@ -275,6 +277,114 @@ function renderStateUI() {
     showEmptySlots();
   }
 }
+
+
+// ============================================================
+//  ตัวช่วยก่อนลุ้น (จ่ายด้วยแต้มเช็คอิน) — เลือกได้ 1 ตัวต่อกล่อง ฝั่ง backend ตัดสินราคา/สิทธิ์/แต้มทั้งหมด
+//  ฝั่งนี้แค่ถามตัวเลือก (helperInfo) แล้วส่งชื่อตัวช่วยไปพร้อมคำขอเปิดกล่อง (openLootBox + helper)
+// ============================================================
+const HELPER_META = {
+  boost: { name: 'เพิ่มโอกาสรางวัลสูง', short: 'เพิ่มโอกาส', desc: 'โอกาสได้ส่วนลดสูงขึ้นกว่าปกติ' },
+  floor: { name: 'การันตีไม่ได้ต่ำสุด', short: 'การันตี',   desc: 'รอบนี้จะไม่ได้ส่วนลดต่ำสุดของกล่องแน่นอน' },
+  up:    { name: 'อัปเกรดกล่อง',         short: 'อัปเกรด',   desc: 'ลุ้นด้วยรางวัลของกล่องระดับถัดไป' },
+  two:   { name: 'ลุ้น 2 ครั้ง เลือกอันที่ดี', short: 'ลุ้น 2 ครั้ง', desc: 'หมุน 2 ครั้ง ได้ส่วนลดที่สูงกว่า' }
+};
+let helperData = null;       // { token, points, options:[{key,price,affordable}] }
+let helperLoading = null;    // promise ระหว่างโหลด
+let helperChoice = null;     // key ที่เลือกไว้ (หรือ null)
+let helperPick = null;       // key ที่กำลังเลือกในแผ่น (ยังไม่ยืนยัน)
+
+function currentToken() { return stock.length ? lootTokens[stock[0]] : null; }
+function currentIsPaid() { return stock.length && stock[0] === 'PAID'; }
+
+function resetHelper() {
+  helperChoice = null; helperPick = null; helperData = null; helperLoading = null;
+  helperBtn.classList.remove('on');
+  document.getElementById('helperBtnText').textContent = 'ตัวช่วย';
+  helperSheet.hidden = true;
+}
+
+function loadHelperInfo() {
+  const token = currentToken();
+  if (!token || currentIsPaid()) return Promise.resolve(null);
+  if (helperData && helperData.token === token) return Promise.resolve(helperData);
+  if (helperLoading) return helperLoading;
+  helperLoading = callGAS('helperInfo', { token }, 8000)
+    .then((r) => {
+      helperLoading = null;
+      if (r && r.success && r.eligible && Array.isArray(r.options) && r.options.length) {
+        helperData = { token, points: Number(r.points) || 0, options: r.options };
+      } else {
+        helperData = { token, points: Number(r.points) || 0, options: [] };
+      }
+      syncHelperBtn();
+      return helperData;
+    })
+    .catch(() => { helperLoading = null; return null; });
+  return helperLoading;
+}
+
+// ปุ่มตัวช่วยโชว์เมื่อปุ่ม "ลุ้นรางวัล" โชว์ (ยกเว้นกล่อง PAID หรือ backend บอกว่าไม่มีตัวช่วย)
+function syncHelperBtn() {
+  const idle = !startBtn.classList.contains('hide');
+  const noOpt = helperData && helperData.options.length === 0;
+  helperBtn.style.display = (idle && !currentIsPaid() && !noOpt) ? '' : 'none';
+  if (idle && !currentIsPaid()) loadHelperInfo();
+}
+new MutationObserver(syncHelperBtn).observe(startBtn, { attributes: true, attributeFilter: ['class'] });
+
+function renderHelperSheet() {
+  const d = helperData;
+  document.getElementById('hsPoints').textContent = d ? d.points : 0;
+  const list = document.getElementById('hsList');
+  list.innerHTML = '';
+  (d ? d.options : []).forEach((o) => {
+    const meta = HELPER_META[o.key]; if (!meta) return;
+    const off = !o.affordable;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'hs-opt' + (off ? ' off' : '') + (helperPick === o.key ? ' sel' : '');
+    b.innerHTML = '<span class="hs-radio"></span><span class="hs-txt"><span class="hs-name"></span><span class="hs-desc"></span></span><span class="hs-price"></span>';
+    b.querySelector('.hs-name').textContent = meta.name;
+    b.querySelector('.hs-desc').textContent = off ? 'แต้มไม่พอ' : meta.desc;
+    b.querySelector('.hs-price').textContent = o.price + ' แต้ม';
+    if (!off) b.addEventListener('click', () => { helperPick = o.key; renderHelperSheet(); });
+    list.appendChild(b);
+  });
+  const yes = document.getElementById('hsYes');
+  const sel = d && d.options.find((o) => o.key === helperPick);
+  yes.disabled = !sel;
+  yes.textContent = sel ? `ยืนยัน · ${sel.price} แต้ม` : 'เลือกตัวช่วย';
+}
+
+helperBtn.addEventListener('click', async () => {
+  if (busy) return;
+  helperPick = helperChoice;
+  helperSheet.hidden = false;
+  document.getElementById('hsList').innerHTML = '<p class="hs-sub" style="margin:18px 0">กำลังโหลด...</p>';
+  const d = await loadHelperInfo();
+  if (!d || !d.options.length) {
+    helperSheet.hidden = true;
+    showToast(d ? 'ตอนนี้ไม่มีตัวช่วยสำหรับกล่องนี้' : 'โหลดตัวช่วยไม่สำเร็จ กรุณาลองใหม่', 'error', 3000);
+    return;
+  }
+  renderHelperSheet();
+});
+document.getElementById('hsNo').addEventListener('click', () => {
+  helperChoice = null; helperPick = null;
+  helperBtn.classList.remove('on');
+  document.getElementById('helperBtnText').textContent = 'ตัวช่วย';
+  helperSheet.hidden = true;
+});
+document.getElementById('hsYes').addEventListener('click', () => {
+  const o = helperData && helperData.options.find((x) => x.key === helperPick);
+  if (!o) return;
+  helperChoice = o.key;
+  helperBtn.classList.add('on');
+  document.getElementById('helperBtnText').textContent = `${HELPER_META[o.key].short} · ${o.price} แต้ม`;
+  helperSheet.hidden = true;
+});
+helperSheet.addEventListener('click', (e) => { if (e.target === helperSheet) helperSheet.hidden = true; });
 
 function updateStartState() {
   renderStateUI();
@@ -881,13 +991,15 @@ async function startRound() {
 
   const milestone = stock[0];
   const token = lootTokens[milestone];
+  const helperKey = (milestone !== 'PAID' && helperChoice) ? helperChoice : '';
+  helperSheet.hidden = true;
 
   const HARD_TIMEOUT_MS = 30000;   // เวลารอ backend หลังผู้เล่นกดเริ่ม (มิลลิวินาที) — ปรับตัวเลขนี้ได้
 
   // ส่งคำขอเปิดจริง "ตอนผู้เล่นกดเริ่ม" (playRound เป็นคนเรียก)
   // request ไม่ถูกยกเลิกแม้ backend จะตอบช้า (auto-resync ผ่าน HARD_TIMEOUT_MS ถ้าช้าเกินไปจริงๆ)
   const requestOpen = () => {
-    const realPromise = callGAS('openLootBox', { token }, 45000).catch((err) => {
+    const realPromise = callGAS('openLootBox', { token, helper: helperKey }, 45000).catch((err) => {
       console.error('openLootBox failed:', err);
       return { success: false, message: 'เชื่อมต่อกับระบบไม่สำเร็จ' };
     });
@@ -900,6 +1012,7 @@ async function startRound() {
 
   const outcome = await playRound(milestone, requestOpen, null, token);
 
+  resetHelper();   // ไม่ว่าสำเร็จหรือไม่ ล้างตัวช่วยที่เลือกไว้ (ราคา/แต้มอาจเปลี่ยน ให้เลือกใหม่ได้)
   if (outcome.success) {
     stock.shift();
     delete lootTokens[milestone];
@@ -1014,6 +1127,21 @@ function applyRoomData(result) {
     }
   });
 
+  // ข้อมูลตัวช่วยที่ backend แนบมากับข้อมูลกล่อง (ไม่ต้องเรียก helperInfo แยก) — ใช้เฉพาะเมื่อ token ตรงกับกล่องใบแรก
+  const h = result.helper;
+  if (h && stock.length && h.token === lootTokens[stock[0]] && stock[0] !== 'PAID') {
+    helperData = {
+      token: h.token,
+      points: Number(h.points) || 0,
+      options: (h.eligible && Array.isArray(h.options)) ? h.options : []
+    };
+    if (helperChoice && !helperData.options.some((o) => o.key === helperChoice && o.affordable)) {
+      helperChoice = null;
+      helperBtn.classList.remove('on');
+      document.getElementById('helperBtnText').textContent = 'ตัวช่วย';
+    }
+  }
+
   updateStockCount();
 }
 
@@ -1024,6 +1152,7 @@ function renderCabinet(result) {
   applyRoomData(result);
   busy = false;
   updateStartState();
+  syncHelperBtn();
   saveCacheSnapshot(result);
   warmBgm();
 }

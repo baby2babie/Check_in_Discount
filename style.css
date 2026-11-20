@@ -778,3 +778,30 @@ html[data-fest="christmas"] .btn.ghost.respin{ --rs-fg:#FFE9A8; --rs-bd:#F2C14E;
 @keyframes rsIn{ from{ opacity:0; transform:translateX(-12px) scale(.94); } to{ opacity:1; transform:none; } }
 @keyframes rsSpin{ from{ transform:rotate(0); } to{ transform:rotate(-360deg); } }
 @media (prefers-reduced-motion: reduce){ .btn.ghost.respin.in, .btn.ghost.respin.in::before{ animation:none; } }
+
+/* ===== ตัวช่วยก่อนลุ้น ===== */
+.start-row{ display:flex; gap:10px; align-items:stretch; width:min(92%,340px); margin:0 auto; }
+.start-row .btn.primary{ flex:1 1 0; width:auto; margin:0; height:58px; display:flex; align-items:center; justify-content:center; }
+.start-row .btn.ghost.respin.helper{ flex:0 0 auto; min-width:118px; padding:0 16px; }
+.start-row .btn.ghost.respin.helper::before{
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M12 2l2.2 6.3L20.5 10l-6.3 1.7L12 18l-2.2-6.3L3.5 10l6.3-1.7z'/%3E%3Cpath d='M19 15l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M12 2l2.2 6.3L20.5 10l-6.3 1.7L12 18l-2.2-6.3L3.5 10l6.3-1.7z'/%3E%3Cpath d='M19 15l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+.start-row .btn.ghost.respin.helper.on{ box-shadow:inset 0 0 0 2px var(--rs-bd), inset 0 2px 0 rgba(255,255,255,.7), 0 8px 16px -10px rgba(0,0,0,.35); }
+.helper-card{ text-align:left; }
+.helper-card h3{ text-align:center; }
+.helper-card .hs-sub{ text-align:center; margin-bottom:14px; }
+.hs-list{ display:flex; flex-direction:column; gap:9px; }
+.hs-opt{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px 14px; border-radius:16px;
+  border:1.5px solid #EADFD8; background:#FFFDFB; color:#2B1A1A; font-family:inherit; cursor:pointer; }
+.hs-opt .hs-radio{ flex:none; width:20px; height:20px; border-radius:50%; border:2px solid #CDBFB6; background:#fff; position:relative; }
+.hs-opt .hs-txt{ flex:1; min-width:0; }
+.hs-opt .hs-name{ display:block; font-size:15px; font-weight:600; line-height:1.35; }
+.hs-opt .hs-desc{ display:block; font-size:12.5px; line-height:1.5; color:#7A6A6A; margin-top:1px; }
+.hs-opt .hs-price{ flex:none; font-size:15px; font-weight:700; color:#B3121F; white-space:nowrap; }
+.hs-opt.sel{ border-color:#B3121F; background:#FFF4F2; box-shadow:0 0 0 1px #B3121F inset; }
+.hs-opt.sel .hs-radio{ border-color:#B3121F; background:#B3121F; }
+.hs-opt.sel .hs-radio::after{ content:""; position:absolute; left:5px; top:2px; width:5px; height:9px; border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); }
+.hs-opt.off{ opacity:.45; cursor:not-allowed; }
+.hs-opt.off .hs-price{ color:#8A7B7B; font-size:13px; font-weight:600; }
+.respin-yes:disabled{ background:#E9E2DD; color:#A59A94; }
