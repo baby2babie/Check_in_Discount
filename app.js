@@ -333,6 +333,12 @@ function syncHelperBtn() {
 }
 new MutationObserver(syncHelperBtn).observe(startBtn, { attributes: true, attributeFilter: ['class'] });
 
+// ดึงตัวช่วย/แต้มล่าสุดของกล่องใบถัดไปไว้ล่วงหน้า (หลังเปิดกล่องหรือหลังลุ้นอีกครั้ง แต้มเปลี่ยน) เพื่อให้กดปุ่มตัวช่วยแล้วขึ้นทันที
+function refreshHelperInfo() {
+  helperData = null; helperLoading = null;
+  if (stock.length && stock[0] !== 'PAID') loadHelperInfo();
+}
+
 function renderHelperSheet() {
   const d = helperData;
   document.getElementById('hsPoints').textContent = d ? d.points : 0;
@@ -360,6 +366,12 @@ function renderHelperSheet() {
 helperBtn.addEventListener('click', async () => {
   if (busy) return;
   helperPick = helperChoice;
+  const token = currentToken();
+  if (helperData && helperData.token === token && helperData.options.length) {   // ข้อมูลพร้อมแล้ว: ขึ้นรายการทันที ไม่โชว์ "กำลังโหลด"
+    renderHelperSheet();
+    helperSheet.hidden = false;
+    return;
+  }
   helperSheet.hidden = false;
   document.getElementById('hsList').innerHTML = '<p class="hs-sub" style="margin:18px 0">กำลังโหลด...</p>';
   const d = await loadHelperInfo();
@@ -954,6 +966,7 @@ document.getElementById('respinYes').addEventListener('click', async () => {
   if (outcome.success) {
     const newAmt = Number(outcome.result.discount_amount) || 0;
     lastOpen = null;
+    refreshHelperInfo();   // แต้มลด ต้องอัปเดตตัวเลือกตัวช่วยของกล่องถัดไป
     showRespinResult(open.amount, newAmt);
     busy = false;
     return;
@@ -968,6 +981,7 @@ document.getElementById('respinYes').addEventListener('click', async () => {
     showRespinResult(open.amount, newAmt);
     presentTicket(open.milestone, newAmt, false);
     lastOpen = null;
+    refreshHelperInfo();
   } else {
     // กลับไปแสดงตั๋วใบเดิม (ผลเดิมยังอยู่ ไม่เสียแต้มถ้า backend ไม่ได้หัก)
     setState('result');
@@ -1016,6 +1030,7 @@ async function startRound() {
   if (outcome.success) {
     stock.shift();
     delete lootTokens[milestone];
+    refreshHelperInfo();   // กล่องใบถัดไป (ถ้ามี) โหลดตัวช่วยรอไว้เลย
     lastOpen = { milestone, token, amount: Number(outcome.result.discount_amount) || 0 };
     updateStockCount();
     clearCacheSnapshot();   // กันหน้าเปิดรอบหน้าโชว์สิทธิ์เก่าที่เพิ่งใช้ไป
