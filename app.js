@@ -287,7 +287,7 @@ const HELPER_META = {
   boost: { name: 'BOOSTER', short: 'BOOSTER', desc: 'โอกาสได้ส่วนลดสูงขึ้นกว่าปกติ' },
   floor: { name: 'SAFE+',   short: 'SAFE+',   desc: 'รอบนี้จะไม่ได้ส่วนลดต่ำสุดของกล่องแน่นอน' },
   up:    { name: 'UPGRADE', short: 'UPGRADE', desc: 'ลุ้นด้วยรางวัลของกล่องระดับถัดไป' },
-  two:   { name: 'TWIN',    short: 'TWIN',    desc: 'หมุน 2 ครั้ง ได้ส่วนลดที่สูงกว่า' }
+  two:   { name: 'TWIN',    short: 'TWIN',    desc: 'หมุน 2 ครั้ง เลือก 1 ส่วนลดที่ดีสุด' }
 };
 let helperData = null;       // { token, points, options:[{key,price,affordable}] }
 let helperLoading = null;    // promise ระหว่างโหลด
@@ -342,8 +342,8 @@ function setHelperHint(res, fromMilestone) {
   const amt = Number(res.discount_amount) || 0;
   if (res.helper_used === 'two' && res.draws) {
     const p = String(res.draws).split(',').map(Number);
-    if (p.length === 2 && p[0] !== p[1]) pendingHint = `TWIN ได้ ${p[0]} กับ ${p[1]} บาท เลือก ${amt} บาทให้`;
-    else if (p.length === 2) pendingHint = `TWIN ได้ ${amt} บาททั้งสองครั้ง`;
+    if (p.length === 2 && p[0] !== p[1]) pendingHint = `TWIN ได้ ${p[0]} กับ ${p[1]} บาท เลือก ${amt} บาท`;
+    else if (p.length === 2) pendingHint = `TWIN ได้ ${amt} บาททั้งสองครั้ง เลือก ${amt} บาท`;
   } else if (res.helper_used === 'up') {
     const n = NEXT_BOX[fromMilestone];
     if (n) pendingHint = `UPGRADE ลุ้นด้วยรางวัลของกล่อง ${n} วัน`;
