@@ -287,7 +287,9 @@ const HELPER_META = {
   boost: { name: 'BOOSTER', short: 'BOOSTER', desc: 'โอกาสได้ส่วนลดสูงขึ้นกว่าปกติ' },
   floor: { name: 'SAFE+',   short: 'SAFE+',   desc: 'รอบนี้จะไม่ได้ส่วนลดต่ำสุดของกล่องแน่นอน' },
   up:    { name: 'UPGRADE', short: 'UPGRADE', desc: 'ลุ้นด้วยรางวัลของกล่องระดับถัดไป' },
-  two:   { name: 'TWIN',    short: 'TWIN',    desc: 'หมุน 2 ครั้ง เลือก 1 ส่วนลดที่ดีสุด' }
+  two:   { name: 'TWIN',    short: 'TWIN',    desc: 'หมุน 2 ครั้ง เลือก 1 ส่วนลดที่ดีสุด' },
+  magnet:{ name: 'MAGNET',  short: 'MAGNET',  desc: 'ดึงโอกาสไปที่ส่วนลดสูงสุดของกล่อง' },
+  vip:   { name: 'LEGEND TOUCH', short: 'LEGEND', desc: 'ลุ้นด้วยสิทธิ์ระดับ Legend 1 รอบ' }
 };
 let helperData = null;       // { token, points, options:[{key,price,affordable}] }
 let helperLoading = null;    // promise ระหว่างโหลด
@@ -309,7 +311,7 @@ function loadHelperInfo() {
   if (!token || currentIsPaid()) return Promise.resolve(null);
   if (helperData && helperData.token === token) return Promise.resolve(helperData);
   if (helperLoading) return helperLoading;
-  helperLoading = callGAS('helperInfo', { token }, 8000)
+  helperLoading = callGAS('helperInfo', { token, tierLabel: currentTierLabel }, 8000)
     .then((r) => {
       helperLoading = null;
       if (r && r.success && r.eligible && Array.isArray(r.options) && r.options.length) {
@@ -347,6 +349,8 @@ function setHelperHint(res, fromMilestone) {
   } else if (res.helper_used === 'up') {
     const n = NEXT_BOX[fromMilestone];
     if (n) pendingHint = `UPGRADE ลุ้นด้วยรางวัลของกล่อง ${n} วัน`;
+  } else if (res.helper_used === 'vip') {
+    pendingHint = 'LEGEND TOUCH ลุ้นด้วยสิทธิ์ระดับ Legend';
   }
 }
 let helperNext = null;       // { token, p: promise, data }
@@ -354,7 +358,7 @@ function prefetchNextHelper() {
   const t2 = stock.length > 1 ? lootTokens[stock[1]] : null;
   if (!t2 || stock[1] === 'PAID') { helperNext = null; return; }
   const slot = { token: t2, data: null };
-  slot.p = callGAS('helperInfo', { token: t2 }, 8000).then((r) => {
+  slot.p = callGAS('helperInfo', { token: t2, tierLabel: currentTierLabel }, 8000).then((r) => {
     if (r && r.success) {
       slot.data = { token: t2, points: Number(r.points) || 0,
                     options: (r.eligible && Array.isArray(r.options)) ? r.options : [] };
