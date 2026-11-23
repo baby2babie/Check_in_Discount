@@ -794,6 +794,7 @@ html[data-fest="christmas"] .btn.ghost.respin{ --rs-fg:#FFE9A8; --rs-bd:#F2C14E;
 .helper-card h3{ text-align:center; }
 .helper-card .hs-sub{ text-align:center; margin-bottom:14px; }
 .hs-list{ display:flex; flex-direction:column; gap:9px; }
+.helper-card .hs-note{ text-align:center; font-size:12px; line-height:1.5; color:#9A8A8A; margin:10px 0 2px; }
 .hs-opt{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:12px 14px; border-radius:16px;
   border:1.5px solid #EADFD8; background:#FFFDFB; color:#2B1A1A; font-family:inherit; cursor:pointer; }
 .hs-opt .hs-radio{ flex:none; width:20px; height:20px; border-radius:50%; border:2px solid #CDBFB6; background:#fff; position:relative; }

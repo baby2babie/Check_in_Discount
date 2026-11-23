@@ -1177,14 +1177,18 @@ retryBtn.addEventListener('click', () => {
 //  RENDER จากข้อมูลจริง (getLootBoxDataByRoom / getLootBoxData)
 // ============================================================
 function updateRoomLabel(room) {
-  cabRoomBadge.textContent = 'ห้อง ' + room;
   currentRoomNo = room;
+  renderRoomBadge();
   showHistoryButton();
+}
+// แสดง "ห้อง 208 · Silver" ให้ผู้ใช้เห็นว่ากำลังใช้สิทธิ์ระดับไหน
+function renderRoomBadge() {
+  cabRoomBadge.textContent = 'ห้อง ' + currentRoomNo + (currentTierLabel ? ' · ' + currentTierLabel : '');
 }
 
 function applyRoomData(result) {
   if (result.roomNo) updateRoomLabel(result.roomNo);
-  if (result.tierLabel) { currentTierLabel = result.tierLabel; applyTier(currentTierLabel); }
+  if (result.tierLabel) { currentTierLabel = result.tierLabel; applyTier(currentTierLabel); renderRoomBadge(); }
 
   stock = [];
   lootTokens = {};
