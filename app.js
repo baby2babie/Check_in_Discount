@@ -10,10 +10,10 @@ const LIFF_ID = '2004478373-aQPYZEpt';
 
 // milestone → ชื่อคูปอง — ลำดับนี้คือลำดับที่ stock queue จะเปิดก่อน-หลัง
 const LB_CONFIG = [
-  { milestone: 7,  name: 'Silver',   tier: 'silver' },
-  { milestone: 14, name: 'Gold',     tier: 'gold'   },
-  { milestone: 21, name: 'Platinum', tier: 'plat'   },
-  { milestone: 28, name: 'Legend',   tier: 'legend' },
+  { milestone: 7,  name: 'กล่อง 7 วัน',  tier: 'silver' },
+  { milestone: 14, name: 'กล่อง 14 วัน', tier: 'gold'   },
+  { milestone: 21, name: 'กล่อง 21 วัน', tier: 'plat'   },
+  { milestone: 28, name: 'กล่อง 28 วัน', tier: 'legend' },
 ];
 const TIER_COLORS = { silver:'#7F93AD', gold:'#B38A38', plat:'#8574B5', legend:'#B5505E', paid:'#3F98A8' };
 
@@ -248,14 +248,14 @@ async function initLiff() {
 //  ชื่อคูปอง / ข้อความประกอบ
 // ============================================================
 function boxNameFor(milestone) {
-  if (String(milestone) === 'PAID') return 'Bonus';
+  if (String(milestone) === 'PAID') return 'กล่องชำระบิลตรงเวลา';
   const cfg = LB_CONFIG.find(c => c.milestone === Number(milestone));
   return cfg ? cfg.name : 'Special';
 }
 function couponSummary(milestone) {
   const reason = stockLabels[String(milestone)];
   const via = /^(เช็คอิน|ชำระ)/.test(reason || '') ? 'จากการ' : 'จาก';
-  return reason ? `สิทธิ์ ${boxNameFor(milestone)} ${via}${reason}` : `สิทธิ์ ${boxNameFor(milestone)}`;
+  return reason ? `สิทธิ์${via}${reason}` : `สิทธิ์ ${boxNameFor(milestone)}`;
 }
 
 function updateStockCount() {
@@ -890,11 +890,11 @@ async function landOnAmount(amount) {
 // ตั๋วเฉลยรางวัล — เรียกตอนวงล้อหยุดแล้ว (celebrate=true) หรือตอนกู้คืนผลเก่าแบบเงียบๆ (celebrate=false)
 function presentTicket(milestone, amount, celebrate = true) {
   const isJackpot = Number(amount) >= JACKPOT_AMOUNT;
-  ticketTier.textContent = isJackpot ? 'Jackpot' : `${boxNameFor(milestone)} Coupon`;
+  ticketTier.textContent = isJackpot ? 'Jackpot' : boxNameFor(milestone);
   ticket.classList.toggle('jackpot', isJackpot);
   revealCard.dataset.jp = isJackpot ? '1' : '0';   // เปิดแสงรัศมีทองหลังตั๋วผ่าน CSS
   ticketDesc.textContent = 'หักจากบิลรอบถัดไปโดยอัตโนมัติ';
-  ticket.setAttribute('aria-label', `${boxNameFor(milestone)} Coupon ส่วนลดค่าเช่า ${amount} บาท`);
+  ticket.setAttribute('aria-label', `${boxNameFor(milestone)} ส่วนลดค่าเช่า ${amount} บาท`);
   ticket.classList.add('show');
   claimBtn.classList.add('show');
   if (celebrate) {
@@ -1297,10 +1297,10 @@ function formatMonthLabel(monthKey) {
 
 function getTierMeta(tierRaw) {
   if (String(tierRaw).trim() === 'PAID') {
-    return { name: 'Bonus', reason: stockLabels.PAID, color: TIER_COLORS.paid };
+    return { name: 'กล่องชำระบิลตรงเวลา', reason: '', color: TIER_COLORS.paid };
   }
   const cfg = LB_CONFIG.find(c => c.milestone === Number(tierRaw));
-  if (cfg) return { name: cfg.name, reason: stockLabels[String(cfg.milestone)] || '', color: TIER_COLORS[cfg.tier] };
+  if (cfg) return { name: cfg.name, reason: '', color: TIER_COLORS[cfg.tier] };
   return { name: 'ไม่ทราบ', reason: '', color: '#8B929C' };
 }
 
