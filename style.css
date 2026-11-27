@@ -850,6 +850,14 @@ html[data-fest="christmas"] .btn.ghost.respin{ --rs-fg:#FFE9A8; --rs-bd:#F2C14E;
 .pf-card{ border:1px solid var(--line); border-radius:12px; padding:9px 8px; text-align:center; }
 .pf-card b{ display:block; font-size:20px; font-weight:600; line-height:1.25; font-variant-numeric:tabular-nums; }
 .pf-card span{ font-size:12px; color:var(--ink-2); }
+.pf-tier{ margin-top:10px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; }
+.pf-tier-top{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:13px; }
+.pf-tier-top b{ font-weight:600; white-space:nowrap; }
+.pf-tier-top span{ color:var(--ink-2); font-size:12px; text-align:right; }
+.pf-bar{ height:6px; border-radius:999px; background:var(--line-2); margin:8px 0 6px; overflow:hidden; }
+.pf-bar i{ display:block; height:100%; border-radius:999px; background:var(--tier); }
+.pf-tier small{ font-size:11px; color:var(--ink-2); }
+.pf-next{ margin:10px 0 0; font-size:13px; text-align:center; color:var(--ink-2); line-height:1.6; }
 .pf-sec{ margin:16px 0 8px; font-size:13px; font-weight:600; }
 .pf-dots{ display:flex; gap:6px; }
 .pf-dot{ flex:1; text-align:center; font-size:11px; color:var(--ink-2); }
@@ -862,6 +870,8 @@ html[data-fest="christmas"] .btn.ghost.respin{ --rs-fg:#FFE9A8; --rs-bd:#F2C14E;
 .pf-help{ list-style:none; margin:0; padding:0; }
 .pf-help li{ display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid var(--line-2); font-size:13px; }
 .pf-help li span:last-child{ color:var(--ink-2); white-space:nowrap; }
+.pf-help li span:first-child{ line-height:1.7; }
+.pf-tag{ display:inline-block; font-style:normal; font-size:11px; padding:1px 8px; margin:2px 4px 0 0; border-radius:999px; background:var(--lav-1,#eeeaf7); color:var(--ink-2); border:1px solid var(--line-2); }
 .pf-empty{ font-size:13px; color:var(--ink-2); }
 .pf-note{ margin-top:14px; padding:10px 12px; border-radius:10px; background:#FBF4EE; font-size:12px; line-height:1.6; color:var(--ink-2); }
 .pf-actions{ display:flex; margin-top:14px; }

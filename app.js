@@ -1361,6 +1361,13 @@ function pfSinceText(s) {
   if (s.days || !p.length) p.push((s.days || 0) + ' วัน');
   return 'เช่ามา ' + p.join(' ');
 }
+function pfMonthsText(m) {
+  m = Math.max(0, Number(m) || 0);
+  const y = Math.floor(m / 12), r = m % 12, p = [];
+  if (y) p.push(y + ' ปี');
+  if (r || !y) p.push(r + ' เดือน');
+  return p.join(' ');
+}
 function pfHelperName(key) { return (HELPER_META[key] && HELPER_META[key].name) || key; }
 function renderProfile(d) {
   const num = (n) => Number(n || 0).toLocaleString('th-TH');
@@ -1374,31 +1381,47 @@ function renderProfile(d) {
   }).join('');
   const lines = [];
   (d.helpers || []).forEach(h => {
-    const box = 'กล่อง ' + esc(h.tier) + ' วัน';
-    if (h.helper) lines.push(`<li><span>${box} · ${esc(pfHelperName(h.helper))}</span><span>−${num(h.helper_cost)} แต้ม</span></li>`);
-    if (h.respun) lines.push(`<li><span>${box} · ลุ้นอีกครั้ง</span><span>−${num(h.respin_cost)} แต้ม</span></li>`);
+    const box = /^\d+$/.test(String(h.tier)) ? 'กล่อง ' + esc(h.tier) + ' วัน' : 'กล่องชำระบิลตรงเวลา';
+    const tags = [];
+    if (h.helper) tags.push(`<em class="pf-tag">ตัวช่วย ${esc(pfHelperName(h.helper))}</em>`);
+    if (h.respun) tags.push('<em class="pf-tag">ลุ้นอีกครั้ง</em>');
+    const amt = Number(h.discount || 0);
+    lines.push(`<li><span>${box}${tags.length ? '<br>' + tags.join(' ') : ''}</span><span>${amt > 0 ? 'ลด ' + num(amt) + ' บาท' : esc(h.prize || '-')}</span></li>`);
   });
   const since = pfSinceText(d.since);
+  const tierObj = d.tier && d.tier.label ? d.tier : null;
+  const streak = Number(d.streak || 0);
+  const nextBox = [7, 14, 21, 28].find(t => !boxMap[String(t)]);
+  const nextLine = nextBox
+    ? (nextBox - streak > 0
+        ? `เช็คอินต่อเนื่อง ${num(streak)} วัน · เช็คอินอีก ${nextBox - streak} วัน ได้กล่อง ${nextBox} วัน`
+        : `เช็คอินต่อเนื่อง ${num(streak)} วัน · เช็คอินวันนี้เพื่อรับกล่อง ${nextBox} วัน`)
+    : `เช็คอินต่อเนื่อง ${num(streak)} วัน · ได้ครบทุกกล่องแล้วรอบนี้`;
+  const tierHtml = tierObj ? `
+    <div class="pf-tier">
+      <div class="pf-tier-top"><b>${esc(tierObj.emoji || '')} ${esc(tierObj.label)}</b><span>${tierObj.nextLabel ? 'อีก ' + esc(pfMonthsText(tierObj.monthsLeft)) + ' ถึง ' + esc(tierObj.nextLabel) : 'ระดับสูงสุดแล้ว'}</span></div>
+      <div class="pf-bar"><i style="width:${Math.max(0, Math.min(100, Number(tierObj.progress) || 0))}%"></i></div>
+      <small>ระดับสมาชิกนับจากระยะเวลาที่เช่า</small>
+    </div>` : '';
+  const bonus = Number(d.birthday_bonus || 0);
   pfBody.innerHTML = `
     <div class="pf-head">
       <div class="pf-av">${esc(d.room || currentRoomNo)}</div>
       <div class="pf-name"><b>ห้อง ${esc(d.room || currentRoomNo)}</b>${since ? `<small>${esc(since)}</small>` : ''}</div>
-      ${currentTierLabel ? `<span class="pf-chip">สมาชิก ${esc(currentTierLabel)}</span>` : ''}
+      ${(tierObj ? tierObj.label : currentTierLabel) ? `<span class="pf-chip">สมาชิก ${esc(tierObj ? tierObj.label : currentTierLabel)}</span>` : ''}
     </div>
     <div class="pf-total">
       <small>ส่วนลดรวมที่ได้รอบนี้</small>
       <strong>${num(d.total_discount)}<span>บาท</span></strong>
-      <em>จากกล่อง ${num(d.box_discount)} + แต้มเช็คอินคงเหลือ ${num(d.points)}</em>
+      <em>จากกล่อง ${num(d.box_discount)} + แต้มเช็คอินคงเหลือ ${num(d.points)}${bonus > 0 ? ' + โบนัสวันเกิด ' + num(bonus) : ''}</em>
     </div>
-    <div class="pf-cards">
-      <div class="pf-card"><b>${num(d.streak)}</b><span>เช็คอินต่อเนื่อง (วัน)</span></div>
-      <div class="pf-card"><b>${num(d.points)}</b><span>แต้มสะสมรอบนี้ (บาท)</span></div>
-    </div>
+    ${tierHtml}
     <h3 class="pf-sec">กล่องสุ่มรอบนี้</h3>
     <div class="pf-dots">${dots}</div>
-    <h3 class="pf-sec">ตัวช่วยที่ใช้รอบนี้</h3>
-    ${lines.length ? `<ul class="pf-help">${lines.join('')}</ul>` : '<p class="pf-empty">ยังไม่ได้ใช้ตัวช่วยรอบนี้</p>'}
-    <p class="pf-note">ระดับสมาชิกคือระดับของห้องคุณ มีผลต่อโอกาสได้ส่วนลดในกล่องสุ่ม แต้มที่ไม่ได้ใช้ยังเป็นส่วนลดบิลตามปกติ</p>
+    <p class="pf-next">${esc(nextLine)}</p>
+    <h3 class="pf-sec">ประวัติการเปิดกล่องรอบนี้</h3>
+    ${lines.length ? `<ul class="pf-help">${lines.join('')}</ul>` : '<p class="pf-empty">ยังไม่ได้เปิดกล่องรอบนี้</p>'}
+    <p class="pf-note">แต้มเช็คอินที่ไม่ได้ใช้ยังเป็นส่วนลดบิลตามปกติ กล่องที่ไม่ได้เปิดจะหมดอายุเมื่อตัดบิล</p>
     <div class="pf-actions"><button type="button" class="btn ghost" id="pfHistory">ดูประวัติการลุ้น</button></div>`;
   document.getElementById('pfHistory').addEventListener('click', () => { closeProfile(); openHistoryOverlay(); });
 }
@@ -1593,6 +1616,8 @@ async function init() {
 
   if (params.get('view') === 'history' && currentRoomNo) {
     openHistoryOverlay();
+  } else if (params.get('profile') === '1' && currentRoomNo) {
+    openProfile();
   }
 
   removeBootMask();
