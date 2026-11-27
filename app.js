@@ -1183,7 +1183,12 @@ function updateRoomLabel(room) {
 }
 // แสดง "ห้อง 208 · Silver" ให้ผู้ใช้เห็นว่ากำลังใช้สิทธิ์ระดับไหน
 function renderRoomBadge() {
-  cabRoomBadge.textContent = 'ห้อง ' + currentRoomNo + (currentTierLabel ? ' · ' + currentTierLabel : '');
+  if (!currentRoomNo) return;
+  cabRoomBadge.hidden = false;
+  cabRoomBadge.innerHTML =
+    '<span class="rp-room">ห้อง ' + esc(currentRoomNo) + '</span>' +
+    (currentTierLabel ? '<span class="rp-sep">·</span><i class="rp-dot"></i><span>ระดับสมาชิก ' + esc(currentTierLabel) + '</span>' : '') +
+    '<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 1.5 7 5l-3.5 3.5"/></svg>';
 }
 
 function applyRoomData(result) {
@@ -1330,6 +1335,106 @@ document.addEventListener('keydown', (e) => {
     closeHistoryOverlay();
   }
 });
+
+// ============================================================
+//  PROFILE SHEET — โปรไฟล์ย่อ ดึงข้อมูลตอนแตะป้ายเท่านั้น (หน้าวงล้อไม่ช้าลง) เก็บแคช 60 วินาที
+// ============================================================
+let pfLastFocus = null, pfCache = null;
+const PF_CACHE_MS = 60 * 1000;
+const pfOverlay = document.getElementById('profile-overlay');
+const pfBody = document.getElementById('pf-body');
+
+function pfSkeleton() {
+  const b = (w, h) => `<i class="pf-skel" style="width:${w};height:${h}"></i>`;
+  pfBody.innerHTML = `
+    <div class="pf-head"><div class="pf-av">${esc(currentRoomNo || '')}</div>
+      <div class="pf-name"><b>ห้อง ${esc(currentRoomNo || '')}</b>${b('55%','12px')}</div></div>
+    <div class="pf-total">${b('40%','12px')}<div style="height:8px"></div>${b('50%','28px')}</div>
+    <div class="pf-cards">${b('100%','62px')}${b('100%','62px')}</div>
+    <div style="height:14px"></div>${b('100%','44px')}`;
+}
+function pfSinceText(s) {
+  if (!s) return '';
+  const p = [];
+  if (s.years)  p.push(s.years + ' ปี');
+  if (s.months) p.push(s.months + ' เดือน');
+  if (s.days || !p.length) p.push((s.days || 0) + ' วัน');
+  return 'เช่ามา ' + p.join(' ');
+}
+function pfHelperName(key) { return (HELPER_META[key] && HELPER_META[key].name) || key; }
+function renderProfile(d) {
+  const num = (n) => Number(n || 0).toLocaleString('th-TH');
+  const boxMap = {};
+  (d.boxes || []).forEach(b => { boxMap[String(b.tier)] = b; });
+  const dots = [7, 14, 21, 28].map(t => {
+    const b = boxMap[String(t)];
+    if (b && b.opened) return `<div class="pf-dot done"><i>✓</i>${t} วัน</div>`;
+    if (b) return `<div class="pf-dot ready"><i>${t}</i>รอเปิด</div>`;
+    return `<div class="pf-dot"><i>${t}</i>${t} วัน</div>`;
+  }).join('');
+  const lines = [];
+  (d.helpers || []).forEach(h => {
+    const box = 'กล่อง ' + esc(h.tier) + ' วัน';
+    if (h.helper) lines.push(`<li><span>${box} · ${esc(pfHelperName(h.helper))}</span><span>−${num(h.helper_cost)} แต้ม</span></li>`);
+    if (h.respun) lines.push(`<li><span>${box} · ลุ้นอีกครั้ง</span><span>−${num(h.respin_cost)} แต้ม</span></li>`);
+  });
+  const since = pfSinceText(d.since);
+  pfBody.innerHTML = `
+    <div class="pf-head">
+      <div class="pf-av">${esc(d.room || currentRoomNo)}</div>
+      <div class="pf-name"><b>ห้อง ${esc(d.room || currentRoomNo)}</b>${since ? `<small>${esc(since)}</small>` : ''}</div>
+      ${currentTierLabel ? `<span class="pf-chip">สมาชิก ${esc(currentTierLabel)}</span>` : ''}
+    </div>
+    <div class="pf-total">
+      <small>ส่วนลดรวมที่ได้รอบนี้</small>
+      <strong>${num(d.total_discount)}<span>บาท</span></strong>
+      <em>จากกล่อง ${num(d.box_discount)} + แต้มเช็คอินคงเหลือ ${num(d.points)}</em>
+    </div>
+    <div class="pf-cards">
+      <div class="pf-card"><b>${num(d.streak)}</b><span>เช็คอินต่อเนื่อง (วัน)</span></div>
+      <div class="pf-card"><b>${num(d.points)}</b><span>แต้มสะสมรอบนี้ (บาท)</span></div>
+    </div>
+    <h3 class="pf-sec">กล่องสุ่มรอบนี้</h3>
+    <div class="pf-dots">${dots}</div>
+    <h3 class="pf-sec">ตัวช่วยที่ใช้รอบนี้</h3>
+    ${lines.length ? `<ul class="pf-help">${lines.join('')}</ul>` : '<p class="pf-empty">ยังไม่ได้ใช้ตัวช่วยรอบนี้</p>'}
+    <p class="pf-note">ระดับสมาชิกคือระดับของห้องคุณ มีผลต่อโอกาสได้ส่วนลดในกล่องสุ่ม แต้มที่ไม่ได้ใช้ยังเป็นส่วนลดบิลตามปกติ</p>
+    <div class="pf-actions"><button type="button" class="btn ghost" id="pfHistory">ดูประวัติการลุ้น</button></div>`;
+  document.getElementById('pfHistory').addEventListener('click', () => { closeProfile(); openHistoryOverlay(); });
+}
+async function loadProfile() {
+  if (pfCache && pfCache.room === currentRoomNo && Date.now() - pfCache.ts < PF_CACHE_MS) { renderProfile(pfCache.data); return; }
+  pfSkeleton();
+  try {
+    const res = await callGAS('profileInfo', { roomNo: currentRoomNo });
+    if (!res || !res.success || !res.profile) throw new Error('load');
+    pfCache = { room: currentRoomNo, ts: Date.now(), data: res.profile };
+    if (pfOverlay.classList.contains('active')) renderProfile(res.profile);
+  } catch (e) {
+    if (!pfOverlay.classList.contains('active')) return;
+    pfBody.innerHTML = '<div class="h-empty"><p class="h-empty-title">โหลดข้อมูลไม่สำเร็จ</p><p>กรุณาลองอีกครั้ง</p><button class="btn ghost" id="pfRetry" type="button">ลองอีกครั้ง</button></div>';
+    document.getElementById('pfRetry').addEventListener('click', loadProfile);
+  }
+}
+function openProfile() {
+  if (!currentRoomNo || pfOverlay.classList.contains('active')) return;
+  pfLastFocus = document.activeElement;
+  pfOverlay.classList.add('active');
+  document.body.classList.add('lock');
+  revealCard.inert = true;
+  document.getElementById('profile-close').focus();
+  loadProfile();
+}
+function closeProfile() {
+  pfOverlay.classList.remove('active');
+  document.body.classList.remove('lock');
+  revealCard.inert = false;
+  if (pfLastFocus && pfLastFocus.focus) pfLastFocus.focus();
+}
+cabRoomBadge.addEventListener('click', openProfile);
+document.getElementById('profile-close').addEventListener('click', closeProfile);
+pfOverlay.addEventListener('click', (e) => { if (e.target === pfOverlay) closeProfile(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && pfOverlay.classList.contains('active')) closeProfile(); });
 
 function historyMessage(title, sub, withRetry) {
   return `

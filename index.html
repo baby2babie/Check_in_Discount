@@ -100,7 +100,6 @@
       <img class="brand-logo" src="assets/logo.png" alt="โลโก้หอพัก">
       <div class="brand">
         <h1>วงล้อส่วนลด</h1>
-        <p class="room" id="cabRoomBadge"></p>
       </div>
     </div>
     <div class="topbar-actions">
@@ -126,6 +125,8 @@
       </button>
     </div>
   </header>
+
+  <div class="pillrow"><button type="button" class="room-pill" id="cabRoomBadge" hidden aria-haspopup="dialog" aria-label="ดูข้อมูลห้อง"></button></div>
 
   <audio id="bgm" loop preload="none"></audio>
 
@@ -223,6 +224,22 @@
       </button>
     </div>
     <div class="history-body" id="history-body"></div>
+  </div>
+</div>
+
+<!-- PROFILE OVERLAY (โปรไฟล์ย่อ — โหลดข้อมูลตอนแตะป้ายเท่านั้น) -->
+<div class="history-overlay" id="profile-overlay" role="dialog" aria-modal="true" aria-labelledby="pf-title">
+  <div class="history-panel">
+    <span class="sheet-grip" aria-hidden="true"></span>
+    <div class="history-header">
+      <h2 class="history-title" id="pf-title">ข้อมูลห้อง</h2>
+      <button class="icon-btn" id="profile-close" type="button" aria-label="ปิด">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="history-body" id="pf-body"></div>
   </div>
 </div>
 
