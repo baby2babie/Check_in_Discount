@@ -1401,7 +1401,7 @@ function renderProfile(d) {
     <div class="pf-tier">
       <div class="pf-tier-top"><b>${esc(tierObj.emoji || '')} ${esc(tierObj.label)}</b><span>${tierObj.nextLabel ? 'อีก ' + esc(pfMonthsText(tierObj.monthsLeft)) + ' ถึง ' + esc(tierObj.nextLabel) : 'ระดับสูงสุดแล้ว'}</span></div>
       <div class="pf-bar"><i style="width:${Math.max(0, Math.min(100, Number(tierObj.progress) || 0))}%"></i></div>
-      <small>ระดับสมาชิกนับจากระยะเวลาที่เช่า</small>
+      <small>ระดับสมาชิกนับจากระยะเวลาที่เช่า และมีผลต่อโอกาสได้ส่วนลดในกล่องสุ่ม</small>
     </div>` : '';
   const bonus = Number(d.birthday_bonus || 0);
   pfBody.innerHTML = `
