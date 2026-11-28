@@ -1,7 +1,7 @@
 // ============================================================
 //  วงล้อส่วนลด — app.js (Minimal Premium Edition)
 //  UI/UX ใหม่ทั้งหมด · โครง backend / LIFF / cache / history / ลอจิกเกม คงเดิม
-//  สถานะหน้าจอควบคุมผ่าน data-state บน #revealCard:
+//  สถานะหน้าจอควบคุมผ่าน data-state บน #revealCard: TEST
 //  loading | idle | play | result | empty | error
 // ============================================================
 
@@ -1399,8 +1399,9 @@ function renderProfile(d) {
     : `เช็คอินต่อเนื่อง ${num(streak)} วัน · ได้ครบทุกกล่องแล้วรอบนี้`;
   const tierHtml = tierObj ? `
     <div class="pf-tier">
-      <div class="pf-tier-top"><b>${esc(tierObj.emoji || '')} ${esc(tierObj.label)}</b><span>${tierObj.nextLabel ? 'อีก ' + esc(pfMonthsText(tierObj.monthsLeft)) + ' ถึง ' + esc(tierObj.nextLabel) : 'ระดับสูงสุดแล้ว'}</span></div>
+      <div class="pf-tier-top"><b>${esc(tierObj.emoji || '')} ${esc(tierObj.label)}</b></div>
       <div class="pf-bar"><i style="width:${Math.max(0, Math.min(100, Number(tierObj.progress) || 0))}%"></i></div>
+      <p class="pf-tier-next">${tierObj.nextLabel ? 'ระดับถัดไป ' + esc((tierObj.nextEmoji || '') + ' ' + tierObj.nextLabel).trim() + ' · อีก ' + esc(pfMonthsText(tierObj.monthsLeft)) : 'ระดับสูงสุดแล้ว'}</p>
       <small>ระดับสมาชิกนับจากระยะเวลาที่เช่า และมีผลต่อโอกาสได้ส่วนลดในกล่องสุ่ม</small>
     </div>` : '';
   const bonus = Number(d.birthday_bonus || 0);

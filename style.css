@@ -856,6 +856,7 @@ html[data-fest="christmas"] .btn.ghost.respin{ --rs-fg:#FFE9A8; --rs-bd:#F2C14E;
 .pf-tier-top span{ color:var(--ink-2); font-size:12px; text-align:right; }
 .pf-bar{ height:6px; border-radius:999px; background:var(--line-2); margin:8px 0 6px; overflow:hidden; }
 .pf-bar i{ display:block; height:100%; border-radius:999px; background:var(--tier); }
+.pf-tier-next{ margin:0 0 4px; font-size:13px; font-weight:500; line-height:1.5; }
 .pf-tier small{ display:block; font-size:11px; line-height:1.5; color:var(--ink-2); }
 .pf-next{ margin:10px 0 0; font-size:13px; text-align:center; color:var(--ink-2); line-height:1.6; }
 .pf-sec{ margin:16px 0 8px; font-size:13px; font-weight:600; }
